@@ -1,64 +1,37 @@
-#include <SoftwareSerial.h>
+#define API_ESCAPED_MODE
 
-class XbeeCommunicator : public SoftwareSerial {
-    boolean check_return() {
-        while (!this->available());
-        c = this->read();
-        if (c != 'O') return false;
-        while (!this->available());
-        c = this->read();
-        if (c != 'K') return false;
-        while (!this->available());
-        c = this->read();
-        if (c != 0xD) return false;
-        return true;
-    }
+#include "XbeeCommunicatorLight.h"
 
-    boolean enter_command_mode_context() {
-        char c;
-        this->print("+++");
-        return this->check_return();
-    }
-
-    boolean leave_command_mode_context() {
-        char c;
-        this->print("+++");
-        return this->check_return();
-    }
-
-    public:
-        XbeeCommunicator(int tx, int rx) : SoftwareSerial(tx,rx) { }
-
-        void begin (int speed) {
-            SoftwareSerial::begin(speed);
-            this->set_up_panid(42);
-            this->set_up_vendorid("0013A200");
-        }
-
-        void set_up_panid(char* panid) {
-            this->enter_command_mode_context();
-            this->print("ATID");
-            this->print(panid);
-            this->leave_command_mode_context();
-        }
-
-        void set_up_vendorid(char* vid) {
-            this->enter_command_mode_context();
-            this->print("ATDH");
-            this->print(vid);
-            this->leave_command_mode_context();
-        }
-
-
-
-} xbeecom(2,3);
+XbeeCommunicator xbeecom(2,3);
+const uint8_t panid[2] = {0x4,0x2};
+const uint8_t venid[8] = {0x0, 0x0, 0x1, 0x3, 0xA, 0x2, 0x0, 0x0};
 
 void setup() {
-    xbeecom.begin(9600);
     Serial.begin(9600);
     Serial.println("-- Start --");
-}
+
+    xbeecom.begin(panid,venid);
+
+    Serial.println("-- Sending --");
+    xbeecom.send("caca!\n");
+    if (xbeecom.available() > 7) {
+        Serial.println(xbeecom.recv());
+        //while (xbeecom.available()) {
+        //   Serial.print(xbeecom.read(),HEX); Serial.print(" ");
+        //
+        //Serial.println();
+    }}
 
 void loop() {
+    if (xbeecom.available() > 2) {
+        Serial.println(xbeecom.recv());
+        //while (xbeecom.available()) {
+        //   Serial.print(xbeecom.read(),HEX); Serial.print(" ");
+        //
+        //erial.println();
+    } else {
+        Serial.print(xbeecom.available()); Serial.println("|");
+    }
+    delay(1000);
 }
 
