@@ -1,6 +1,9 @@
 # Makefile for building Arduino sketches with Arduino 1.0.
-# Makefile-arduino v0.7 by Akkana Peck <akkana@shallowsky.com>
 #
+# Makefile-arduino v0.8 by Bernard Pratz <guyzmo@hackable-devices.org>
+# I release my changes under WTFPL2.0 licence, contact other authors for their favorite licences.
+#
+# Makefile-arduino v0.7 by Akkana Peck <akkana@shallowsky.com>
 # Adapted from a long-ago Arduino 0011 Makefile by mellis, eighthave, oli.keller
 #
 # This Makefile allows you to build sketches from the command line
@@ -10,82 +13,93 @@
 #
 #  1. Copy this file into the folder with your sketch.
 #     There should be a file with the extension .pde (e.g. blink.pde).
-#     cd into this directory.
+#     cd into this directory. Be sure your directory has the same name
+#     as the .pde file.
 #
-#  2. Below, modify the line containing "TARGET" to refer to the name of
-#     of your program's file without an extension (e.g. TARGET = foo).
-#
-#  3. Modify the line containg "ARDUINO_DIR" to point to the directory that
+#  2. Modify the line containg "ARDUINO_DIR" to point to the directory that
 #     contains the Arduino installation (for example, under Mac OS X, this
 #     might be /Applications/arduino-1.0). If it's in your home directory,
 #     you can include $(HOME) as part of the path.
 #
-#  4. Set MODEL to your Arduino model.
+#  3. Set MODEL to your Arduino model.
 #     Tested so far on uno, atmega328, diecimila and mega.
 #     but there are lots of other options:
-#     see $(ARDUINO_DIR)/hardware/arduino/boards.txt for a list.
-#     If you're using one of the other models you might have to modify
-#     PORT; let me know if you do, so I can update this Makefile.
+#     Use the "make list" command to know all the available models
 #
-#  5. Run "make" to compile/verify your program.
+#  4. Run "make" to compile/verify your program.
 #
-#  6. Run "make upload" (and reset your Arduino if it requires it)
+#  5. Run "make upload" (and reset your Arduino if it requires it)
 #     to download your program to the Arduino.
 #
-# NB:
+# Nota Bene:
 # if reset does not work, add RESET_MODE='python' or RESET_MODE='perl' to your env
 #  * Perl version needs libdevice-serialport-perl :
 #  * Python version needs python-serial :
+# if you want to compile against ATTiny, see ATTINY_DIR below.
+
+############################################################################
+# Project's settings
+############################################################################
 
 VERSION = 0.1
 
 # Standard Arduino libraries it will import, e.g. LiquidCrystal:
-ARDLIBS = 
+ARDLIBS = SoftwareSerial
 
-# User-specified (in $HOME_LIB below) libraries:
+# User-specified (in ~/sketchbook/libraries/) libraries (untested):
 USERLIBS = 
 
 # Arduino model:
-# You can set this to be a string, such as :
-# uno, atmega328, diecimila, nano328, nano, mega2560, mega, mini328, mini,
-# ethernet, fio, bt328, bt, lilypad328, lilypad, pro5v328, pro5v, pro328,
-# pro, atmega168, atmega8
+# You can set this to be a string, such as uno, atmega328, diecimila and mega,
 MODEL ?= atmega328
 
-HOME_LIB ?= $(HOME)/Documents/Arduino/libraries
+############################################################################
+# Platform's settings
+############################################################################
+
+# Determine operating system environment
+ifneq "$(wildcard C:/Windows/)" ""
+ UNAME=Windows
+else
+ UNAME=$(shell uname)
+endif
+
+# Name of the program and source .pde file:
+TARGET = $(shell basename $(PWD))
 
 # Where do you keep the official Arduino software package?
 ARDUINO_DIR = /Applications/Arduino10.app/Contents/Resources/Java
+HOME_LIB = $(HOME)/Documents/Arduino/libraries
+# path to ATTiny files look at http://hlt.media.mit.edu/?p=1695
+ATTINY_DIR=$(ARDUINO_DIR)/hardware/attiny45_85
 
 ############################################################################
 # Below here nothing should need to be changed. Cross your fingers!
 ############################################################################
 
-# Determine operating system environment
-UNAME = $(shell uname)
-
-# Name of the program and source .pde file:
-TARGET = $(shell basename $(PWD))
-
 # Where are tools like avr-gcc located on your system?
 ifeq "$(UNAME)" "Darwin"
-AVR_TOOLS_PATH = $(ARDUINO_DIR)/hardware/tools/avr/bin
+ AVR_TOOLS_PATH = $(ARDUINO_DIR)/hardware/tools/avr/bin
 else
-AVR_TOOLS_PATH = /usr/bin
+ AVR_TOOLS_PATH = /usr/bin
 endif
 
-ifeq "$(UNAME)" "Darwin"
+ifeq "$(UNAME)" "Windows"
+ PORT ?= COM1 #XXX needs to be checked !
+else
+ ifeq "$(UNAME)" "Darwin"
   ifeq "$(MODEL)" "uno"
    PORT ?= /dev/tty.usbmodem*
   else
    PORT ?= /dev/tty.usbserial*
   endif
-else
- ifeq "$(UNAME)" "Linux"
-  ifeq "$(MODEL)" "uno"
-PORT ?= /dev/ttyACM*
-  else
-PORT ?= /dev/ttyUSB*
+ else
+  ifeq "$(UNAME)" "Linux"
+   ifeq "$(MODEL)" "uno"
+    PORT ?= /dev/ttyACM*
+   else
+    PORT ?= /dev/ttyUSB*
+   endif
   endif
  endif
 endif
@@ -99,43 +113,63 @@ else
  ifeq "$(RESET_MODE)" "perl"
   RESET_DEVICE = perl -MDevice::SerialPort -e 'Device::SerialPort->new("/dev/ttyUSB0")->pulse_dtr_on(1000)'
  else
-  ifeq "$(UNAME)" "Linux"
-   RESET_DEVICE = stty -F $(PORT) hupcl
+  ifeq "$(UNAME)" "Windows"
+   RESET_DEVICE = echo "CAN'T RESET DEVICE ON WINDOWS !"
   else
-   # BSD uses small f
-   RESET_DEVICE = stty -f $(PORT) hupcl
+   ifeq "$(UNAME)" "Linux"
+    RESET_DEVICE = stty -F $(PORT) hupcl
+   else
+    # BSD uses small f
+    RESET_DEVICE = stty -f $(PORT) hupcl
+   endif
   endif
  endif
 endif
 
 #
+# set up attiny boards.txt path
+#
+ifeq "$(wildcard $(ATTINY_DIR))" ""
+ ATTINY_BOARDS=
+else
+ ATTINY_BOARDS=$(ATTINY_DIR)/boards.txt
+endif
+
+#
 # Set up values according to what the IDE uses:
 #
-DOWNLOAD_RATE = $(shell grep "^$(MODEL)\." $(ARDUINO_DIR)/hardware/arduino/boards.txt | grep upload.speed | sed 's/.*=//')
-MCU = $(shell grep "^$(MODEL)\." $(ARDUINO_DIR)/hardware/arduino/boards.txt | grep build.mcu | sed 's/.*=//')
-F_CPU = $(shell grep "^$(MODEL)\." $(ARDUINO_DIR)/hardware/arduino/boards.txt | grep build.f_cpu | sed 's/.*=//')
+DOWNLOAD_RATE = $(shell grep "^$(MODEL)\." $(ARDUINO_DIR)/hardware/arduino/boards.txt $(ATTINY_BOARDS) | grep upload.speed | sed 's/.*=//')
+MCU = $(shell grep "^$(MODEL)\." $(ARDUINO_DIR)/hardware/arduino/boards.txt $(ATTINY_BOARDS) | grep build.mcu | sed 's/.*=//')
+F_CPU = $(shell grep "^$(MODEL)\." $(ARDUINO_DIR)/hardware/arduino/boards.txt $(ATTINY_BOARDS) | grep build.f_cpu | sed 's/.*=//')
 
 # man avrdude says to use arduino, but the IDE mostly uses stk500.
 # One rumor says that the difference is that arduino does an auto-reset,
 # stk500 doesn't.
 # Might want to grep for upload.protocol as with previous 3 values.
-AVRDUDE_PROGRAMMER = arduino
+ifneq ($(findstring "tiny",$(MODEL)),)
+ AVRDUDE_PROGRAMMER =  $(shell grep "^$(MODEL)\." $(ARDUINO_DIR)/hardware/arduino/boards.txt $(ATTINY_BOARDS) | grep upload.using | sed 's/.*://')
+else
+ AVRDUDE_PROGRAMMER = $(shell grep "^$(MODEL)\." $(ARDUINO_DIR)/hardware/arduino/boards.txt $(ATTINY_BOARDS) | grep upload.protocol | sed 's/.*=//')
+endif
 
 # This has only been tested on standard variants. I'm guessing
 # at what mega and micro might need; other possibilities are
 # leonardo and "eightanaloginputs".
 ifeq "$(MODEL)" "mega"
-ARDUINO_VARIANT=$(ARDUINO_DIR)/hardware/arduino/variants/mega
+ ARDUINO_VARIANT=$(ARDUINO_DIR)/hardware/arduino/variants/mega
 else
-ifeq "$(MODEL)" "micro"
-ARDUINO_VARIANT=$(ARDUINO_DIR)/hardware/arduino/variants/micro
-else
-ARDUINO_VARIANT=$(ARDUINO_DIR)/hardware/arduino/variants/standard
-endif
+ ifeq "$(MODEL)" "micro"
+  ARDUINO_VARIANT=$(ARDUINO_DIR)/hardware/arduino/variants/micro
+ else
+   ifneq ($(findstring "tiny",$(MODEL)),)
+    ARDUINO_VARIANT=$(ATTINY_DIR)/cores/attiny45_85
+   else
+    ARDUINO_VARIANT=$(ARDUINO_DIR)/hardware/arduino/variants/standard
+   endif
+ endif
 endif
 
-CWD = $(shell pwd)
-CWDBASE = $(shell basename `pwd`)
+CWDBASE = $(shell basename $(PWD))
 TARFILE = $(TARGET)-$(VERSION).tar.gz
 
 ARDUINO_CORE = $(ARDUINO_DIR)/hardware/arduino/cores/arduino
@@ -235,8 +269,7 @@ test:
 
 build: elf hex 
 
-#applet_files: $(TARGET).pde
-
+ifneq "$(wildcard $(TARGET).pde)" ""
 applet/$(TARGET).cpp: $(TARGET).pde
 	# Here is the "preprocessing".
 	# It creates a .cpp file based with the same name as the .pde file.
@@ -252,6 +285,29 @@ applet/$(TARGET).cpp: $(TARGET).pde
 	cat $(TARGET).pde >> applet/$(TARGET).cpp
 	echo 'extern "C" void __cxa_pure_virtual() { while (1) ; }' >> applet/$(TARGET).cpp
 	cat $(ARDUINO_CORE)/main.cpp >> applet/$(TARGET).cpp
+else
+ ifneq "$(wildcard $(TARGET).ino)" ""
+applet/$(TARGET).cpp: $(TARGET).ino
+	# Here is the "preprocessing".
+	# It creates a .cpp file based with the same name as the .ino file.
+	# On top of the new .cpp file comes the WProgram.h header.
+	# At the end there is a generic main() function attached,
+	# plus special magic to get around the pure virtual error
+	# undefined reference to `__cxa_pure_virtual' from Print.o.
+	# Then the .cpp file will be compiled. Errors during compile will
+	# refer to this new, automatically generated, file. 
+	# Not the original .ino file you actually edit...
+	test -d applet || mkdir applet
+	echo '#include "Arduino.h"' > applet/$(TARGET).cpp
+	cat $(TARGET).ino >> applet/$(TARGET).cpp
+	echo 'extern "C" void __cxa_pure_virtual() { while (1) ; }' >> applet/$(TARGET).cpp
+	cat $(ARDUINO_CORE)/main.cpp >> applet/$(TARGET).cpp
+else
+applet/$(TARGET).cpp:
+	@echo "FAILURE: Missing .pde or .ino file in current directory !"
+	@exit 2
+endif
+endif
 
 elf: applet/$(TARGET).elf
 hex: applet/$(TARGET).hex
@@ -334,13 +390,17 @@ applet/core.a: $(OBJ)
 
 # Target: clean project.
 clean:
-	$(REMOVE) applet/$(TARGET).hex applet/$(TARGET).eep applet/$(TARGET).cof applet/$(TARGET).elf \
+	$(REMOVE) applet/$(TARGET).eep applet/$(TARGET).cof applet/$(TARGET).elf \
 	applet/$(TARGET).map applet/$(TARGET).sym applet/$(TARGET).lss applet/core.a \
 	$(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d)
 
 flush:
 	$(REMOVE) -rf applet/ \
 	$(REMOVE) $(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d)
+
+list:
+	# LIST OF ALL THE BOARDS AVAILABLE AS TARGETS FOR $$MODEL ENV VARIABLE
+	@cat $(ARDUINO_DIR)/hardware/arduino/boards.txt $(ATTINY_BOARDS) | grep '.name' | sed 's/\(.*\)\.name=\(.*\)/MODEL=\1			-> \2/'
 
 tar: $(TARFILE)
 
