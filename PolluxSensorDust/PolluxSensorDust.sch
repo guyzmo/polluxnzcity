@@ -1371,8 +1371,8 @@ Source: http://ecommas.tycoelectronics.com .. ENG_CD_640456_W.pdf</description>
 <part name="GND1" library="SparkFun" deviceset="GND" device=""/>
 <part name="SK1" library="jt-con-micromatch" deviceset="MMATCH-8-*" device="PTH"/>
 <part name="U$2" library="avr-7" deviceset="TINY25/45/85" device="-20PU"/>
-<part name="C1" library="SparkFun" deviceset="CAP_POL" device="PTH4"/>
-<part name="R1" library="SparkFun" deviceset="RESISTOR" device="AXIAL-0.3"/>
+<part name="C1" library="SparkFun" deviceset="CAP_POL" device="PTH4" value="220 uF"/>
+<part name="R1" library="SparkFun" deviceset="RESISTOR" device="AXIAL-0.3" value="150"/>
 <part name="DUST" library="con-amp" deviceset="MTA06-100" device=""/>
 <part name="U$3" library="SparkFun" deviceset="5V" device=""/>
 <part name="U$4" library="SparkFun" deviceset="5V" device=""/>
@@ -1386,37 +1386,27 @@ Source: http://ecommas.tycoelectronics.com .. ENG_CD_640456_W.pdf</description>
 <text x="71.12" y="33.02" size="1.778" layer="91">DUST_LED</text>
 <text x="60.96" y="60.96" size="1.778" layer="91">DUST_LED</text>
 <text x="60.96" y="66.04" size="1.778" layer="91">DUST_READ</text>
+<text x="71.12" y="27.94" size="1.778" layer="91">SCL</text>
+<text x="71.12" y="22.86" size="1.778" layer="91">SDA</text>
+<text x="96.52" y="27.94" size="1.778" layer="91">SDA</text>
 </plain>
 <instances>
 <instance part="U$1" gate="G$1" x="53.34" y="73.66"/>
-<instance part="GND1" gate="1" x="88.9" y="17.78"/>
-<instance part="SK1" gate="G$1" x="81.28" y="22.86"/>
+<instance part="GND1" gate="1" x="99.06" y="20.32"/>
+<instance part="SK1" gate="G$1" x="91.44" y="25.4"/>
 <instance part="U$2" gate="G$1" x="53.34" y="27.94"/>
 <instance part="C1" gate="G$1" x="68.58" y="50.8" rot="R180"/>
 <instance part="R1" gate="G$1" x="53.34" y="55.88" rot="R90"/>
 <instance part="DUST" gate="G$1" x="78.74" y="60.96" rot="MR90"/>
 <instance part="U$3" gate="G$1" x="33.02" y="27.94"/>
-<instance part="U$4" gate="G$1" x="88.9" y="27.94"/>
+<instance part="U$4" gate="G$1" x="83.82" y="38.1"/>
 <instance part="GND2" gate="1" x="33.02" y="17.78"/>
 <instance part="GND3" gate="1" x="58.42" y="50.8"/>
 </instances>
 <busses>
 </busses>
 <nets>
-<net name="N$2" class="0">
-<segment>
-<pinref part="SK1" gate="G$1" pin="1"/>
-<pinref part="U$2" gate="G$1" pin="(AREF)PB0"/>
-<wire x1="76.2" y1="22.86" x2="71.12" y2="22.86" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="5V" class="0">
-<segment>
-<pinref part="SK1" gate="G$1" pin="4"/>
-<wire x1="86.36" y1="25.4" x2="88.9" y2="25.4" width="0.1524" layer="91"/>
-<pinref part="U$4" gate="G$1" pin="5V"/>
-<wire x1="88.9" y1="25.4" x2="88.9" y2="27.94" width="0.1524" layer="91"/>
-</segment>
 <segment>
 <pinref part="U$2" gate="G$1" pin="VCC"/>
 <wire x1="35.56" y1="25.4" x2="33.02" y2="25.4" width="0.1524" layer="91"/>
@@ -1431,6 +1421,12 @@ Source: http://ecommas.tycoelectronics.com .. ENG_CD_640456_W.pdf</description>
 <wire x1="53.34" y1="68.58" x2="76.2" y2="68.58" width="0.1524" layer="91"/>
 <pinref part="DUST" gate="G$1" pin="6"/>
 <junction x="53.34" y="68.58"/>
+</segment>
+<segment>
+<pinref part="SK1" gate="G$1" pin="1"/>
+<wire x1="86.36" y1="25.4" x2="83.82" y2="25.4" width="0.1524" layer="91"/>
+<wire x1="83.82" y1="25.4" x2="83.82" y2="38.1" width="0.1524" layer="91"/>
+<pinref part="U$4" gate="G$1" pin="5V"/>
 </segment>
 </net>
 <net name="DUST_LED" class="0">
@@ -1451,12 +1447,6 @@ Source: http://ecommas.tycoelectronics.com .. ENG_CD_640456_W.pdf</description>
 <wire x1="33.02" y1="22.86" x2="33.02" y2="20.32" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="SK1" gate="G$1" pin="2"/>
-<wire x1="86.36" y1="22.86" x2="88.9" y2="22.86" width="0.1524" layer="91"/>
-<pinref part="GND1" gate="1" pin="GND"/>
-<wire x1="88.9" y1="22.86" x2="88.9" y2="20.32" width="0.1524" layer="91"/>
-</segment>
-<segment>
 <pinref part="GND3" gate="1" pin="GND"/>
 <wire x1="58.42" y1="53.34" x2="58.42" y2="58.42" width="0.1524" layer="91"/>
 <pinref part="DUST" gate="G$1" pin="2"/>
@@ -1470,14 +1460,11 @@ Source: http://ecommas.tycoelectronics.com .. ENG_CD_640456_W.pdf</description>
 <junction x="58.42" y="58.42"/>
 <junction x="68.58" y="58.42"/>
 </segment>
-</net>
-<net name="N$1" class="0">
 <segment>
-<pinref part="U$2" gate="G$1" pin="(ADC1)PB2"/>
-<wire x1="71.12" y1="27.94" x2="73.66" y2="27.94" width="0.1524" layer="91"/>
-<wire x1="73.66" y1="27.94" x2="73.66" y2="25.4" width="0.1524" layer="91"/>
-<pinref part="SK1" gate="G$1" pin="3"/>
-<wire x1="73.66" y1="25.4" x2="76.2" y2="25.4" width="0.1524" layer="91"/>
+<pinref part="SK1" gate="G$1" pin="2"/>
+<pinref part="GND1" gate="1" pin="GND"/>
+<wire x1="96.52" y1="25.4" x2="99.06" y2="25.4" width="0.1524" layer="91"/>
+<wire x1="99.06" y1="25.4" x2="99.06" y2="22.86" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="DUST_READ" class="0">
@@ -1502,6 +1489,23 @@ Source: http://ecommas.tycoelectronics.com .. ENG_CD_640456_W.pdf</description>
 <wire x1="68.58" y1="45.72" x2="53.34" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="68.58" y1="48.26" x2="68.58" y2="45.72" width="0.1524" layer="91"/>
 <junction x="68.58" y="45.72"/>
+</segment>
+</net>
+<net name="N$1" class="0">
+<segment>
+<pinref part="U$2" gate="G$1" pin="(ADC1)PB2"/>
+<pinref part="SK1" gate="G$1" pin="3"/>
+<wire x1="71.12" y1="27.94" x2="86.36" y2="27.94" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="SDA" class="0">
+<segment>
+<pinref part="U$2" gate="G$1" pin="(AREF)PB0"/>
+<wire x1="71.12" y1="22.86" x2="76.2" y2="22.86" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="SK1" gate="G$1" pin="4"/>
+<wire x1="96.52" y1="27.94" x2="101.6" y2="27.94" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>

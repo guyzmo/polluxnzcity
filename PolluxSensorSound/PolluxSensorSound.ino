@@ -1,7 +1,7 @@
 /*
                +-\/-+
      (RESET)  1|    |8  VCC (2.7-5.5V)
-  Sound Read  2|    |7  I2C   SCK -> Uno A5
+  Sound Read  2|    |7  I2C   SCL -> Uno A5
        DEBUG  3|    |6  (PB1) NA
          GND  4|    |5  I2C   SDA -> Uno A4
                +----+ 
