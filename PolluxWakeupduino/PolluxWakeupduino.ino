@@ -1,8 +1,9 @@
-#define API_ESCAPED_MODE 1
+#undef API_ESCAPED_MODE 
+#undef VERBOSE
 
 #include "../PolluxGateway/XbeeCommunicatorLight.h"
 
-XbeeCommunicator xbeecom(0,1);
+XbeeCommunicator xbeecom(1,0);
 
 uint8_t panid[2] = { 0x4, 0x2 };
 uint8_t venid[8] = {0x0, 0x0, 0x1, 0x3, 0xA, 0x2, 0x0, 0x0};
