@@ -3,7 +3,7 @@
 // http://www.circuitsathome.com/mcu/playing-xbee-part-4-api
 // http://www.chasingtrons.com/main/2010/11/13/xbee-propeller-chip.html
 
-#include <SoftwareSerial.h>
+// --------------------------------------------------------------- Constants
 
 #define SPEED 9600
 
@@ -40,10 +40,10 @@
 #endif
 
 #ifdef VERBOSE
-#   define debug_print(STR) Serial.print(STR);
-#   define debug_println(STR) Serial.println(STR);
-#   define debug_print_hex(STR) Serial.print(STR,HEX);
-#   define debug_println_hex(STR) Serial.println(STR,HEX);
+#   define debug_print(STR) printf("DEBUG: %s\n", STR);
+#   define debug_println(STR) printf("DEBUG: %s\n", STR);
+#   define debug_print_hex(STR) printf("DEBUG: %x\n", STR);
+#   define debug_println_hex(STR) printf("DEBUG: %x\n", STR);
 #else
 #   define debug_print(STR) 
 #   define debug_println(STR) 
@@ -51,6 +51,7 @@
 #   define debug_println_hex(STR) 
 #endif
 
+// --------------------------------------------------------------- Xbee Union Types
 
 const uint8_t COORDINATOR_ADDR[8] = {0,0,0,0,0,0,0,0};
 const uint8_t BROADCAST_ADDR[8] = {0,0,0,0,0,0,0xff,0xff};
@@ -95,7 +96,86 @@ typedef struct xbee_frame {
     uint16_t checksum;
 } XBeeFrame;
 
-class XbeeCommunicator : public SoftwareSerial {
+// --------------------------------------------------------------- Serial
+
+#include <fcntl.h>      // read
+#include <stdio.h>      // printf
+#include <unistd.h>     //open
+#include <string.h>     // memset
+#include <errno.h>
+#include <stdlib.h>
+#include <sys/epoll.h>
+
+#define EPOLL_MAX_CONN 2
+#define EPOLL_RUN_TIMEOUT -1
+
+class Serial {
+    public:
+
+        Serial (char* port) {
+            int epfd = epoll_create(EPOLL_MAX_CONN);
+            int fd = open("/dev/ttyO2", O_RDWR | O_NONBLOCK);
+
+            if( fd > 0 ) {
+                const int BUFF_SIZE = 50;
+                char buff[BUFF_SIZE];
+                memset(buff, 0, BUFF_SIZE);
+
+                struct epoll_event ev;
+                struct epoll_event events;
+                ev.events = EPOLLIN | EPOLLPRI | EPOLLERR | EPOLLHUP;
+                ev.data.fd = fd;
+
+                int res = epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev);
+                if( res < 0 )
+                    printf("Error epoll_ctl: %i\n", errno);
+            }
+        }
+
+        int poll() {
+            int n = epoll_wait(epfd, &events, EPOLL_MAX_CONN, EPOLL_RUN_TIMEOUT);
+
+            printf("Epoll unblocked\n");
+            if(n < 0)
+                perror("Epoll failed\n");
+            else if(n==0)
+                printf("TIMEOUT\n");
+            else
+            {
+                int size = read(fd, buff, BUFF_SIZE-1);
+                if( size < 0 )
+                    printf("Error Reading the device: %s\n", strerror(errno));
+                    return -1;
+                else if( size > 0 ) {
+                    printf("Input found!\n");
+                    buff[size] = '\0';
+                    printf("%x\n", buff);
+                    return 1;
+                } else {
+                    printf("No input\n");
+                    return 0;
+                }
+
+                if( errno == EAGAIN ) {
+                    printf("ERRNO: EAGAIN\n");
+                    return -2;
+                }
+                return -3;
+            }
+        }
+
+        virtual int read() {
+            
+        };
+
+        virtual int write(int val) {
+
+        }
+};
+
+// --------------------------------------------------------------- XBEE Lib
+
+class XbeeCommunicator : public Serial {
     bool _reset;
 
     /* sends transmit request to addr, network              */
