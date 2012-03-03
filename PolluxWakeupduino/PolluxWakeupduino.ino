@@ -27,20 +27,17 @@ This example is for Series 2 XBee
 // create the XBee object
 XBee xbee = XBee();
 
-uint8_t payload[] = { 0, 0 };
 
 // SH + SL Address of receiving XBee
-XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x403e0f30);
-ZBTxRequest zbTx = ZBTxRequest(addr64, payload, sizeof(payload));
+XBeeAddress64 addr64 = XBeeAddress64(0x0, 0x0);
 ZBTxStatusResponse txStatus = ZBTxStatusResponse();
 
 int pin5 = 0;
 
-int statusLed = 13;
-int errorLed = 13;
+int statusLed = 12;
+int errorLed = 11;
 
 void flashLed(int pin, int times, int wait) {
-
   for (int i = 0; i < times; i++) {
     digitalWrite(pin, HIGH);
     delay(wait);
@@ -61,8 +58,8 @@ void setup() {
 
 void loop() {   
   // break down 10-bit reading into two bytes and place in payload
-  payload[0] = 0x2;
-  payload[1] = 0xA;
+  char payload[] = "test0r burn0r ! \\_o< coin coin !";
+  ZBTxRequest zbTx = ZBTxRequest(addr64, (uint8_t*)payload, sizeof(payload));
 
   xbee.send(zbTx);
 
@@ -81,18 +78,19 @@ void loop() {
       // get the delivery status, the fifth byte
       if (txStatus.getDeliveryStatus() == SUCCESS) {
         // success.  time to celebrate
-        flashLed(statusLed, 5, 50);
+        flashLed(statusLed, 10, 10);
       } else {
         // the remote XBee did not receive our packet. is it powered on?
-        flashLed(errorLed, 3, 500);
+        flashLed(errorLed, 4, 100);
       }
     }
   } else if (xbee.getResponse().isError()) {
     //nss.print("Error reading packet.  Error code: ");  
     //nss.println(xbee.getResponse().getErrorCode());
+    flashLed(errorLed, 1, 100);
   } else {
     // local XBee did not provide a timely TX Status Response -- should not happen
-    flashLed(errorLed, 2, 50);
+    flashLed(errorLed, 2, 100);
   }
 
   delay(1000);
