@@ -22,7 +22,7 @@ class XbeePollux : public XbeeCommunicator {
                     printf("Do something with : '%s'\n", frame->content.rx.payload);
                     break;
                 default:
-                    printf("Incoming frame.\n");
+                    printf("Incoming frame that's not useful.\n");
                     break;
             }
         }
