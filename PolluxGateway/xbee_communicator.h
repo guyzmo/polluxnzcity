@@ -3,9 +3,31 @@
 // http://www.circuitsathome.com/mcu/playing-xbee-part-4-api
 // http://www.chasingtrons.com/main/2010/11/13/xbee-propeller-chip.html
 
-// --------------------------------------------------------------- Constants
+#include <unistd.h> // msleep
 
-#define SPEED 9600
+#include "beagle_serial.h"
+
+#ifdef VERBOSE
+#   define debug_print(STR) printf("%s", STR);
+#   define debug_printc(STR) printf("%02X", STR);
+#   define debug_println(STR) printf("%s\n", STR);
+#   define debug_print_hex(STR) printf("%02X", STR);
+#   define debug_println_hex(STR) printf("%02X\n", STR);
+#else
+#   define debug_print(STR) 
+#   define debug_printc(STR) 
+#   define debug_println(STR) 
+#   define debug_print_hex(STR) 
+#   define debug_println_hex(STR) 
+#endif
+
+#define msleep(X) usleep(X*1000)
+#define DEC 0
+#define HEX 1
+inline int min(int a, int b) { return (a < b) ? a : b; }
+
+
+// --------------------------------------------------------------- Constants
 
 /* API frame fields */
 #define FRM_DLM	0x7e		//frame delimiter
@@ -36,19 +58,7 @@
 #define ERR_INVALID_CHECKSUM  -8
 
 #ifndef TIMING
-#define TIMING 10
-#endif
-
-#ifdef VERBOSE
-#   define debug_print(STR) printf("DEBUG: %s\n", STR);
-#   define debug_println(STR) printf("DEBUG: %s\n", STR);
-#   define debug_print_hex(STR) printf("DEBUG: %x\n", STR);
-#   define debug_println_hex(STR) printf("DEBUG: %x\n", STR);
-#else
-#   define debug_print(STR) 
-#   define debug_println(STR) 
-#   define debug_print_hex(STR) 
-#   define debug_println_hex(STR) 
+#   define TIMING 10
 #endif
 
 // --------------------------------------------------------------- Xbee Union Types
@@ -96,87 +106,9 @@ typedef struct xbee_frame {
     uint16_t checksum;
 } XBeeFrame;
 
-// --------------------------------------------------------------- Serial
-
-#include <fcntl.h>      // read
-#include <stdio.h>      // printf
-#include <unistd.h>     //open
-#include <string.h>     // memset
-#include <errno.h>
-#include <stdlib.h>
-#include <sys/epoll.h>
-
-#define EPOLL_MAX_CONN 2
-#define EPOLL_RUN_TIMEOUT -1
-
-class Serial {
-    public:
-
-        Serial (char* port) {
-            int epfd = epoll_create(EPOLL_MAX_CONN);
-            int fd = open("/dev/ttyO2", O_RDWR | O_NONBLOCK);
-
-            if( fd > 0 ) {
-                const int BUFF_SIZE = 50;
-                char buff[BUFF_SIZE];
-                memset(buff, 0, BUFF_SIZE);
-
-                struct epoll_event ev;
-                struct epoll_event events;
-                ev.events = EPOLLIN | EPOLLPRI | EPOLLERR | EPOLLHUP;
-                ev.data.fd = fd;
-
-                int res = epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev);
-                if( res < 0 )
-                    printf("Error epoll_ctl: %i\n", errno);
-            }
-        }
-
-        int poll() {
-            int n = epoll_wait(epfd, &events, EPOLL_MAX_CONN, EPOLL_RUN_TIMEOUT);
-
-            printf("Epoll unblocked\n");
-            if(n < 0)
-                perror("Epoll failed\n");
-            else if(n==0)
-                printf("TIMEOUT\n");
-            else
-            {
-                int size = read(fd, buff, BUFF_SIZE-1);
-                if( size < 0 )
-                    printf("Error Reading the device: %s\n", strerror(errno));
-                    return -1;
-                else if( size > 0 ) {
-                    printf("Input found!\n");
-                    buff[size] = '\0';
-                    printf("%x\n", buff);
-                    return 1;
-                } else {
-                    printf("No input\n");
-                    return 0;
-                }
-
-                if( errno == EAGAIN ) {
-                    printf("ERRNO: EAGAIN\n");
-                    return -2;
-                }
-                return -3;
-            }
-        }
-
-        virtual int read() {
-            
-        };
-
-        virtual int write(int val) {
-
-        }
-};
-
 // --------------------------------------------------------------- XBEE Lib
 
 class XbeeCommunicator : public Serial {
-    bool _reset;
 
     /* sends transmit request to addr, network              */
     /* 256 bytes max.payload; Xbee max.payload is 100 bytes */
@@ -185,15 +117,15 @@ class XbeeCommunicator : public Serial {
         uint8_t len;
 
         char* byte_ptr = NULL;
-        
-        SoftwareSerial::write(FRM_DLM);                                // 1. SEND FRAME DELIMITER
+
         debug_print("Sending frame: '");
         debug_print_hex(FRM_DLM);
+        Serial::write(FRM_DLM);                                // 1. SEND FRAME DELIMITER
         // data's length + frm type (1) + frm id (1) + addr (8) + network (4) + bradius (1) + options (1)
         len = nbytes + 16;                 
         this->write((uint8_t)(len>>8));                                // 2. SEND LENGTH
         this->write((uint8_t)(len&0xFF));
-        
+
         this->write(API_XMIT_REQ);              checksum = API_XMIT_REQ;       // 3. SEND FRAME API Identifier (transmission request)
         this->write(frameid);               checksum += frameid;       // 4. SEND FRAME Unique ID
         for (int8_t i=7;i>=0;--i) {
@@ -218,27 +150,28 @@ class XbeeCommunicator : public Serial {
     }
 
     void send_atcmd(int frameid, const char* at_command, const char* param_value) {
+        printf("send_at_cmd(%s)\n", at_command);
         uint16_t len = 0;
         int checksum;
 
-        SoftwareSerial::write(FRM_DLM);                                 // 1. SEND FRAME DELIMITER
         debug_print("Sending frame: '");
         debug_print_hex(FRM_DLM);
+        Serial::write(FRM_DLM);                                         // 1. SEND FRAME DELIMITER
 
         // 1B for frm id + 1B for api id + size of the command (usually 2B) + size of the param (usually 0B)
         len = strlen(at_command) + strlen(param_value)+2;
         this->write((uint8_t)(len>>8));                                 // 2. SEND FRAME LENGTH
         this->write((uint8_t)(len&0xFF));
         
-        this->write(API_AT_CMD);            checksum = API_AT_CMD;       // 3. SEND FRAME API Identifier (transmission request)
+        this->write(API_AT_CMD);            checksum = API_AT_CMD;      // 3. SEND FRAME API Identifier (transmission request)
         this->write(frameid);               checksum += frameid;        // 4. SEND FRAME Unique ID
         
         for (uint8_t i=0;i<strlen(at_command);++i) {
-            this->write(at_command[i]);     checksum += at_command[i];  // 5. SEND AT COMMAND
+            this->Serial::write(at_command[i]);     checksum += at_command[i];  // 5. SEND AT COMMAND
         }
 
         for (uint8_t i=0;i<strlen(param_value);++i) {
-            this->write(param_value[i]);    checksum += param_value[i]; // 6. SEND PARAMETERS
+            this->Serial::write(param_value[i]);    checksum += param_value[i]; // 6. SEND PARAMETERS
         }
 
         checksum = 0xff - (checksum);                                   // 10. SEND CHECKSUM
@@ -248,6 +181,7 @@ class XbeeCommunicator : public Serial {
 
     int rcpt_frame(XBeeFrame* frame) {
         uint8_t b;
+        frame->checksum = 0;
         //1. GET FRAME DELIMITER
         debug_print("[FRM_DLM]");
         if (this->read(true) != FRM_DLM)
@@ -262,7 +196,7 @@ class XbeeCommunicator : public Serial {
         debug_print("[FRM_ID]");
         frame->api_id = this->read();
         switch (frame->api_id) {
-/*            case AT_CMD_RESP:               
+            case AT_CMD_RESP:               
                 frame->api_id = AT_CMD_RESP;                          frame->checksum += AT_CMD_RESP;
                 frame->content.at.frame_id = this->read();            frame->checksum += frame->content.at.frame_id;
                 frame->content.at.command[0] = this->read();          frame->checksum += frame->content.at.command[0];
@@ -283,7 +217,6 @@ class XbeeCommunicator : public Serial {
                 frame->content.tx.discovery_status = this->read();    frame->checksum += frame->content.tx.discovery_status;
                 break;
 
-*/
             case RX_PACKET:
                 frame->api_id = RX_PACKET;                            frame->checksum += RX_PACKET;
                 frame->content.rx.network_addr.i8.msb = this->read(); frame->checksum += frame->content.rx.network_addr.i8.msb;
@@ -358,14 +291,14 @@ class XbeeCommunicator : public Serial {
                 break;
 
             default:
-                for (uint8_t i = 0; i < min(frame->length.i16,100); ++i)
-                    frame->content.unknown[i] = this->read();
+                for (uint8_t i = 0; i < min(frame->length.i16,100); ++i) {
+                    frame->content.unknown[i] = this->read(); }
                 return ERR_UNKWNOWN_FRM_ID;
         }
 
         debug_print("[CHECKSUM(");
-        debug_print(0xFF-(frame->checksum&0xFF));
-        debug_print("]");
+        debug_printc(0xFF-(frame->checksum&0xFF));
+        debug_print(")]");
         //4. validate checksum
         if (0xFF-(frame->checksum&0xFF) != (uint16_t)this->read())
             return ERR_INVALID_CHECKSUM;
@@ -373,111 +306,114 @@ class XbeeCommunicator : public Serial {
         return 1;
     }
 
-
     void print_data(uint8_t* data, uint16_t len, int type) {
-        for (uint16_t i=0;i<min(len,100);++i)
-            Serial.print((uint8_t)data[i], type);
-        Serial.println();
+        if (type == HEX) {
+            for (uint16_t i=0;i<min(len,100);++i)
+                printf("%02X", (uint8_t)data[i]);
+        } else  {
+            for (uint16_t i=0;i<min(len,100);++i)
+                printf("%c", (uint8_t)data[i]);
+        }
+        printf("\n");
     }
-
+    
     void print_frame(XBeeFrame* frame) {
-        Serial.println("-- Frame --");
-        Serial.print("length: "); Serial.println(frame->length.i16, DEC);
-        Serial.print("api_id: "); Serial.print(frame->api_id, HEX);
+        printf("-- Frame --\n");
+        printf("length: "); printf("%d\n", frame->length.i16);
+        printf("api_id: "); printf("%02X", frame->api_id);
         switch (frame->api_id) {
             case NODE_INDICATOR:
-                Serial.println(" ; NODE IDENTIFICATION INDICATOR");
-                Serial.print("src_ad: "); print_data(frame->content.rx.source_addr,8,HEX);
-                Serial.print("net_ad: "); Serial.println(frame->content.rx.network_addr.i16,HEX);
-                Serial.print("recvopt: "); Serial.println(frame->content.rx.options,HEX);
-                Serial.print("nodname: "); Serial.println((char*)frame->content.rx.payload);
+                printf(" ; NODE IDENTIFICATION INDICATOR\n");
+                printf("src_ad: "); print_data(frame->content.rx.source_addr,8,HEX);
+                printf("net_ad: "); printf("%02X\n", frame->content.rx.network_addr.i16);
+                printf("recvopt: "); printf("%02X\n", frame->content.rx.options,HEX);
+                printf("nodname: "); printf("%s\n", (char*)frame->content.rx.payload);
                 break;
             case MODEM_STATUS:
-                Serial.println(" ; MODEM STATUS");
-                Serial.print("status: ");
+                printf(" ; MODEM STATUS\n");
+                printf("status: ");
                 switch (frame->content.ms.status) {
-                    case 0: Serial.println("Hardware reset"); break;
-                    case 1: Serial.println("Watchdog timer reset"); break;
-                    case 2: Serial.println("Associated" ); break;
-                    case 3: Serial.println("Disassociated");  break;
-                    case 4: Serial.println("Synchronization Lost (Beacon-enabled only)" ); break;
-                    case 5: Serial.println("Coordinator realignment" ); break;
-                    case 6: Serial.println("Coordinator started"); break;
+                    case 0: printf("Hardware reset\n"); break;
+                    case 1: printf("Watchdog timer reset\n"); break;
+                    case 2: printf("Associated\n"); break;
+                    case 3: printf("Disassociated\n");  break;
+                    case 4: printf("Synchronization Lost (Beacon-enabled only)\n"); break;
+                    case 5: printf("Coordinator realignment\n"); break;
+                    case 6: printf("Coordinator started\n"); break;
                 }
                 break;
-/*
             case AT_CMD_RESP:
-                Serial.println(" ; AT COMMAND RESPONSE");
-                Serial.print("frm_id: "); Serial.println(frame->content.at.frame_id,DEC);
-                Serial.print("at_cmd: "); Serial.println(frame->content.at.command);
-                Serial.print("status: "); Serial.println(frame->content.at.status, HEX);
-                Serial.print("values: "); Serial.println(frame->content.at.values);
+                printf(" ; AT COMMAND RESPONSE\n");
+                printf("frm_id: "); printf("%02X\n", frame->content.at.frame_id);
+                printf("at_cmd: "); printf("%s\n", frame->content.at.command);
+                printf("status: "); printf("%02X\n", frame->content.at.status);
+                printf("values: "); printf("%02X\n", frame->content.at.values);
                 break;
+
             case TX_STATUS:
-                Serial.println(" ; TX STATUS");
-                Serial.print("frm_id: "); Serial.println(frame->content.tx.frame_id,DEC);
-                Serial.print("net_ad: "); Serial.println(frame->content.tx.network_addr.i16,HEX);
-                Serial.print("retry : "); Serial.println(frame->content.tx.retries);
-                Serial.print("delivs: "); Serial.println(frame->content.tx.delivery_status,HEX);
-                Serial.print("discos: "); Serial.println(frame->content.tx.discovery_status,HEX);
+                printf(" ; TX STATUS\n");
+                printf("frm_id: "); printf("%s\n", frame->content.tx.frame_id);
+                printf("net_ad: "); printf("%02X\n", frame->content.tx.network_addr.i16);
+                printf("retry : "); printf("%s\n", frame->content.tx.retries);
+                printf("delivs: "); printf("%02X\n", frame->content.tx.delivery_status);
+                printf("discos: "); printf("%02X\n", frame->content.tx.discovery_status);
                 break;
-*/
+
             case RX_PACKET:
-                Serial.print(" ; RX PACKET");
-                Serial.print("src_ad: "); print_data(frame->content.rx.source_addr,8,HEX);
-                Serial.print("net_ad: "); Serial.println(frame->content.rx.network_addr.i16,HEX);
-                Serial.print("recvopt: "); Serial.println(frame->content.rx.options,HEX);
-                Serial.print("payload: "); print_data(frame->content.rx.payload,frame->length.i16,DEC);
+                printf(" ; RX PACKET\n");
+                printf("src_ad: "); print_data(frame->content.rx.source_addr,8,HEX);
+                printf("net_ad: "); printf("%02X\n", frame->content.rx.network_addr.i16);
+                printf("recvopt: "); printf("%02X\n", frame->content.rx.options);
+                printf("payload: "); print_data(frame->content.rx.payload,frame->length.i16,DEC);
                 break;
 
             default:
-                Serial.println(" /!\\ UNKNOWN PACKET TYPE /!\\");
-                Serial.print("content: "); print_data(frame->content.unknown,frame->length.i16, HEX);
+                printf(" /!\\ UNKNOWN PACKET TYPE /!\\\n");
+                printf("content: "); print_data(frame->content.unknown,frame->length.i16, HEX);
         }
-        Serial.println("-- End of Frame --");
+        printf("-- End of Frame --\n");
     }
         
     public:
-        XbeeCommunicator(int rx, int tx) : SoftwareSerial(rx,tx), _reset(false) {
-            pinMode(rx, INPUT);
-            pinMode(tx, OUTPUT);
-        }
+        XbeeCommunicator(char* port) : Serial(port) {}
 
-        void begin (const uint8_t* panid, const uint8_t* vendorid) {
-            SoftwareSerial::begin(SPEED);
-            this->listen();
+        int begin (const int* panid, const int* vendorid) {
+            printf("XbeeCommunicator.begin()\n");
+            int ret = Serial::begin(B9600);
+            if (ret <= 0)
+                return ret;
 
-            delay(1000);
-            this->send_atcmd(1,"FR","");
-            delay(1000);
-            this->send_atcmd(1,"NB","");
-            delay(1000);
             // discovery
-            this->send_atcmd(1, "NR", "0");
+            this->send_atcmd(3, "ND", "");
+            //msleep(1000);
+            this->send_atcmd(4, "MY", "");
                     
+            return ret;
         }
 
-        int read(boolean no_esc=false) {
-            int c = SoftwareSerial::read();
-            delay(TIMING);
-            if (c < 0x10)
-                debug_print_hex(0);
-
-            debug_print_hex(c);
-            debug_print(' ');
+        int read(bool no_esc=false) {
+            try {
+                int c = Serial::read();
+                msleep(TIMING);
+                debug_print_hex(c);
+                debug_print(" ");
             /*
 #ifdef API_ESCAPED_MODE
-            if (no_esc == false && c == 0x7D)
-                return SoftwareSerial::read()^0x20;
+                if (no_esc == false && c == 0x7D)
+                    return Serial::read()^0x20;
 #endif
             */
-            return c;
+                return c;
+            } catch (SerialException e) {
+                e.print_msg();
+            }
         }
 
-        size_t write(uint8_t i) {
-            delay(TIMING);
+        ssize_t write(uint8_t i) {
+            //printf("XbeeCommunicator.write(%02X)\n", i);
+            msleep(TIMING);
             size_t s=0;
-            debug_print(' ');
+            debug_print(" ");
             switch (i) {
                 /*
 #ifdef API_ESCAPED_MODE
@@ -485,20 +421,14 @@ class XbeeCommunicator : public Serial {
                 case 0x7D:
                 case 0x11:
                 case 0x13:
-                    s+=SoftwareSerial::write(0x7D);
-                    s+=SoftwareSerial::write(0x20^i);
+                    s+=Serial::write(0x7D);
+                    s+=Serial::write(0x20^i);
                     return s;
 #endif
                 */
                 default:
-                    if (i < 0x10) {
-                        debug_print_hex((uint8_t)0x0);
-                        debug_print_hex(i);
-                        s+=SoftwareSerial::write((uint8_t)0x0);
-                    }
-                    else 
-                        debug_print_hex(i);
-                    return s+SoftwareSerial::write((uint8_t)i);
+                    debug_print_hex(i);
+                    return s+Serial::write((uint8_t)i);
             }
         }
 
@@ -513,24 +443,42 @@ class XbeeCommunicator : public Serial {
                            /* options       */ (uint8_t)0);
         }
 
-        char* recv() {
-            int err;
-            PROGMEM XBeeFrame frame;
+        void recv() {
+            int err=0;
+            char c=0;
+            XBeeFrame frame;
 
             for (int i=0;i<111;++i)
                 frame.content.unknown[i] = 0x0;
+
             debug_print("Recv frame: '");
             err = this->rcpt_frame(&frame);
             debug_println("'");
-            if (err < 0) {
-                Serial.print("---- ERROR CODE: ");
-                Serial.println(err);
-                while (this->available())
-                    Serial.print(this->read(),HEX);
-                Serial.println("----");
-            } else
-                this->print_frame(&frame);
-
-            return (char*)"";
+            switch (err) {
+                case ERR_WRONG_FRM_DLM:
+                    printf("---- ERROR CODE: %d ; INVALID FRAME DELIMITER ----\n", err);
+                    break;
+                case ERR_INVALID_CHECKSUM:
+                    printf("---- ERROR CODE: %d ; INVALID CHECKSUM ----\n", err);
+                    break;
+                case ERR_UNKWNOWN_FRM_ID:
+                case ERR_NOT_IMPLEMENTED:
+                    printf("---- ERROR CODE: %d\n", err);
+                    try {
+                        while ((c = this->read()) != (char)-1)
+                            printf("%02X",c);
+                        printf("\n----\n");
+                    } catch (SerialException e) {
+                        printf("\n");
+                        e.print_msg();
+                    }
+                    break;
+                default:
+                    run(&frame);
+            }
         }
+
+        virtual void run (XBeeFrame* frame) {
+            this->print_frame(frame);
+        };
 };
