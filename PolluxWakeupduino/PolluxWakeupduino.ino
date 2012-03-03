@@ -54,12 +54,13 @@ void setup() {
   pinMode(errorLed, OUTPUT);
 
   xbee.begin(9600);
+
+  flashLed(statusLed, 1, 100);
+  flashLed(errorLed, 1, 100);
 }
 
-void loop() {   
-  // break down 10-bit reading into two bytes and place in payload
-  char payload[] = "test0r burn0r ! \\_o< coin coin !";
-  ZBTxRequest zbTx = ZBTxRequest(addr64, (uint8_t*)payload, sizeof(payload));
+int send_data(char* payload) {
+  ZBTxRequest zbTx = ZBTxRequest(addr64, (uint8_t*)payload, strlen(payload));
 
   xbee.send(zbTx);
 
@@ -81,7 +82,7 @@ void loop() {
         flashLed(statusLed, 10, 10);
       } else {
         // the remote XBee did not receive our packet. is it powered on?
-        flashLed(errorLed, 4, 100);
+        flashLed(errorLed, 2, 100);
       }
     }
   } else if (xbee.getResponse().isError()) {
@@ -92,7 +93,11 @@ void loop() {
     // local XBee did not provide a timely TX Status Response -- should not happen
     flashLed(errorLed, 2, 100);
   }
+}
 
+void loop() {   
+  char* data = "test0r burn0r ! \\_o< coin coin !";
+  send_data(data);
   delay(1000);
 }
 
