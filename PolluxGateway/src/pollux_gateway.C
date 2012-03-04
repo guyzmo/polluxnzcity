@@ -32,7 +32,7 @@ const int venid[8] = {0x0, 0x0, 0x1, 0x3, 0xA, 0x2, 0x0, 0x0};
 
 void sigint_handler(int c) {
     Beagle::Leds::disable_leds();
-    //Beagle::UART::disable_uart2();
+    Beagle::UART::disable_uart2();
     printf("Exiting...\n");
     exit(0);
 }
@@ -49,7 +49,7 @@ class XbeePollux : public XbeeCommunicator {
     }
     public:
         XbeePollux(char* port) : XbeeCommunicator(port) { 
-            //Beagle::UART::enable_uart2();
+            Beagle::UART::enable_uart2();
             Beagle::Leds::enable_leds();
             Beagle::Leds::set_status_led();
             this->setup_signal();
