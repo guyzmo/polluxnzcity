@@ -2,8 +2,8 @@
 //#define VERBOSE 
 //#define API_ESCAPED_MODE // if API MODE is 2, useful for use with software flow control
 
-#include "beaglebone.h"
-#include "xbee_communicator.h"
+#include <beaglebone.h>
+#include <xbee_communicator.h>
 
 const int panid[2] = {0x2,0xA};
 const int venid[8] = {0x0, 0x0, 0x1, 0x3, 0xA, 0x2, 0x0, 0x0};

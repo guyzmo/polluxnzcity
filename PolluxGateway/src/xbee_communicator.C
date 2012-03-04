@@ -3,7 +3,7 @@
 // http://www.circuitsathome.com/mcu/playing-xbee-part-4-api
 // http://www.chasingtrons.com/main/2010/11/13/xbee-propeller-chip.html
 
-#include "xbee_communicator.h"
+#include <xbee_communicator.h>
 
 
 void XbeeCommunicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbytes, uint8_t* data, uint8_t frameid, uint8_t bradius, uint8_t options) {
