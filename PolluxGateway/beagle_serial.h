@@ -2,6 +2,9 @@
  * http://stackoverflow.com/questions/27247/could-you-recommend-some-guides-about-epoll-on-linux
  */
 
+#ifndef __BEAGLE_SERIAL_H__
+#define __BEAGLE_SERIAL_H__
+
 #include <fcntl.h>      // read
 #include <stdio.h>      // printf
 #include <unistd.h>     //open
@@ -133,3 +136,4 @@ class Serial {
         }
 };
 
+#endif // __BEAGLE_SERIAL_H__

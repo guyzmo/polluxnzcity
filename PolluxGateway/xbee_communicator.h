@@ -3,9 +3,14 @@
 // http://www.circuitsathome.com/mcu/playing-xbee-part-4-api
 // http://www.chasingtrons.com/main/2010/11/13/xbee-propeller-chip.html
 
+#ifndef __XBEE_COMM_H__
+#define __XBEE_COMM_H__
+
 #include <unistd.h> // msleep
 
 #include "beagle_serial.h"
+
+// --------------------------------------------------------------- Tools
 
 #ifdef VERBOSE
 #   define debug_print(STR) printf("%s", STR);
@@ -26,29 +31,28 @@
 #define HEX 1
 inline int min(int a, int b) { return (a < b) ? a : b; }
 
-
 // --------------------------------------------------------------- Constants
 
 /* API frame fields */
 #define FRM_DLM	0x7e		//frame delimiter
 
 /* frame types	*/
-#define API_AT_CMD   0x08    //send at command
-#define API_RM_CMD   0x17    //remote command request
-#define API_XMIT_REQ 0x10    //transmit request	
-#define API_ADDR_REQ 0x11    //explicit addressing transmit request	
+#define API_AT_CMD     0x08    //send at command
+#define API_RM_CMD     0x17    //remote command request
+#define API_XMIT_REQ   0x10    //transmit request	
+#define API_ADDR_REQ   0x11    //explicit addressing transmit request	
 
-#define AT_CMD_RESP    0x88  //AT Command Response
-#define RM_CMD_RESP    0x97  //Remote Command Response
-#define MODEM_STATUS   0x8A  //Modem Status
-#define TX_STATUS      0x8B  //ZigBee Transmit Status
-#define RX_PACKET      0x90  //ZigBee Receive Packet (AO=0)
-#define RX_PACKET_IND  0x91  //ZigBee Explicit Rx Indicator (AO=1)
-#define IO_SMPL_IND_RX 0x92  //ZigBee IO Data Sample Rx Indicator
-#define SENSOR_RD_IND  0x94  //XBee Sensor Read Indicator (AO=0)
-#define NODE_INDICATOR 0x95  //Node Identification Indicator (AO=0)
+#define AT_CMD_RESP    0x88    //AT Command Response
+#define RM_CMD_RESP    0x97    //Remote Command Response
+#define MODEM_STATUS   0x8A    //Modem Status
+#define TX_STATUS      0x8B    //ZigBee Transmit Status
+#define RX_PACKET      0x90    //ZigBee Receive Packet (AO=0)
+#define RX_PACKET_IND  0x91    //ZigBee Explicit Rx Indicator (AO=1)
+#define IO_SMPL_IND_RX 0x92    //ZigBee IO Data Sample Rx Indicator
+#define SENSOR_RD_IND  0x94    //XBee Sensor Read Indicator (AO=0)
+#define NODE_INDICATOR 0x95    //Node Identification Indicator (AO=0)
 
-#define RX_PACKET_LEN 12    // 12 bytes of frame specific data between header and checksum
+#define RX_PACKET_LEN  12      // 12 bytes of frame specific data between header and checksum
 
 /* errors */
 
@@ -397,12 +401,10 @@ class XbeeCommunicator : public Serial {
                 msleep(TIMING);
                 debug_print_hex(c);
                 debug_print(" ");
-            /*
 #ifdef API_ESCAPED_MODE
                 if (no_esc == false && c == 0x7D)
                     return Serial::read()^0x20;
 #endif
-            */
                 return c;
             } catch (SerialException e) {
                 e.print_msg();
@@ -410,12 +412,10 @@ class XbeeCommunicator : public Serial {
         }
 
         ssize_t write(uint8_t i) {
-            //printf("XbeeCommunicator.write(%02X)\n", i);
             msleep(TIMING);
             size_t s=0;
             debug_print(" ");
             switch (i) {
-                /*
 #ifdef API_ESCAPED_MODE
                 case 0x7E:
                 case 0x7D:
@@ -425,7 +425,6 @@ class XbeeCommunicator : public Serial {
                     s+=Serial::write(0x20^i);
                     return s;
 #endif
-                */
                 default:
                     debug_print_hex(i);
                     return s+Serial::write((uint8_t)i);
@@ -482,3 +481,5 @@ class XbeeCommunicator : public Serial {
             this->print_frame(frame);
         };
 };
+
+#endif // __XBEE_COMM_H__
