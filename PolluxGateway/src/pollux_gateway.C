@@ -9,7 +9,8 @@ const int panid[2] = {0x2,0xA};
 const int venid[8] = {0x0, 0x0, 0x1, 0x3, 0xA, 0x2, 0x0, 0x0};
 
 void sigint_handler(int c) {
-    BeagleLeds::disable_leds();
+    Beagle::Leds::disable_leds();
+    Beagle::UART::disable_uart2();
     printf("Exiting...\n");
     exit(0);
 }
@@ -26,29 +27,30 @@ class XbeePollux : public XbeeCommunicator {
     }
     public:
         XbeePollux(char* port) : XbeeCommunicator(port) { 
-            BeagleLeds::enable_leds();
-            BeagleLeds::set_status_led();
+            Beagle::UART::enable_uart2();
+            Beagle::Leds::enable_leds();
+            Beagle::Leds::set_status_led();
             this->setup_signal();
         }
         ~XbeePollux() {
-            BeagleLeds::disable_leds();
+            Beagle::Leds::disable_leds();
         }
 
         void run (XBeeFrame* frame) {
             switch (frame->api_id) {
                 case RX_PACKET:
                     // XbeeCommunicator::run(frame); // print frame details
-                    BeagleLeds::set_rgb_led(BeagleLeds::BLUE);
+                    Beagle::Leds::set_rgb_led(Beagle::Leds::BLUE);
                     printf("Do something with : '%s'\n", frame->content.rx.payload);
                     msleep(500);
-                    BeagleLeds::reset_rgb_led(BeagleLeds::BLUE);
+                    Beagle::Leds::reset_rgb_led(Beagle::Leds::BLUE);
                     break;
                 default:
-                    BeagleLeds::set_rgb_led(BeagleLeds::RED);
+                    Beagle::Leds::set_rgb_led(Beagle::Leds::RED);
                     msleep(500);
-                    BeagleLeds::reset_rgb_led(BeagleLeds::BLUE);
+                    Beagle::Leds::reset_rgb_led(Beagle::Leds::BLUE);
                     printf("Incoming frame that's not useful.\n");
-                    BeagleLeds::reset_rgb_led(BeagleLeds::RED);
+                    Beagle::Leds::reset_rgb_led(Beagle::Leds::RED);
                     break;
             }
         }

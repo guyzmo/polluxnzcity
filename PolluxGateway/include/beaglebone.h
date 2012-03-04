@@ -1,10 +1,28 @@
+#ifndef __BEAGLEBONE_H__
+#define __BEAGLEBONE_H__
+
 #include <fcntl.h>      // read
 #include <unistd.h>     // open
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-struct BeagleLeds {
+namespace Beagle {
+
+struct UART {
+    static void enable_uart2() {
+        int fd;
+        fd = open("/sys/kernel/debug/omap_mux/spi0_d0",O_WRONLY);write(fd, "1", 1);close(fd);
+        fd = open("/sys/kernel/debug/omap_mux/spi0_sclk",O_WRONLY);write(fd, "21", 1);close(fd);
+    }
+    static void disable_uart2() {
+        int fd;
+        fd = open("/sys/kernel/debug/omap_mux/spi0_d0",O_WRONLY);write(fd, "0", 1);close(fd);
+        fd = open("/sys/kernel/debug/omap_mux/spi0_sclk",O_WRONLY);write(fd, "20", 1);close(fd);
+    }
+};
+
+struct Leds {
         static const int RED = 0;
         static const int GREEN = 1;
         static const int BLUE = 2;
@@ -89,3 +107,6 @@ struct BeagleLeds {
 
 };
 
+} // namespace Beagle
+
+#endif // __BEAGLEBONE_H__

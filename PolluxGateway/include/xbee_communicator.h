@@ -6,30 +6,8 @@
 #ifndef __XBEE_COMM_H__
 #define __XBEE_COMM_H__
 
-#include <unistd.h> // msleep
-
-#include "beagle_serial.h"
-
-// --------------------------------------------------------------- Tools
-
-#ifdef VERBOSE
-#   define debug_print(STR) printf("%s", STR);
-#   define debug_printc(STR) printf("%02X", STR);
-#   define debug_println(STR) printf("%s\n", STR);
-#   define debug_print_hex(STR) printf("%02X", STR);
-#   define debug_println_hex(STR) printf("%02X\n", STR);
-#else
-#   define debug_print(STR) 
-#   define debug_printc(STR) 
-#   define debug_println(STR) 
-#   define debug_print_hex(STR) 
-#   define debug_println_hex(STR) 
-#endif
-
-#define msleep(X) usleep(X*1000)
-#define DEC 0
-#define HEX 1
-inline int min(int a, int b) { return (a < b) ? a : b; }
+#include <pollux_toolbox.h>
+#include <beagle_serial.h>
 
 // --------------------------------------------------------------- Constants
 
@@ -61,10 +39,12 @@ inline int min(int a, int b) { return (a < b) ? a : b; }
 #define ERR_UNKWNOWN_FRM_ID   -4
 #define ERR_INVALID_CHECKSUM  -8
 
+/* Timing between each frame event */
 #ifndef TIMING
 #   define TIMING 10
 #endif
 
+/* default addresses */
 const uint8_t COORDINATOR_ADDR[8] = {0,0,0,0,0,0,0,0};
 const uint8_t BROADCAST_ADDR[8] = {0,0,0,0,0,0,0xff,0xff};
 const uint16_t BROADCAST_NET = 0xFFFE;
