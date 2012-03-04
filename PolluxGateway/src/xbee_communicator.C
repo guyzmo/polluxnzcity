@@ -44,7 +44,8 @@ void XbeeCommunicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbyte
 }
 
 void XbeeCommunicator::send_atcmd(int frameid, const char* at_command, const char* param_value) {
-    printf("send_at_cmd(%s)\n", at_command);
+    debug_print("send_at_cmd(");debug_print(at_command);debug_print(")\n");
+
     uint16_t len = 0;
     int checksum;
 
@@ -271,7 +272,7 @@ void XbeeCommunicator::print_frame(XBeeFrame* frame) {
 XbeeCommunicator::XbeeCommunicator(char* port) : Serial(port) {}
 
 int XbeeCommunicator::begin (const int* panid, const int* vendorid) {
-    printf("XbeeCommunicator.begin()\n");
+    debug_print("XbeeCommunicator.begin()\n");
     int ret = Serial::begin(B9600);
     if (ret <= 0)
         return ret;

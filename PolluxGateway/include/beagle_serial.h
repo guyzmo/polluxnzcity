@@ -14,6 +14,8 @@
 #include <termios.h>
 #include <sys/epoll.h>
 
+#include <pollux_toolbox.h>
+
 #define EPOLL_MAX_CONN 2
 #define EPOLL_RUN_TIMEOUT -1
 #define BUFF_SIZE 50

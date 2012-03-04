@@ -19,7 +19,7 @@ int SerialException::get_code() {
 Serial::Serial(const char* port) : port(port) {}
 
 int Serial::begin(int speed) {
-    printf("Serial.begin(%d)\n", speed);
+    debug_print("Serial.begin()\n");
     int res;
     struct epoll_event ev;
     struct termios my_termios;
