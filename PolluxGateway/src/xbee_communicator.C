@@ -1,10 +1,30 @@
-// Xbee Light Communicator Library
-// Resources :
-// http://www.circuitsathome.com/mcu/playing-xbee-part-4-api
-// http://www.chasingtrons.com/main/2010/11/13/xbee-propeller-chip.html
+/*
+ * Pollux'NZ City source code
+ *
+ * (c) 2012 CKAB / hackable:Devices
+ * (c) 2012 Bernard Pratz <guyzmo{at}hackable-devices{dot}org>
+ * (c) 2012 Lucas Fernandez <kasey{at}hackable-devices{dot}org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * resources that helped:
+ * http://www.circuitsathome.com/mcu/playing-xbee-part-4-api
+ * http://www.chasingtrons.com/main/2010/11/13/xbee-propeller-chip.html
+ *
+ * Xbee Light Communicator Library
+ */
 
 #include <xbee_communicator.h>
-
 
 void XbeeCommunicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbytes, uint8_t* data, uint8_t frameid, uint8_t bradius, uint8_t options) {
     int checksum;
@@ -302,8 +322,9 @@ int XbeeCommunicator::read(bool no_esc) {
 }
 
 ssize_t XbeeCommunicator::write(uint8_t i) {
-    msleep(TIMING);
     size_t s=0;
+
+    msleep(TIMING);
     debug_print(" ");
     switch (i) {
 #ifdef API_ESCAPED_MODE
