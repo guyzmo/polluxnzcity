@@ -2,7 +2,7 @@
  * http://stackoverflow.com/questions/27247/could-you-recommend-some-guides-about-epoll-on-linux
  */
 
-#include "beagle_serial.h"
+#include <beagle_serial.h>
 
 // Serial Exception class
 
