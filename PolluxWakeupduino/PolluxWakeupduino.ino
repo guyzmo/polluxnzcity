@@ -6,18 +6,18 @@
  * 
  * Copyright (c) 2009 Andrew Rapp. For the XBee example origins.
  *
- * XBee-Arduino is free software: you can redistribute it and/or modify
+ * Pollux'NZ City is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * XBee-Arduino is distributed in the hope that it will be useful,
+ * Pollux'NZ City is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with XBee-Arduino.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this project. If not, see <http://www.gnu.org/licenses/>.
  */
 
 //#define VERBOSE
@@ -246,15 +246,15 @@ class Pollux {
                 xbprintf("%s: %d", command, res.v.i);
                 break;
             case I2C_FLT:
-                xbprintf("%s: %f", command, (double)res.v.f);
+                xbprintf("%s: %5.2f", command, (double)res.v.f);
                 break;
             case I2C_DBL:
-                xbprintf("%s: %f", command, (double)res.v.d);
+                xbprintf("%s: %5.2f", command, (double)res.v.d);
                 break;
             case I2C_STR:
                 xbprintf("%s: %s", command, (char*)res.v.buffer);
             default:
-                xbprintf("no type");
+                break;
         }
     }
 
