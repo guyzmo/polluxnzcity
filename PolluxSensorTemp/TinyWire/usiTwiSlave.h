@@ -41,6 +41,7 @@ Change Activity:
 
 ********************************************************************************/
 
+#include <inttypes.h>
 void    usiTwiSlaveInit( 
 	uint8_t,  	
 	uint8_t	(*onI2CReadFromRegister)(uint8_t reg),
