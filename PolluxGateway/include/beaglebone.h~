@@ -57,19 +57,19 @@ struct Leds {
             fd = open("/sys/kernel/debug/omap_mux/lcd_data6",O_WRONLY);write(fd, "7", 1);close(fd);
 
             if ((fd = open("/sys/class/gpio/gpio70/direction",O_RDONLY)) == -1) {
-                fd = open("/sys/class/gpio/export",O_WRONLY);write(fd, "70", 2);
+                fd = open("/sys/class/gpio/export",O_WRONLY);write(fd, "70", 1);
             }
             close(fd);
             if ((fd = open("/sys/class/gpio/gpio72/direction",O_RDONLY)) == -1) {
-                fd = open("/sys/class/gpio/export",O_WRONLY);write(fd, "72", 2);
+                fd = open("/sys/class/gpio/export",O_WRONLY);write(fd, "72", 1);
             }
             close(fd);
             if ((fd = open("/sys/class/gpio/gpio74/direction",O_RDONLY)) == -1) {
-                fd = open("/sys/class/gpio/export",O_WRONLY);write(fd, "74", 2);
+                fd = open("/sys/class/gpio/export",O_WRONLY);write(fd, "74", 1);
             }
             close(fd);
             if ((fd = open("/sys/class/gpio/gpio76/direction",O_RDONLY)) == -1) {
-                fd = open("/sys/class/gpio/export",O_WRONLY);write(fd, "76", 2);
+                fd = open("/sys/class/gpio/export",O_WRONLY);write(fd, "76", 1);
             }
             close(fd);
             
@@ -77,7 +77,6 @@ struct Leds {
             fd = open("/sys/class/gpio/gpio72/direction",O_WRONLY);write(fd, "out", 4);close(fd);
             fd = open("/sys/class/gpio/gpio74/direction",O_WRONLY);write(fd, "out", 4);close(fd);
             fd = open("/sys/class/gpio/gpio76/direction",O_WRONLY);write(fd, "out", 4);close(fd);
-            printf("leds enabled\n");
         }
         static void disable_leds () {
             int fd;
@@ -86,30 +85,30 @@ struct Leds {
             reset_rgb_led(BLUE);
             reset_rgb_led(GREEN);
             printf("leds turned off\n");
-            fd = open("/sys/class/gpio/unexport",O_WRONLY);write(fd, "70", 2);close(fd);
-            fd = open("/sys/class/gpio/unexport",O_WRONLY);write(fd, "72", 2);close(fd);
-            fd = open("/sys/class/gpio/unexport",O_WRONLY);write(fd, "74", 2);close(fd);
-            fd = open("/sys/class/gpio/unexport",O_WRONLY);write(fd, "76", 2);close(fd);
-            printf("leds disabled\n");
+            fd = open("/sys/class/gpio/unexport",O_WRONLY);write(fd, "70", 1);close(fd);
+            fd = open("/sys/class/gpio/unexport",O_WRONLY);write(fd, "72", 1);close(fd);
+            fd = open("/sys/class/gpio/unexport",O_WRONLY);write(fd, "74", 1);close(fd);
+            fd = open("/sys/class/gpio/unexport",O_WRONLY);write(fd, "76", 1);close(fd);
+            printf("disabled the leds\n");
         }
 
         static void set_status_led() {
-            int fd = open("/sys/class/gpio/gpio70/value",O_WRONLY);write(fd, "1", 1);close(fd);
+            int fd = open("/sys/class/gpio/gpio70/value",O_WRONLY);write(fd, "1", 2);close(fd);
         }
         static void reset_status_led() {
-            int fd = open("/sys/class/gpio/gpio70/value",O_WRONLY);write(fd, "0", 1);close(fd);
+            int fd = open("/sys/class/gpio/gpio70/value",O_WRONLY);write(fd, "0", 2);close(fd);
         }
         static void set_rgb_led(int color) {
             int fd;
             switch (color) {
                 case RED:
-                    fd = open("/sys/class/gpio/gpio72/value",O_WRONLY);write(fd, "1", 1);close(fd);
+                    fd = open("/sys/class/gpio/gpio72/value",O_WRONLY);write(fd, "1", 2);close(fd);
                     break;
                 case BLUE:
-                    fd = open("/sys/class/gpio/gpio74/value",O_WRONLY);write(fd, "1", 1);close(fd);
+                    fd = open("/sys/class/gpio/gpio74/value",O_WRONLY);write(fd, "1", 2);close(fd);
                     break;
                 case GREEN:
-                    fd = open("/sys/class/gpio/gpio76/value",O_WRONLY);write(fd, "1", 1);close(fd);
+                    fd = open("/sys/class/gpio/gpio76/value",O_WRONLY);write(fd, "1", 2);close(fd);
                     break;
             }
         }
@@ -117,13 +116,13 @@ struct Leds {
             int fd;
             switch (color) {
                 case RED:
-                    fd = open("/sys/class/gpio/gpio72/value",O_WRONLY);write(fd, "0", 1);close(fd);
+                    fd = open("/sys/class/gpio/gpio72/value",O_WRONLY);write(fd, "0", 2);close(fd);
                     break;
                 case BLUE:
-                    fd = open("/sys/class/gpio/gpio74/value",O_WRONLY);write(fd, "0", 1);close(fd);
+                    fd = open("/sys/class/gpio/gpio74/value",O_WRONLY);write(fd, "0", 2);close(fd);
                     break;
                 case GREEN:
-                    fd = open("/sys/class/gpio/gpio76/value",O_WRONLY);write(fd, "0", 1);close(fd);
+                    fd = open("/sys/class/gpio/gpio76/value",O_WRONLY);write(fd, "0", 2);close(fd);
                     break;
             }
         }
