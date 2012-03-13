@@ -45,18 +45,17 @@
 VERSION = 0.1
 
 # Standard Arduino libraries it will import, e.g. LiquidCrystal:
-ARDLIBS = Wire Wire/utility EEPROM
+ARDLIBS = 
 
 # User-specified (in ~/sketchbook/libraries/) libraries :
-USERLIBS = XBee
+USERLIBS = 
 
 # Libs in local directory
-# uncomment value if you have libs in directories inside project's directory
-LOCALLIBS = # $(patsubst applet/,,$(wildcard */))
+LOCALLIBS = $(patsubst applet/,,$(wildcard */))
 
 # Arduino model:
 # You can set this to be a string, such as uno, atmega328, diecimila and mega,
-MODEL ?= atmega328
+MODEL ?= attiny85at1
 
 ############################################################################
 # Platform's settings
@@ -77,7 +76,6 @@ ARDUINO_DIR = /Applications/Arduino10.app/Contents/Resources/Java
 HOME_LIB = $(HOME)/Documents/Arduino/libraries
 # path to ATTiny files look at http://code.google.com/p/arduino-tiny/
 ATTINY_DIR=$(ARDUINO_DIR)/hardware/tiny
-TERM = ~/bin/miniterm.py
 
 ############################################################################
 # Below here nothing should need to be changed. Cross your fingers!
@@ -412,9 +410,6 @@ clean:
 flush:
 	$(REMOVE) -rf applet/ \
 	$(REMOVE) $(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d)
-
-monitor:
-	$(TERM) $(PORT)
 
 list:
 	# LIST OF ALL THE BOARDS AVAILABLE AS TARGETS FOR $$MODEL ENV VARIABLE

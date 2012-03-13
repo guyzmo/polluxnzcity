@@ -24,6 +24,7 @@
 //#define VERBOSE 
 //#define API_ESCAPED_MODE // if API MODE is 2, useful for use with software flow control
 
+#include <citypulse.h>
 #include <beaglebone.h>
 #include <xbee_communicator.h>
 
@@ -80,6 +81,8 @@ class XbeePollux : public XbeeCommunicator {
                                                                                 frame->content.rx.source_addr[6],
                                                                                 frame->content.rx.source_addr[7],
                                                                                 frame->content.rx.payload);
+                    /* XXX 1. constructs the JSON with data from payload */
+                    /* XXX 2. call post_to_citypulse(json_str); */
                     msleep(500);
                     Beagle::Leds::reset_rgb_led(Beagle::Leds::BLUE);
                     break;

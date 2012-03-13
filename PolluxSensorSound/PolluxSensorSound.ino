@@ -92,8 +92,8 @@ void loop() {
     for(i=0;i<50;i++) {                  // make 50 temperature sample
       sound.add(analogRead(SOUND_READ)); // read and store temperature sensor output
       delayMicroseconds(DELAY_ADC);      // wait 10 us to stabilise ADC
-      digitalWrite(DEBUG,HIGH);
-      digitalWrite(DEBUG,LOW);
+      //digitalWrite(DEBUG,HIGH);
+      //digitalWrite(DEBUG,LOW);
     }
 
     TinyWireS.send(convert_to_dB(sound.average()));
