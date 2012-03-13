@@ -39,6 +39,10 @@
 #include <XBee.h>
 #include <Wire.h>
 
+#define LED_STA 11 // GREEN
+#define LED_ERR 10 // RED
+#define LED_XFR 9  // BLUE
+
 /*
 This example is for Series 2 XBee
  Sends a ZB TX request with the value of analogRead(pin5) and checks the status response for success
@@ -51,9 +55,6 @@ XBee xbee = XBee();
 // SH + SL Address of receiving XBee
 XBeeAddress64 addr64 = XBeeAddress64(0x0, 0x0);
 ZBTxStatusResponse txStatus = ZBTxStatusResponse();
-
-const int statusLed = 12;
-const int errorLed = 13;
 
 void flashLed(int pin, int times, int wait) {
   for (int i = 0; i < times; i++) {
@@ -78,7 +79,7 @@ void send_data(char* payload) {
   xbee.send(zbTx);
 
   // flash TX indicator
-  flashLed(statusLed, 1, 100);
+  flashLed(LED_XFR, 1, 100);
 
   // after sending a tx request, we expect a status response
   // wait up to half second for the status response
@@ -92,19 +93,19 @@ void send_data(char* payload) {
       // get the delivery status, the fifth byte
       if (txStatus.getDeliveryStatus() == SUCCESS) {
         // success.  time to celebrate
-        flashLed(statusLed, 10, 10);
+        flashLed(LED_XFR, 10, 10);
       } else {
         // the remote XBee did not receive our packet. is it powered on?
-        flashLed(errorLed, 2, 100);
+        flashLed(LED_ERR, 2, 100);
       }
     }
   } else if (xbee.getResponse().isError()) {
     //nss.print("Error reading packet.  Error code: ");  
     //nss.println(xbee.getResponse().getErrorCode());
-    flashLed(errorLed, 1, 100);
+    flashLed(LED_ERR, 1, 100);
   } else {
     // local XBee did not provide a timely TX Status Response -- should not happen
-    flashLed(errorLed, 2, 100);
+    flashLed(LED_ERR, 2, 100);
   }
 }
 #endif
@@ -283,6 +284,7 @@ class Pollux {
         }
 
         void init_i2c_network() {
+            analogWrite(LED_STA, 8);
             for (int addr=0x20;addr<0x30;++addr) {
                 res.reset();
                 if (send_command(addr,I2C_CMD_INIT) == 0) {
@@ -293,6 +295,8 @@ class Pollux {
                     xbprintf("*** No device at address %02X", addr);
             }
             store_to_eeprom();
+            analogWrite(LED_STA, 0);
+            flashLed(LED_STA, 1, 100);
         }
         void do_measures() {
             int i=0, addr;
@@ -306,8 +310,9 @@ class Pollux {
 };
 
 void setup() {
-    pinMode(statusLed, OUTPUT);
-    pinMode(errorLed, OUTPUT);
+    pinMode(LED_STA, OUTPUT);
+    pinMode(LED_ERR, OUTPUT);
+    pinMode(LED_XFR, OUTPUT);
 
 #ifdef NO_ZIGBEE
     Serial.begin(9600);
@@ -316,8 +321,7 @@ void setup() {
 #endif
     Wire.begin();
 
-    flashLed(statusLed, 3, 100);
-    flashLed(errorLed, 3, 100);
+    flashLed(LED_STA, 3, 100);
 
     Pollux pollux;
 
