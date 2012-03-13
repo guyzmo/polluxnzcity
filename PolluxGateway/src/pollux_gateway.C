@@ -63,21 +63,30 @@ class XbeePollux : public XbeeCommunicator {
                 // XbeeCommunicator::run(frame); // print frame details
                 case AT_CMD_RESP:
                     Beagle::Leds::set_rgb_led(Beagle::Leds::GREEN);
-                    printf("AT command answered : '%s'\n", frame->content.at.command);
+                    printf("[AT] Command: '%s' ; Values: '%X'\n", frame->content.at.command, frame->content.at.values);
                     msleep(500);
                     Beagle::Leds::reset_rgb_led(Beagle::Leds::GREEN);
                     break;
                 case RX_PACKET:
                     Beagle::Leds::set_rgb_led(Beagle::Leds::BLUE);
-                    printf("Do something with : '%s'\n", frame->content.rx.payload);
+                    printf("[RX] Network Addr: '%02X' ; Source Addr: '%02X%02X%02X%02X:%02X%02X%02X%02X' ; Payload: '%s'\n", 
+                                                                                frame->content.rx.network_addr,
+                                                                                frame->content.rx.source_addr[0],
+                                                                                frame->content.rx.source_addr[1],
+                                                                                frame->content.rx.source_addr[2],
+                                                                                frame->content.rx.source_addr[3],
+                                                                                frame->content.rx.source_addr[4],
+                                                                                frame->content.rx.source_addr[5],
+                                                                                frame->content.rx.source_addr[6],
+                                                                                frame->content.rx.source_addr[7],
+                                                                                frame->content.rx.payload);
                     msleep(500);
                     Beagle::Leds::reset_rgb_led(Beagle::Leds::BLUE);
                     break;
                 default:
                     Beagle::Leds::set_rgb_led(Beagle::Leds::RED);
                     msleep(500);
-                    Beagle::Leds::reset_rgb_led(Beagle::Leds::BLUE);
-                    printf("Incoming frame that's not useful.\n");
+                    printf("Incoming frame (%02X) that's not useful.\n", frame->api_id);
                     Beagle::Leds::reset_rgb_led(Beagle::Leds::RED);
                     break;
             }
