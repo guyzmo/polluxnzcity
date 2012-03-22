@@ -115,12 +115,15 @@ typedef struct xbee_frame {
 
 class XbeeCommunicator : public Serial {
 
+    int frm_id;
+
     void xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbytes, uint8_t* data, uint8_t frameid, uint8_t bradius, uint8_t options);
-    void send_atcmd(int frameid, const char* at_command, const char* param_value);
+    void send_atcmd(const char* at_command, const char* param_value);
     int rcpt_frame(XBeeFrame* frame);
 
-    void print_data(uint8_t* data, uint16_t len, int type);
-    void print_frame(XBeeFrame* frame);
+    protected:
+        void print_data(uint8_t* data, uint16_t len, int type);
+        void print_frame(XBeeFrame* frame);
         
     public:
         XbeeCommunicator(char* port);
@@ -130,7 +133,8 @@ class XbeeCommunicator : public Serial {
         int read(bool no_esc=false);
         ssize_t write(uint8_t i);
 
-        void send(const char* data);
+        void send(char* payload);
+        void send(char* payload, uint8_t* node, uint16_t net);
         void recv();
 
         virtual void run (XBeeFrame* frame);

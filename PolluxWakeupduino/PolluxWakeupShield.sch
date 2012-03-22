@@ -3789,29 +3789,29 @@ Source: http://ecommas.tycoelectronics.com .. ENG_CD_640456_W.pdf</description>
 </net>
 <net name="N$2" class="0">
 <segment>
-<pinref part="U1" gate="G$1" pin="D7"/>
-<wire x1="185.42" y1="137.16" x2="203.2" y2="137.16" width="0.1524" layer="91"/>
-<wire x1="203.2" y1="137.16" x2="203.2" y2="139.7" width="0.1524" layer="91"/>
 <pinref part="LED3" gate="G$1" pin="1"/>
 <wire x1="203.2" y1="139.7" x2="213.36" y2="139.7" width="0.1524" layer="91"/>
+<pinref part="U1" gate="G$1" pin="*D9"/>
+<wire x1="185.42" y1="132.08" x2="203.2" y2="132.08" width="0.1524" layer="91"/>
+<wire x1="203.2" y1="132.08" x2="203.2" y2="139.7" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$3" class="0">
 <segment>
 <pinref part="LED2" gate="G$1" pin="1"/>
-<wire x1="213.36" y1="132.08" x2="203.2" y2="132.08" width="0.1524" layer="91"/>
-<wire x1="203.2" y1="132.08" x2="203.2" y2="134.62" width="0.1524" layer="91"/>
-<pinref part="U1" gate="G$1" pin="D8"/>
-<wire x1="203.2" y1="134.62" x2="185.42" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="213.36" y1="132.08" x2="205.74" y2="132.08" width="0.1524" layer="91"/>
+<pinref part="U1" gate="G$1" pin="*D10"/>
+<wire x1="185.42" y1="129.54" x2="205.74" y2="129.54" width="0.1524" layer="91"/>
+<wire x1="205.74" y1="129.54" x2="205.74" y2="132.08" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$4" class="0">
 <segment>
-<pinref part="U1" gate="G$1" pin="*D9"/>
-<wire x1="185.42" y1="132.08" x2="200.66" y2="132.08" width="0.1524" layer="91"/>
-<wire x1="200.66" y1="132.08" x2="200.66" y2="124.46" width="0.1524" layer="91"/>
 <pinref part="LED1" gate="G$1" pin="1"/>
-<wire x1="200.66" y1="124.46" x2="213.36" y2="124.46" width="0.1524" layer="91"/>
+<wire x1="193.04" y1="124.46" x2="213.36" y2="124.46" width="0.1524" layer="91"/>
+<pinref part="U1" gate="G$1" pin="*D11"/>
+<wire x1="185.42" y1="127" x2="193.04" y2="127" width="0.1524" layer="91"/>
+<wire x1="193.04" y1="127" x2="193.04" y2="124.46" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="WAKEUP" class="0">
