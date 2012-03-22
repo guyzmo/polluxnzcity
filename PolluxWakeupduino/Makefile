@@ -45,7 +45,7 @@
 VERSION = 0.1
 
 # Standard Arduino libraries it will import, e.g. LiquidCrystal:
-ARDLIBS = Wire Wire/utility EEPROM
+ARDLIBS = SoftwareSerial Wire Wire/utility EEPROM
 
 # User-specified (in ~/sketchbook/libraries/) libraries :
 USERLIBS = XBee
@@ -57,6 +57,8 @@ LOCALLIBS = # $(patsubst applet/,,$(wildcard */))
 # Arduino model:
 # You can set this to be a string, such as uno, atmega328, diecimila and mega,
 MODEL ?= uno
+
+USERDEF=#'VERBOSE' 'BUFFER_SIZE=64' #  'NO_ZIGBEE'
 
 ############################################################################
 # Platform's settings
@@ -211,6 +213,8 @@ DEBUG = stabs
 
 OPT = s
 
+DEFINE=$(patsubst %,-D%,$(USERDEF))
+
 # Place -D or -U options here
 CDEFS = -DF_CPU=$(F_CPU)
 
@@ -273,7 +277,7 @@ LST = $(ASRC:.S=.lst) $(CXXSRC:.cpp=.lst) $(SRC:.c=.lst)
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
 ALL_CFLAGS = -mmcu=$(MCU) -I. $(CFLAGS)
-ALL_CXXFLAGS = -mmcu=$(MCU) -I. $(CXXFLAGS)
+ALL_CXXFLAGS = -mmcu=$(MCU) -I. $(CXXFLAGS) $(DEFINE)
 ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 # Default target.
