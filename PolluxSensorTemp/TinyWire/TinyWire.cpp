@@ -78,10 +78,6 @@ void TinyWire::_on_receive_handler(uint8_t reg, uint8_t value) {
 uint8_t TinyWire::_on_request_handler(uint8_t reg) {
     switch (reg) {
         case I2C_CMD_INIT:
-
-            digitalWrite(PB4, HIGH);
-            delay(500);
-            digitalWrite(PB4, LOW);
             output_buffer.clear();
             store_desc();
             last = I2C_GET;
@@ -89,10 +85,6 @@ uint8_t TinyWire::_on_request_handler(uint8_t reg) {
             return 0;
         case I2C_CMD_MEAS:
             output_buffer.clear();
-
-            digitalWrite(PB4, HIGH);
-            delay(500);
-            digitalWrite(PB4, LOW);
             _request_callback();
             return 0;
 

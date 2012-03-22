@@ -56,7 +56,7 @@ LOCALLIBS = # $(patsubst applet/,,$(wildcard */))
 
 # Arduino model:
 # You can set this to be a string, such as uno, atmega328, diecimila and mega,
-MODEL ?= atmega328
+MODEL ?= uno
 
 ############################################################################
 # Platform's settings
@@ -415,6 +415,9 @@ flush:
 
 monitor:
 	$(TERM) $(PORT)
+
+reset:
+	$(RESET_DEVICE)
 
 list:
 	# LIST OF ALL THE BOARDS AVAILABLE AS TARGETS FOR $$MODEL ENV VARIABLE
