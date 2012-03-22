@@ -34,15 +34,15 @@ void XbeeCommunicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbyte
 
     debug_print("Sending frame: '");
     debug_print_hex(FRM_DLM);
-    Serial::write(FRM_DLM);                                // 1. SEND FRAME DELIMITER
+    Serial::write(FRM_DLM);                                        // 1. SEND FRAME DELIMITER
     // data's length + frm type (1) + frm id (1) + addr (8) + network (4) + bradius (1) + options (1)
-    len = nbytes + 16;                 
+    len = nbytes + 14;                 
     this->write((uint8_t)(len>>8));                                // 2. SEND LENGTH
     this->write((uint8_t)(len&0xFF));
 
-    this->write(API_XMIT_REQ);              checksum = API_XMIT_REQ;       // 3. SEND FRAME API Identifier (transmission request)
+    this->write(API_XMIT_REQ);          checksum = API_XMIT_REQ;   // 3. SEND FRAME API Identifier (transmission request)
     this->write(frameid);               checksum += frameid;       // 4. SEND FRAME Unique ID
-    for (int8_t i=7;i>=0;--i) {
+    for (int8_t i=0;i<8;++i) {
         this->write(*(addr64+i));       checksum += *(addr64+i);   // 5. SEND 64bit ADDRESS OF REMOTE MODULE
     }
     byte_ptr = (char*)&network;
@@ -63,7 +63,7 @@ void XbeeCommunicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbyte
     debug_println("'");
 }
 
-void XbeeCommunicator::send_atcmd(int frameid, const char* at_command, const char* param_value) {
+void XbeeCommunicator::send_atcmd(const char* at_command, const char* param_value) {
     debug_print("send_at_cmd(");debug_print(at_command);debug_print(")\n");
 
     uint16_t len = 0;
@@ -79,7 +79,9 @@ void XbeeCommunicator::send_atcmd(int frameid, const char* at_command, const cha
     this->write((uint8_t)(len&0xFF));
 
     this->write(API_AT_CMD);            checksum = API_AT_CMD;      // 3. SEND FRAME API Identifier (transmission request)
-    this->write(frameid);               checksum += frameid;        // 4. SEND FRAME Unique ID
+    this->write(frm_id);                checksum += frm_id;        // 4. SEND FRAME Unique ID
+
+    ++frm_id; // increment frame id for next frame
 
     for (uint8_t i=0;i<strlen(at_command);++i) {
         this->Serial::write(at_command[i]);     checksum += at_command[i];  // 5. SEND AT COMMAND
@@ -126,7 +128,7 @@ int XbeeCommunicator::rcpt_frame(XBeeFrame* frame) {
             frame->api_id = TX_STATUS;                            frame->checksum += TX_STATUS;
             frame->content.tx.frame_id = this->read();            frame->checksum += frame->content.tx.frame_id;
             frame->content.tx.network_addr.i8.msb = this->read(); frame->checksum += frame->content.tx.network_addr.i8.msb;
-            frame->content.tx.network_addr.i8.lsb = this->read(); frame->checksum += frame->content.tx.network_addr.i8.msb;
+            frame->content.tx.network_addr.i8.lsb = this->read(); frame->checksum += frame->content.tx.network_addr.i8.lsb;
             frame->content.tx.retries = this->read();             frame->checksum += frame->content.tx.retries;
             frame->content.tx.delivery_status = this->read();     frame->checksum += frame->content.tx.delivery_status;
             frame->content.tx.discovery_status = this->read();    frame->checksum += frame->content.tx.discovery_status;
@@ -261,24 +263,78 @@ void XbeeCommunicator::print_frame(XBeeFrame* frame) {
             printf(" ; AT COMMAND RESPONSE\n");
             printf("frm_id: "); printf("%02X\n", frame->content.at.frame_id);
             printf("at_cmd: "); printf("%s\n", frame->content.at.command);
-            printf("status: "); printf("%02X\n", frame->content.at.status);
+            printf("status: "); printf("%02X ", frame->content.at.status);
+            switch (frame->content.at.status) {
+                case 0: printf("OK\n"); break;
+                case 1: printf("Error\n"); break;
+                case 2: printf("Invalid command\n"); break;
+                case 3: printf("Invalid Parameter\n");  break;
+            }
             printf("values: "); printf("%02X\n", frame->content.at.values);
             break;
 
         case TX_STATUS:
             printf(" ; TX STATUS\n");
-            printf("frm_id: "); printf("%s\n", frame->content.tx.frame_id);
+            printf("frm_id: "); printf("%02X\n", frame->content.tx.frame_id);
             printf("net_ad: "); printf("%02X\n", frame->content.tx.network_addr.i16);
-            printf("retry : "); printf("%s\n", frame->content.tx.retries);
-            printf("delivs: "); printf("%02X\n", frame->content.tx.delivery_status);
-            printf("discos: "); printf("%02X\n", frame->content.tx.discovery_status);
+            printf("retry : "); printf("%d\n", frame->content.tx.retries);
+            printf("delivery: "); printf("%02X ", frame->content.tx.delivery_status);
+            switch (frame->content.tx.delivery_status) {
+                case 0x00:
+                    printf("Success\n");
+                    break;
+                case 0x02:
+                    printf("CCA Failure\n");
+                    break;
+                case 0x15:
+                    printf("Invalid destination endpoint\n");
+                    break;
+                case 0x21:
+                    printf("Network ACK Failure\n");
+                    break;
+                case 0x22:
+                    printf("Not Joined to Network\n");
+                    break;
+                case 0x23:
+                    printf("Self-addressed\n");
+                    break;
+                case 0x24:
+                    printf("Address Not Found\n");
+                    break;
+                case 0x25:
+                    printf("Route Not Found\n");
+                    break;
+            }
+            printf("discos: "); printf("%02X ", frame->content.tx.discovery_status);
+            switch(frame->content.tx.discovery_status) {
+                case 0x00:
+                    printf("No Discovery Overhead\n");
+                    break;
+                case 0x01:
+                    printf("Address Discovery \n");
+                    break;
+                case 0x02:
+                    printf("Route Discovery\n");
+                    break;
+                case 0x03:
+                    printf("Address and Route Discovery\n");
+                    break;
+            }
             break;
 
         case RX_PACKET:
             printf(" ; RX PACKET\n");
             printf("src_ad: "); print_data(frame->content.rx.source_addr,8,HEX);
             printf("net_ad: "); printf("%02X\n", frame->content.rx.network_addr.i16);
-            printf("recvopt: "); printf("%02X\n", frame->content.rx.options);
+            printf("recvopt: "); printf("%02X ", frame->content.rx.options);
+            switch (frame->content.rx.options) {
+                case 0x01:
+                    printf("Packet Acknowledged\n");
+                    break;
+                case 0x02:
+                    printf("Broadcast Packet\n");
+                    break;
+            }
             printf("payload: "); print_data(frame->content.rx.payload,frame->length.i16,DEC);
             break;
 
@@ -297,10 +353,12 @@ int XbeeCommunicator::begin (const int* panid, const int* vendorid) {
     if (ret <= 0)
         return ret;
 
+    frm_id = 1;
+
     // discovery
-    this->send_atcmd(3, "ND", "");
+    this->send_atcmd("ND", "");
     //msleep(1000);
-    this->send_atcmd(4, "MY", "");
+    this->send_atcmd("MY", "");
 
     return ret;
 }
@@ -342,15 +400,27 @@ ssize_t XbeeCommunicator::write(uint8_t i) {
     }
 }
 
-
-void XbeeCommunicator::send(const char* data) {
+void XbeeCommunicator::send(char* data) {
     this->xmit_req(/* hardware addr */ (uint8_t*)COORDINATOR_ADDR,
-            /* network bcast */ (uint16_t)BROADCAST_NET, 
-            /* data's length */ strlen(data), 
-            /* data          */ (uint8_t*)data, 
-            /* frame id      */ (uint8_t)1, 
-            /* bcast radius  */ (uint8_t)8, 
-            /* options       */ (uint8_t)0);
+                /* network bcast */ (uint16_t)BROADCAST_NET,
+                /* data's length */ strlen(data), 
+                /* data          */ (uint8_t*)data, 
+                /* frame id      */ (uint8_t)frm_id++, 
+                /* bcast radius  */ (uint8_t)8, 
+                /* options       */ (uint8_t)8);
+    if (frm_id = 0xFF)
+        frm_id = 1;
+}
+void XbeeCommunicator::send(char* data, uint8_t* addr=(uint8_t*)COORDINATOR_ADDR, uint16_t network=(uint16_t)BROADCAST_NET) {
+    this->xmit_req(/* hardware addr */ (uint8_t*)addr,
+                /* network bcast */ (uint16_t)network, 
+                /* data's length */ strlen(data), 
+                /* data          */ (uint8_t*)data, 
+                /* frame id      */ (uint8_t)frm_id++, 
+                /* bcast radius  */ (uint8_t)8, 
+                /* options       */ (uint8_t)0);
+    if (frm_id = 0xFF)
+        frm_id = 1;
 }
 
 void XbeeCommunicator::recv() {

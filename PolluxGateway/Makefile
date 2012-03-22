@@ -21,17 +21,13 @@ RM=/bin/rm -rf
 HEADERS=include/
 SRC=src/
 
-CFLAGS=-g -Wno-write-strings
+CFLAGS=-g3 -std=c++0x -Wno-write-strings -DVERBOSE
 
 %.o:
 	$(CXX) $(CFLAGS) -I$(HEADERS) -o $*.o -c $*.C
 
-
-
 pollux_gateway: $(SRC)/pollux_gateway.C src/beagle_serial.o src/xbee_communicator.o
 	$(CXX) $(CFLAGS) -I$(HEADERS) -o $@ $^
-
-all: pollux_gateway
 
 clean:
 	$(RM) src/*.o pollux_gateway
