@@ -32,9 +32,11 @@
 #endif
 
 #define CMD_INIT 1
+#define CMD_MEAS 8
+#define CMD_HALT 32
+
 #define I2C_LEN  2
 #define I2C_TYPE 4
-#define CMD_MEAS 8
 #define I2C_GET 16
 
 #define I2C_INT 1
