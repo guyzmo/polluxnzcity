@@ -77,6 +77,9 @@ HOME_LIB = $(HOME)/Documents/Arduino/libraries
 # path to ATTiny files look at http://code.google.com/p/arduino-tiny/
 ATTINY_DIR=$(ARDUINO_DIR)/hardware/tiny
 
+USERDEF=
+#'BUFFER_SIZE=64'
+
 ############################################################################
 # Below here nothing should need to be changed. Cross your fingers!
 ############################################################################
@@ -209,6 +212,9 @@ DEBUG = stabs
 
 OPT = s
 
+#DEFINE=$(foreach d,$(USERDEF), -D$d)
+DEFINE=$(patsubst %,-D%,$(USERDEF))
+
 # Place -D or -U options here
 CDEFS = -DF_CPU=$(F_CPU)
 
@@ -271,7 +277,7 @@ LST = $(ASRC:.S=.lst) $(CXXSRC:.cpp=.lst) $(SRC:.c=.lst)
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
 ALL_CFLAGS = -mmcu=$(MCU) -I. $(CFLAGS)
-ALL_CXXFLAGS = -mmcu=$(MCU) -I. $(CXXFLAGS)
+ALL_CXXFLAGS = -mmcu=$(MCU) -I. $(CXXFLAGS) $(DEFINE)
 ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 # Default target.
