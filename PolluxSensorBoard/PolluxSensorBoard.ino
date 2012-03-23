@@ -1,4 +1,24 @@
-/*
+/**
+ * Pollux'NZ City Project
+ * Copyright (c) 2012 CKAB, hackable:Devices
+ * Copyright (c) 2012 Bernard Pratz <guyzmo{at}hackable-devices{dot}org>
+ * Copyright (c) 2012 Lucas Fernandez <kasey{at}hackable-devices{dot}org>
+ * 
+ * Copyright (c) 2009 Andrew Rapp. For the XBee example origins.
+ *
+ * Pollux'NZ City is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Pollux'NZ City is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this project. If not, see <http://www.gnu.org/licenses/>.
+
                   +-\/-+
         (RESET)  1|    |8  VCC (2.7-5.5V)
             SPL  2|    |7  I2C   SCK -> Uno A5
