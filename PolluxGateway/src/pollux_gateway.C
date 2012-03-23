@@ -33,6 +33,8 @@
 const int panid[2] = {0x2,0xA};
 const int venid[8] = {0x0, 0x0, 0x1, 0x3, 0xA, 0x2, 0x0, 0x0};
 
+uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x79 };
+
 void sigint_handler(int c) {
     Beagle::Leds::disable_leds();
     Beagle::UART::disable_uart2();
@@ -103,10 +105,12 @@ class Tokenizer {
 //#ifndef __XBEERESULT_H__
 //#define __XBEERESULT_H__
 
-#define I2C_CMD_INIT 1
+#define CMD_INIT 1
+#define CMD_MEAS 8
+#define CMD_HALT 32
+
 #define I2C_LEN  2
 #define I2C_TYPE 4
-#define I2C_CMD_MEAS 8
 #define I2C_GET 16
 
 #define I2C_INT 1
@@ -123,6 +127,7 @@ class XbeeResult {
     // I2C
     int command;
     int addr;
+    int reg;
     // ZIGBEE
     uint8_t node[8];
     int network;
@@ -171,14 +176,20 @@ class XbeeResult {
 
                     } else {
                         // i2c
+                        printf("CMD %02X ", frame->content.rx.payload[0]);
                         command = frame->content.rx.payload[0];
+                        printf("ADDR %02X ", frame->content.rx.payload[1]);
                         addr =  frame->content.rx.payload[1];
+                        printf("REG %d ", frame->content.rx.payload[2]);
+                        reg = frame->content.rx.payload[2];
 
                         // content
-                        length = frame->content.rx.payload[2];
-                        type = frame->content.rx.payload[3];
+                        printf("LEN %d ", frame->content.rx.payload[3]);
+                        length = frame->content.rx.payload[3];
+                        printf("TYPE %02X ", frame->content.rx.payload[4]);
+                        type = frame->content.rx.payload[4];
                         for (int i=0;i<length;++i) 
-                            v.buffer[i] = (char)(frame->content.rx.payload)[i+4];
+                            v.buffer[i] = (char)(frame->content.rx.payload)[i+5];
                     }
                     break;
                 case AT_CMD_RESP:
@@ -202,12 +213,15 @@ class XbeeResult {
         int get_i2c_address() {
             return addr;
         }
+        int get_i2c_register() {
+            return reg;
+        }
         const char* fmt_i2c_command() {
             switch (command) {
-                case I2C_CMD_INIT:
-                    return "I2C_CMD_INIT";
-                case I2C_CMD_MEAS:
-                    return "I2C_CMD_MEAS";
+                case CMD_INIT:
+                    return "CMD_INIT";
+                case CMD_MEAS:
+                    return "CMD_MEAS";
                 case 42:
                     return "COMMENT";
                 default:
@@ -269,46 +283,51 @@ class XbeeResult {
             else
                 switch (type) {
                     case I2C_INT:
-                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X) ; Content(len:%d,type:%s) : '%d'\n", get_network(), 
+                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X:%d) ; Content(len:%d,type:%s) : '%d'\n", get_network(), 
                                                                                                                                 fmt_node_address((char*)netstr), 
                                                                                                                                 fmt_i2c_command(),
                                                                                                                                 get_i2c_address(), 
+                                                                                                                                get_i2c_register(), 
                                                                                                                                 get_length(),
                                                                                                                                 fmt_type(),
                                                                                                                                 get_value_as_int());
                         break;
                     case I2C_FLT:
-                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X) ; Content(len:%d,type:%s) : '%5.2f'\n", get_network(), 
+                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X:%d) ; Content(len:%d,type:%s) : '%5.2f'\n", get_network(), 
                                                                                                                                     fmt_node_address((char*)netstr), 
                                                                                                                                     fmt_i2c_command(),
                                                                                                                                     get_i2c_address(), 
+                                                                                                                                get_i2c_register(), 
                                                                                                                                     get_length(),
                                                                                                                                     fmt_type(),
                                                                                                                                     get_value_as_float());
                         break;
                     case I2C_DBL:
-                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X) ; Content(len:%d,type:%s) : '%5.2f'\n", get_network(), 
+                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X:%d) ; Content(len:%d,type:%s) : '%5.2f'\n", get_network(), 
                                                                                                                                     fmt_node_address((char*)netstr), 
                                                                                                                                     fmt_i2c_command(),
                                                                                                                                     get_i2c_address(), 
+                                                                                                                                get_i2c_register(), 
                                                                                                                                     get_length(),
                                                                                                                                     fmt_type(),
                                                                                                                                     get_value_as_double());
                         break;
                     case I2C_CHR:
-                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X) ; Content(len:%d,type:%s) : '%c'\n", get_network(), 
+                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X:%d) ; Content(len:%d,type:%s) : '%c'\n", get_network(), 
                                                                                                                                 fmt_node_address((char*)netstr), 
                                                                                                                                 fmt_i2c_command(),
                                                                                                                                 get_i2c_address(), 
+                                                                                                                                get_i2c_register(), 
                                                                                                                                 get_length(),
                                                                                                                                 fmt_type(),
                                                                                                                                 get_value_as_char());
                         break;
                     case I2C_STR:
-                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X) ; Content(len:%d,type:%s) : '%s'\n", get_network(), 
+                        printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X:%d) ; Content(len:%d,type:%s) : '%s'\n", get_network(), 
                                                                                                                                 fmt_node_address((char*)netstr), 
                                                                                                                                 fmt_i2c_command(),
                                                                                                                                 get_i2c_address(), 
+                                                                                                                                get_i2c_register(), 
                                                                                                                                 get_length(),
                                                                                                                                 fmt_type(),
                                                                                                                                 get_value_as_string());
@@ -328,6 +347,7 @@ class XbeeResult {
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include <unordered_map>
 
@@ -339,10 +359,53 @@ class XbeeResult {
 //  {"v":22.0,"u":"ppm","p":"50","k":"lat"},
 //  {"v":22.0,"u":"ppm","p":"50","k":"lon"}]
 const char* JSON_DATA_FMT  = "[%s]";
-const char* JSON_VALUE_FMT = "{\"k\":%s, \"v\":%s, \"u\":%s}";
+const char* JSON_VALUE_FMT = "{\"k\":%s, \"v\":%s, \"u\":%s, \"p\":%d}";
+
+class Sensor {
+    std::string name;
+    std::string unit;
+
+    uint8_t address;
+    uint8_t reg;
+
+    protected:
+        bool ignored;
+
+    public:
+        Sensor(std::string name, std::string unit, uint8_t addr, uint8_t reg) : name(name), unit(unit), address(addr), reg(reg) {
+            this->ignored = false;
+        }
+        std::string get_name() {
+            return this->name;
+        }
+        std::string get_unit() {
+            return this->unit;
+        }
+        uint8_t get_address() {
+            return this->address;
+        }
+        uint8_t get_reg() {
+            return this->reg;
+        }
+        virtual bool is_ignored() {
+            return this->ignored;
+        }
+};
+class Action : public Sensor {
+    public:
+        Action(std::string name, std::string unit, uint8_t addr, uint8_t reg) : Sensor(name,unit,addr,reg) {
+            ignored = true;
+        }
+        bool is_ignored() {
+            return ignored;
+        }
+};
 
 class XbeePollux : public XbeeCommunicator {
-    std::unordered_map<int, std::vector<std::string>*> sensors_map;
+    std::unordered_map<uint8_t, std::vector<Sensor>*> sensors_map;
+    std::vector<std::string> values_json_list;
+
+    int meas_idx;
     
     void setup_signal() {
         struct sigaction sigIntHandler;
@@ -354,22 +417,119 @@ class XbeePollux : public XbeeCommunicator {
         sigaction(SIGINT, &sigIntHandler, NULL);
     }
     public:
-        XbeePollux(char* port) : XbeeCommunicator(port) { 
+        XbeePollux(char* port, std::unordered_map<uint8_t, std::vector<Sensor>*> &sensors) : XbeeCommunicator(port), sensors_map(sensors) { 
             Beagle::UART::enable_uart2();
             Beagle::Leds::enable_leds();
             Beagle::Leds::set_status_led();
             this->setup_signal();
+            meas_idx=0;
         }
         ~XbeePollux() {
             Beagle::Leds::disable_leds();
         }
 
+        void store_measure(XbeeResult& payload) {
+            std::ostringstream json_string;
+
+            if (sensors_map.count(payload.get_i2c_address()) == 0) {
+                printf("i2c address %02X is unknown.", payload.get_i2c_address());
+                return;
+            }
+            if (sensors_map[payload.get_i2c_address()]->size() <= payload.get_i2c_register()) {
+                printf("measure #%d at i2c address %02X is invalid.", payload.get_i2c_register(), payload.get_i2c_address());
+                return;
+            }
+            if (sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).is_ignored()) {
+                printf("measure from i2c(%02X,%02X) of type %d is ignored\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
+                return;
+            }
+
+            switch (payload.get_type()) {
+                case I2C_CHR:
+                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()\
+                               <<",\"v\":\""<<payload.get_value_as_char()\
+                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()\
+                               <<",\"p\":\"0\"}";
+                    break;
+                case I2C_INT:
+                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()\
+                               <<",\"v\":\""<<payload.get_value_as_int()\
+                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()\
+                               <<",\"p\":\"0\"}";
+                    break;
+                case I2C_FLT:
+                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()\
+                               <<",\"v\":\""<<payload.get_value_as_float()\
+                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()\
+                               <<",\"p\":\"0\"}";
+                    break;
+                case I2C_DBL:
+                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()\
+                               <<",\"v\":\""<<payload.get_value_as_double()\
+                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()\
+                               <<",\"p\":\"0\"}";
+                    break;
+                default:
+                    printf("measure from i2c(%02X,%02X) of type %d unsupported\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
+                    return;
+            }
+            printf("measure from i2c(%02X,%02X) : %s\n", payload.get_i2c_address(), payload.get_i2c_register(), json_string.str().c_str());
+            values_json_list.push_back(json_string.str());
+            return;
+        }
+        void push_data() {
+            std::ostringstream json_string;
+
+            json_string<<"[";
+            for (std::vector<std::string>::iterator it=values_json_list.begin() ; it < values_json_list.end(); ++it )
+                json_string << *it <<",";
+            json_string<<"]";
+
+            printf("Pushing data to citypulse: '%s'\n", json_string.str().c_str());
+            
+        }
+        void get_next_measure() {
+            printf("next measure: %d\n", meas_idx);
+            switch (meas_idx++) {
+                case 0:
+                    printf("Getting Fan\n");
+                    {
+                        // XXX ask for the 3 measures of sensor 0x27
+                        char buf[] = {CMD_MEAS, 0x27, 3};
+                        send((char*)buf, gw_node, 0xFFFF);
+                    }
+                    break;
+                case 1:
+                    printf("Getting SPL\n");
+                    break;
+                case 2:
+                    printf("Getting Temp\n");
+                    break;
+                case 3:
+                    {
+                        printf("Getting DUST\n");
+
+                        // XXX ask for the 1 measure of sensor 0x26
+                        char buf[] = {CMD_MEAS, 0x26, 1};
+                        send((char*)buf, gw_node, 0xFFFF);
+                    }
+                    break;
+                default:
+                    {
+                        meas_idx = 0;
+                        printf("Sending HALT to device\n");
+
+                        char buf[] = {CMD_HALT};
+                        send((char*)buf, gw_node, 0xFFFF);
+                        push_data();
+                    }
+            }
+        }
+
         void run (XBeeFrame* frame) {
 
-            XbeeCommunicator::run(frame); // print frame details
+            //XbeeCommunicator::run(frame); // print frame details
             XbeeResult payload(frame);
-            Tokenizer* init_str;
-            std::vector<std::string>* sensors;
 
             switch (frame->api_id) {
                 case AT_CMD_RESP:
@@ -386,26 +546,14 @@ class XbeePollux : public XbeeCommunicator {
                     payload.print();
 
                     switch (payload.get_i2c_command()) {
-                        case I2C_CMD_INIT:
-                            // store 'payload' for address 'addr' into hashmap<int> _descriptors;
-                            init_str = new Tokenizer(payload.get_value_as_string(), ";");
-                            sensors = new std::vector<std::string>();
-
-                            while (init_str->NextToken()) {
-                                sensors->push_back(init_str->GetToken());
-                            }
-                            sensors_map[payload.get_i2c_address()] = sensors;
-                            delete(init_str);
+                        case CMD_MEAS:
+                            printf("GOT MEASURE\n");
+                            store_measure(payload);
+                            get_next_measure();                           
                             break;
-                        case I2C_CMD_MEAS:
-                            printf("MEAS\n");
-                            {
-                                msleep(2000);
-                                uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x79 };
-                                send((char*)"TEST", gw_node, 0xFFFF);
-                                printf("SENT\n");
-                            }
-
+                        case CMD_INIT:
+                            printf("GOT WAKE UP\n");
+                            get_next_measure();                           
                             break;
                         case '*':
                             // just a comment ;)
@@ -430,7 +578,28 @@ class XbeePollux : public XbeeCommunicator {
 };
 
 int main(void) {
-    XbeePollux s = XbeePollux("/dev/ttyO2");
+    std::unordered_map<uint8_t, std::vector<Sensor>*> sensors_map;
+    std::vector<Sensor>* sensor;
+
+    sensor = new std::vector<Sensor>();
+    sensor->push_back(Sensor("Dust","ppm",0x26, 0));
+    sensors_map[0x26] = sensor;
+
+    sensor = new std::vector<Sensor>();
+    sensor->push_back(Action("Fan","",0x27, 0));
+    sensor->push_back(Sensor("Noise level","dB",0x27, 1));
+    sensor->push_back(Sensor("Temperature","ºC", 0x27, 2));
+    sensors_map[0x27] = sensor;
+
+    //sensor = new std::vector<Sensor>();
+    //sensor->push_back(Sensor("CO","ppm",0x28));
+    //sensors_map[0x28] = sensor;
+    
+    //sensor = new std::vector<Sensor>();
+    //sensor->push_back(Sensor("NO2","ppm",0x29));
+    //sensors_map[0x29] = sensor;
+
+    XbeePollux s = XbeePollux("/dev/ttyO2",sensors_map);
 
     if (s.begin(panid,venid) >= 0) {
         for (;;) 
@@ -440,4 +609,20 @@ int main(void) {
     return 1;
 }
 
+////// OLD CODE
+                        /*
+            Tokenizer* init_str;
+            std::vector<std::string>* sensors;
+                        case CMD_INIT:
+                            // store 'payload' for address 'addr' into hashmap<int> _descriptors;
+                            init_str = new Tokenizer(payload.get_value_as_string(), ";");
+                            sensors = new std::vector<std::string>();
+
+                            while (init_str->NextToken()) {
+                                sensors->push_back(init_str->GetToken());
+                            }
+                            sensors_map[payload.get_i2c_address()] = sensors;
+                            delete(init_str);
+                            break;
+                         */
 
