@@ -22,7 +22,7 @@
 #ifndef __XBEEWRAPPER_H__
 #define __XBEEWRAPPER_H__
 
-#include "LedWrapper.h"
+#include <LedWrapper.h>
 
 //#define VERBOSE
 //#define NO_ZIGBEE

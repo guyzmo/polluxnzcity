@@ -25,7 +25,7 @@
 //#define VERBOSE
 //#define NO_ZIGBEE
 
-#include "LedWrapper.h"
+#include <LedWrapper.h>
 
 #ifndef BUFFER_SIZE
 #  define BUFFER_SIZE 32
