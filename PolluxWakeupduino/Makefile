@@ -45,20 +45,21 @@
 VERSION = 0.1
 
 # Standard Arduino libraries it will import, e.g. LiquidCrystal:
-ARDLIBS = SoftwareSerial Wire Wire/utility EEPROM
+ARDLIBS = SoftwareSerial Wire Wire/utility
 
 # User-specified (in ~/sketchbook/libraries/) libraries :
 USERLIBS = XBee
 
 # Libs in local directory
 # uncomment value if you have libs in directories inside project's directory
-LOCALLIBS = # $(patsubst applet/,,$(wildcard */))
+LOCALLIBS = $(patsubst applet/,,$(wildcard */))
 
 # Arduino model:
 # You can set this to be a string, such as uno, atmega328, diecimila and mega,
 MODEL ?= uno
 
-USERDEF=#'VERBOSE' 'BUFFER_SIZE=64' #  'NO_ZIGBEE'
+USERDEF='VERBOSE'
+# 'BUFFER_SIZE=64' #  'NO_ZIGBEE'
 
 ############################################################################
 # Platform's settings

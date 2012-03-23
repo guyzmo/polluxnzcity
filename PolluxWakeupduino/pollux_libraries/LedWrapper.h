@@ -19,42 +19,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this project. If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef __LED_WRAPPER_H__
+#define __LED_WRAPPER_H__
 
-//#define VERBOSE
-//#define NO_ZIGBEE
+#define LED_STA 11 // GREEN
+#define LED_ERR 10 // RED
+#define LED_XFR 9  // BLUE
 
-#ifndef BUFFER_SIZE
-#  define BUFFER_SIZE 32
-#endif
+void flashLed(int pin, int times, int wait) {
+  for (int i = 0; i < times; i++) {
+    digitalWrite(pin, HIGH);
+    delay(wait);
+    digitalWrite(pin, LOW);
+    if (pin == LED_STA)
+      analogWrite(pin, 8);
 
-#include <LedWrapper.h>
-#include <XBeeWrapper.h>
-#include <WireWrapper.h>
-#include <PolluxCommunicator.h>
-
-void setup() {
-    pinMode(LED_STA, OUTPUT);
-    pinMode(LED_ERR, OUTPUT);
-    pinMode(LED_XFR, OUTPUT);
-
-#ifdef VERBOSE
-    nss.begin(9600);
-#endif
-#ifdef NO_ZIGBEE
-    Serial.begin(9600);
-#else
-    xbee.begin(9600);
-#endif
-    Wire.begin();
-
-    Pollux pollux;
-
-    pollux.send_wake_up();
-    pollux.wait_for_command();
-    pollux.halt();
+    if (i + 1 < times) {
+      delay(wait);
+    }
+  }
 }
 
-void loop() {
-    /* nop */
-}
-
+#endif // __LED_WRAPPER_H__
