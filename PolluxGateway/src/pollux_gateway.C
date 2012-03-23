@@ -561,8 +561,6 @@ class XbeePollux : public XbeeCommunicator {
                         default:
                             printf("Unknown Command: %d\n", payload.fmt_i2c_command());
                     }
-                    /* XXX 1. constructs the JSON with data from payload */
-                    /* XXX 2. call post_to_citypulse(json_str); */
 
                     msleep(10);
                     Beagle::Leds::reset_rgb_led(Beagle::Leds::BLUE);
@@ -608,21 +606,4 @@ int main(void) {
     }
     return 1;
 }
-
-////// OLD CODE
-                        /*
-            Tokenizer* init_str;
-            std::vector<std::string>* sensors;
-                        case CMD_INIT:
-                            // store 'payload' for address 'addr' into hashmap<int> _descriptors;
-                            init_str = new Tokenizer(payload.get_value_as_string(), ";");
-                            sensors = new std::vector<std::string>();
-
-                            while (init_str->NextToken()) {
-                                sensors->push_back(init_str->GetToken());
-                            }
-                            sensors_map[payload.get_i2c_address()] = sensors;
-                            delete(init_str);
-                            break;
-                         */
 
