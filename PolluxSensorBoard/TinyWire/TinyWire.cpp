@@ -77,12 +77,6 @@ void TinyWire::_on_receive_handler(uint8_t reg, uint8_t value) {
 
 uint8_t TinyWire::_on_request_handler(uint8_t reg) {
     switch (reg) {
-        case I2C_CMD_INIT:
-            output_buffer.clear();
-            store_desc();
-            last = I2C_GET;
-            type = I2C_STR;
-            return 0;
         case I2C_CMD_MEAS:
             output_buffer.clear();
             _request_callback();
@@ -93,7 +87,7 @@ uint8_t TinyWire::_on_request_handler(uint8_t reg) {
         case I2C_LEN:
             return output_buffer.size();
         case I2C_GET:
-            return output_buffer.pop();
+            last = I2C_GET;
         default:
             if (output_buffer.size() > 0)
                 if (last == I2C_GET)

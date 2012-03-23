@@ -40,10 +40,6 @@ extern "C" {
 #define I2C_CHR 8
 #define I2C_STR 16
 
-#ifndef DESC
-# define DESC "Unknown Sensor"
-#endif
-
 class TinyWire {
     static Buffer input_buffer;
     static Buffer output_buffer;
@@ -55,10 +51,6 @@ class TinyWire {
 
     static void _on_receive_handler(uint8_t reg, uint8_t value);
     static uint8_t _on_request_handler(uint8_t reg);
-
-    static void store_desc() {
-        output_buffer.push((char*)DESC);
-    }
 
     public:
         void begin(uint8_t i2c_slave_address);
