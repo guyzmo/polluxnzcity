@@ -48,7 +48,7 @@ void setup() {
     Pollux pollux;
 
     pollux.send_wake_up();
-    pollux.wait_for_command();
+    while (pollux.wait_for_command()==1);
     pollux.halt();
 }
 
