@@ -280,45 +280,21 @@ void XbeeCommunicator::print_frame(XBeeFrame* frame) {
             printf("retry : "); printf("%d\n", frame->content.tx.retries);
             printf("delivery: "); printf("%02X ", frame->content.tx.delivery_status);
             switch (frame->content.tx.delivery_status) {
-                case 0x00:
-                    printf("Success\n");
-                    break;
-                case 0x02:
-                    printf("CCA Failure\n");
-                    break;
-                case 0x15:
-                    printf("Invalid destination endpoint\n");
-                    break;
-                case 0x21:
-                    printf("Network ACK Failure\n");
-                    break;
-                case 0x22:
-                    printf("Not Joined to Network\n");
-                    break;
-                case 0x23:
-                    printf("Self-addressed\n");
-                    break;
-                case 0x24:
-                    printf("Address Not Found\n");
-                    break;
-                case 0x25:
-                    printf("Route Not Found\n");
-                    break;
+                case 0x00: printf("Success\n"); break;
+                case 0x02: printf("CCA Failure\n"); break;
+                case 0x15: printf("Invalid destination endpoint\n"); break;
+                case 0x21: printf("Network ACK Failure\n"); break;
+                case 0x22: printf("Not Joined to Network\n"); break;
+                case 0x23: printf("Self-addressed\n"); break;
+                case 0x24: printf("Address Not Found\n"); break;
+                case 0x25: printf("Route Not Found\n"); break;
             }
             printf("discos: "); printf("%02X ", frame->content.tx.discovery_status);
             switch(frame->content.tx.discovery_status) {
-                case 0x00:
-                    printf("No Discovery Overhead\n");
-                    break;
-                case 0x01:
-                    printf("Address Discovery \n");
-                    break;
-                case 0x02:
-                    printf("Route Discovery\n");
-                    break;
-                case 0x03:
-                    printf("Address and Route Discovery\n");
-                    break;
+                case 0x00: printf("No Discovery Overhead\n"); break;
+                case 0x01: printf("Address Discovery \n"); break;
+                case 0x02: printf("Route Discovery\n"); break;
+                case 0x03: printf("Address and Route Discovery\n"); break;
             }
             break;
 
@@ -328,12 +304,8 @@ void XbeeCommunicator::print_frame(XBeeFrame* frame) {
             printf("net_ad: "); printf("%02X\n", frame->content.rx.network_addr.i16);
             printf("recvopt: "); printf("%02X ", frame->content.rx.options);
             switch (frame->content.rx.options) {
-                case 0x01:
-                    printf("Packet Acknowledged\n");
-                    break;
-                case 0x02:
-                    printf("Broadcast Packet\n");
-                    break;
+                case 0x01: printf("Packet Acknowledged\n"); break;
+                case 0x02: printf("Broadcast Packet\n"); break;
             }
             printf("payload: "); print_data(frame->content.rx.payload,frame->length.i16,DEC);
             break;
