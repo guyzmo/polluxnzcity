@@ -38,8 +38,8 @@ class Pollux {
         if (send_cmd(addr, command) == 0) {
             xbprintf("*** Tx cmd %02X to device %02X", command, addr);
             recv(addr,1,res.v.buffer);
-            if (send_cmd(0x27, I2C_TYPE) == 0) {
-                recv(0x27,1,res.v.buffer);
+            if (send_cmd(addr, I2C_TYPE) == 0) {
+                recv(addr,1,res.v.buffer);
                 res.type = res.v.c;
                 xbprintf("*** TYPE: %d", res.type);
             }
@@ -51,11 +51,11 @@ class Pollux {
     void get_results(uint8_t addr) {
         if (send_cmd(addr, I2C_LEN) == 0) {
             xbprintf("*** Rx results from device %02X", addr);
-            recv(0x27,1,res.v.buffer);
+            recv(addr,1,res.v.buffer);
             res.len = res.v.i;
             xbprintf("*** LENGTH: %d", res.len);
-            if (send_cmd(0x27, I2C_GET) == 0)
-                recv(0x27,res.len,res.v.buffer);
+            if (send_cmd(addr, I2C_GET) == 0)
+                recv(addr,res.len,res.v.buffer);
         }
     }
 
@@ -140,10 +140,10 @@ class Pollux {
         }
     }
 
-    void wait_for_command() {
+    uint8_t wait_for_command() {
         nss_println("### wait for command");
-        char buf[42];
-        int n = PolluxXbee::recv_data_blocking(buf);
+        char buf[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        int n = PolluxXbee::recv_data_timeout(buf, 5000);
         nss_print("### received ");
         nss_print(n);
         nss_print("### bytes : ");
@@ -163,7 +163,9 @@ class Pollux {
                 for (uint8_t i=0;i<nb;++i)
                     do_measure(addr,i); //,params[i]);
                     //do_measure(addr,i,params[i]); // XXX to be implemented
-                break;
+                return 1;
+            case CMD_HALT:
+                return 0;
             default:
                 nss_println("### unknown command");
         }
