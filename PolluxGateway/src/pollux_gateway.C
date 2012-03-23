@@ -26,7 +26,7 @@
 
 #include <string>
 
-//#include <citypulse.h>
+#include <citypulse.h>
 #include <beaglebone.h>
 #include <xbee_communicator.h>
 
@@ -186,7 +186,7 @@ class XbeeResult {
                         // content
                         printf("LEN %d ", frame->content.rx.payload[3]);
                         length = frame->content.rx.payload[3];
-                        printf("TYPE %02X ", frame->content.rx.payload[4]);
+                        printf("TYPE %02X\n", frame->content.rx.payload[4]);
                         type = frame->content.rx.payload[4];
                         for (int i=0;i<length;++i) 
                             v.buffer[i] = (char)(frame->content.rx.payload)[i+5];
@@ -446,27 +446,27 @@ class XbeePollux : public XbeeCommunicator {
 
             switch (payload.get_type()) {
                 case I2C_CHR:
-                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()\
-                               <<",\"v\":\""<<payload.get_value_as_char()\
-                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()\
+                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()<<"\""\
+                               <<",\"v\":\""<<payload.get_value_as_char()<<"\""\
+                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()<<"\""\
                                <<",\"p\":\"0\"}";
                     break;
                 case I2C_INT:
-                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()\
-                               <<",\"v\":\""<<payload.get_value_as_int()\
-                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()\
+                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()<<"\""\
+                               <<",\"v\":\""<<payload.get_value_as_int()<<"\""\
+                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()<<"\""\
                                <<",\"p\":\"0\"}";
                     break;
                 case I2C_FLT:
-                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()\
-                               <<",\"v\":\""<<payload.get_value_as_float()\
-                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()\
+                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()<<"\""\
+                               <<",\"v\":\""<<payload.get_value_as_float()<<"\""\
+                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()<<"\""\
                                <<",\"p\":\"0\"}";
                     break;
                 case I2C_DBL:
-                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()\
-                               <<",\"v\":\""<<payload.get_value_as_double()\
-                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()\
+                    json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()<<"\""\
+                               <<",\"v\":\""<<payload.get_value_as_double()<<"\""\
+                               <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()<<"\""\
                                <<",\"p\":\"0\"}";
                     break;
                 default:
@@ -482,13 +482,27 @@ class XbeePollux : public XbeeCommunicator {
 
             json_string<<"[";
             for (std::vector<std::string>::iterator it=values_json_list.begin() ; it < values_json_list.end(); ++it )
-                json_string << *it <<",";
+                if (it+1 != values_json_list.end())
+                    json_string << *it <<",";
+                else
+                    json_string << *it;
             json_string<<"]";
 
             printf("Pushing data to citypulse: '%s'\n", json_string.str().c_str());
-            
+            if (post_to_citypulse(json_string.str().c_str()) == 0) {
+                printf("    -> success\n");
+                Beagle::Leds::set_rgb_led(Beagle::Leds::GREEN);
+                msleep(100);
+                Beagle::Leds::reset_rgb_led(Beagle::Leds::GREEN);
+            } else {
+                printf("    -> failure\n");
+                Beagle::Leds::set_rgb_led(Beagle::Leds::RED);
+                msleep(100);
+                Beagle::Leds::reset_rgb_led(Beagle::Leds::RED);
+            }
         }
         void get_next_measure() {
+            // XXX OBSERVER PATTERN TO IMPROVE
             printf("next measure: %d\n", meas_idx);
             switch (meas_idx++) {
                 case 0:
@@ -533,12 +547,12 @@ class XbeePollux : public XbeeCommunicator {
 
             switch (frame->api_id) {
                 case AT_CMD_RESP:
-                    Beagle::Leds::set_rgb_led(Beagle::Leds::GREEN);
+                    //Beagle::Leds::set_rgb_led(Beagle::Leds::GREEN);
 
                     printf("[AT] Command: '%s' ; Values: '%X'\n", frame->content.at.command, frame->content.at.values);
 
                     msleep(50);
-                    Beagle::Leds::reset_rgb_led(Beagle::Leds::GREEN);
+                    //Beagle::Leds::reset_rgb_led(Beagle::Leds::GREEN);
                     break;
                 case RX_PACKET:
                     Beagle::Leds::set_rgb_led(Beagle::Leds::BLUE);
