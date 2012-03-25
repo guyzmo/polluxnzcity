@@ -1,0 +1,32 @@
+Pollux Gateway Application
+==========================
+
+This program runs the network of sensor devices for the Pollux'nz City project.
+
+
+Dependencies
+============
+
+ * libgcrypt    <http://www.gnu.org/s/libgcrypt/>
+ * libjson-glib <http://live.gnome.org/JsonGlib>
+
+Compilation
+===========
+
+ % make
+
+You can put in environment a "DEFINE" variable having : 
+ * VERBOSE
+    to have more output
+ * API_ESCAPED_MODE
+    to change XBee API Mode from 1 to 2 (still untested)
+
+Execution
+=========
+
+ % ./pollux_gateway
+
+License
+=======
+
+ * GPLv3        <http://www.gnu.org/licenses/gpl.html>
