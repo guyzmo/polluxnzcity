@@ -206,6 +206,18 @@ class XbeeResult {
         uint8_t* get_node_address() {
             return node;
         }
+        uint16_t get_node_address_as_long() {
+            uint16_t addr = 0;
+            addr += (node[0]<<0);
+            addr += (node[1]<<8);
+            addr += (node[2]<<16);
+            addr += (node[3]<<24);
+            addr += (node[4]<<32);
+            addr += (node[5]<<40);
+            addr += (node[6]<<48);
+            addr += (node[7]<<56);
+            return addr;
+        }
         int get_network() {
             return network;
         }
@@ -393,7 +405,7 @@ class Sensor {
 };
 class Action : public Sensor {
     public:
-        Action(std::string name, std::string unit, uint8_t addr, uint8_t reg) : Sensor(name,unit,addr,reg) {
+        Action(std::string name, uint8_t addr, uint8_t reg) : Sensor(name,"",addr,reg) {
             ignored = true;
         }
         bool is_ignored() {
@@ -598,7 +610,7 @@ int main(void) {
     sensors_map[0x26] = sensor;
 
     sensor = new std::vector<Sensor>();
-    sensor->push_back(Action("Fan","",0x27, 0));
+    sensor->push_back(Action("Fan",0x27, 0));
     sensor->push_back(Sensor("Noise level","dB",0x27, 1));
     sensor->push_back(Sensor("Temperature","ºC", 0x27, 2));
     sensors_map[0x27] = sensor;
