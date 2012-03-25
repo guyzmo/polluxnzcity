@@ -81,19 +81,24 @@ class Action : public Sensor {
 
 ////////////////////
 
+#define CMD_INIT 1
+#define CMD_MEAS 8
+#define CMD_HALT 32
+
 class PolluxConfiguration {
     std::tr1::unordered_map<unsigned long /* ZigBee Address */, std::tr1::unordered_map<uint8_t /* i2c addr */, std::vector<Sensor>/* sensor list */ > > sensors_map;
     std::tr1::unordered_map<std::string /* target datastore */, std::tr1::unordered_map<std::string /* key */, std::string/* val */> > datastores_map;
     std::tr1::unordered_map<std::string /* config option */   , std::string /* val */> configuration_map;
        
-    unsigned int meas_idx;
-    unsigned int stop;
-    std::tr1::unordered_map<uint16_t, std::tr1::unordered_map<uint8_t, std::vector<Sensor> >::iterator > module_iterator_map;
+    typedef struct {
+        unsigned int meas_idx;
+        unsigned int stop;
+        std::tr1::unordered_map<uint8_t, std::vector<Sensor> >::iterator it;
+    } module_iter;
+    std::tr1::unordered_map<uint16_t, module_iter> module_iterator_map;
 
     public:
         PolluxConfiguration() {
-            meas_idx=-1;
-            stop=0;
         }
         int get_configuration(std::string& path) {
             std::ostringstream fname;
@@ -222,7 +227,9 @@ class PolluxConfiguration {
                                                                                                        <<",0x"<<std::hex<<i2c_address<<",0x"<<std::hex<<reg<<")"<<std::endl;
                         }
                     }
-                    module_iterator_map[zb_address] = sensors_map[zb_address].begin();
+                    module_iterator_map[zb_address].it = sensors_map[zb_address].begin();
+                    module_iterator_map[zb_address].meas_idx=-1;
+                    module_iterator_map[zb_address].stop=0;
                 }
 
                 free(json_data);
@@ -232,32 +239,40 @@ class PolluxConfiguration {
         
 
         char* get_next_measure(unsigned long int module) {
-            std::tr1::unordered_map<uint8_t, std::vector<Sensor> >::iterator& sensor_it = module_iterator_map[module];
+            std::tr1::unordered_map<uint8_t, std::vector<Sensor> >::iterator& sensor_it = module_iterator_map[module].it;
             char* buf = (char*)malloc(sizeof(char)*3);
             buf[0] = 0x0;
             buf[1] = 0x0;
             buf[2] = 0x0;
 
-            if (sensor_it->second.size() > 1 and stop == 0) {
-                stop = sensor_it->second.size()-2;
-                meas_idx = 0;
-            } else if (meas_idx < stop) {
-                ++meas_idx;
+            if (sensors_map.count(module) == 0)
                 return buf;
-            } else if (meas_idx == stop) {
-                stop = 0;
-                meas_idx = -1;
+
+            if (sensor_it == sensors_map[module].end()) {
+                sensor_it = sensors_map[module].begin();
+                buf[0] = CMD_HALT;
+                buf[1] = 0x0;
+                buf[2] = 0x0;
                 return buf;
             }
 
-            buf[0] = 0x42;
+            if (sensor_it->second.size() > 1 and module_iterator_map[module].stop == 0) {
+                module_iterator_map[module].stop = sensor_it->second.size()-2;
+                module_iterator_map[module].meas_idx = 0;
+            } else if (module_iterator_map[module].meas_idx < module_iterator_map[module].stop) {
+                ++(module_iterator_map[module].meas_idx);
+                return buf;
+            } else if (module_iterator_map[module].meas_idx == module_iterator_map[module].stop) {
+                module_iterator_map[module].stop = 0;
+                module_iterator_map[module].meas_idx = -1;
+                return buf;
+            }
+
+            buf[0] = CMD_MEAS;
             buf[1] = (unsigned short int)(*sensor_it).first;
             buf[2] = (unsigned short int)(*sensor_it).second.size();
 
             ++sensor_it;
-            if (sensor_it == sensors_map[module].end()) {
-                sensor_it = sensors_map[module].begin();
-            }
 
             return buf;
         }
@@ -283,15 +298,38 @@ int main(int argc, char * argv[])
     if (!pconfig.get_sensors(filename))
         std::cout<<"Sensor description file not found."<<std::endl;
 
+
+    /////////////// in run():
     char* buf;
-    buf = pconfig.get_next_measure(0x0013a20040698679); std::cout<<"sending: "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;delete(buf);
-    buf = pconfig.get_next_measure(0x0013a20040698679); std::cout<<"sending: "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;delete(buf);
-    buf = pconfig.get_next_measure(0x0013a20040698679); std::cout<<"sending: "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;delete(buf);
-    buf = pconfig.get_next_measure(0x0013a20040698679); std::cout<<"sending: "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;delete(buf);
-    buf = pconfig.get_next_measure(0x0013a20040698679); std::cout<<"sending: "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;delete(buf);
-    buf = pconfig.get_next_measure(0x0013a20040698679); std::cout<<"sending: "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;delete(buf);
-    buf = pconfig.get_next_measure(0x0013a20040698679); std::cout<<"sending: "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;delete(buf);
-    buf = pconfig.get_next_measure(0x0013a20040698679); std::cout<<"sending: "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;delete(buf);
+    unsigned long node = 0x0013a20040698679;
+    for (int i=0;i<10;++i) {
+        buf = pconfig.get_next_measure(node); 
+        if (buf[0] == 0x0)
+            std::cout<<"ignoring 0x"<<std::hex<<node<<std::endl;
+        else
+            std::cout<<"sending to 0x"<<std::hex<<node<<": "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;
+        if (buf[0] == CMD_HALT) {
+            delete(buf);
+            break;
+        }
+        delete(buf);
+    }
+
+    node = 0x0042000000000000;
+    for (int i=0;i<10;++i) {
+        buf = pconfig.get_next_measure(node); 
+        if (buf[0] == 0x0)
+            std::cout<<"ignoring 0x"<<std::hex<<node<<std::endl;
+        else
+            std::cout<<"sending to 0x"<<std::hex<<node<<": "<<std::hex<<(int)buf[0]<<","<<std::hex<<(int)buf[1]<<","<<std::hex<<(int)buf[2]<<std::endl;
+        if (buf[0] == CMD_HALT) {
+            delete(buf);
+            break;
+        }
+        delete(buf);
+    }
+    //////////////////////////
+
 
     return 0;
 }
