@@ -1,9 +1,15 @@
 #!/bin/env python
 
-from bottle import install, route, run, PluginError, HTTPError, debug, response, view
+
+from bottle import install, route, run, PluginError, HTTPError, debug, response, view, static_file
+
+from argparse import ArgumentParser
+
 import inspect
 
 import json
+
+import sys
 
 import re
 
@@ -205,11 +211,19 @@ at respecting JSON's syntax.
 @route('/')
 @view('index')
 def index():
-    return dict()
+    return dict(config=config._config_map, datastores=config._datastores_map, sensors=sensors._sensors_map)
+
+@route('/images/<filename:re:.*\.png>#')
+def get_image(filename):
+    return static_file(filename, root='static/images/', mimetype='image/png')
+
+@route('/js/<filename>')
+def get_javascript(filename):
+    return static_file(filename, root='static/javascript/')
 
 @route('/sensor/list')
 def sensor_list():
-    return sensors.get_modules()
+    return json.dumps(sensors.get_modules())
 
 @route('/sensor/<addr>')
 def sensor_get(addr):
@@ -253,24 +267,48 @@ def config_get(key):
     return config.get_configuration()[key]
 
 if __name__ == "__main__":
-    config = Configuration("./")
-    sensors = Sensors("./")
+    parser = ArgumentParser(prog=sys.argv[0],
+                description="Pollux'NZ City configurator")
 
-    #print "CONFIGURATION"
-    #print config.get_configuration()
-    #print "DATASTORES"
-    #for datastore in config.get_datastores():
-    #    print datastore, config.get_datastore_config(datastore)
-    #print "SENSORS"
-    #for module in sensors.get_modules():
-    #    print module, sensors.get_module(module)
-    ##config.save()
-    ##sensors.save()
+    parser.add_argument("-V", '--version', action='version', version="%(prog)s version 0")
+    
+    parser.add_argument("-d",
+                        "--debug",
+                        dest="debug",
+                        action="store_true",
+                        default=False,
+                        help="Debug mode")
+    parser.add_argument("-P",
+                        "--path",
+                        dest="path",
+                        default=".",
+                        help='path to configuration directory. e.g. /etc/pollux/')
+    parser.add_argument("-c",
+                        "--cache",
+                        dest="cache_path",
+                        default="/tmp/",
+                        help='Directory where all cached objects (session, files) will be stored.\nDefaults to "/tmp/bf/"')
+    # HOST ARGUMENT
+    parser.add_argument("-H",
+                        "--host",
+                        dest="host",
+                        default='0.0.0.0',
+                        help='Host to serve the web application on.')
+    # PORT ARGUMENT
+    parser.add_argument("-p",
+                        "--port",
+                        dest="port",
+                        default='8080',
+                        help='Port to be used for serving the web application.')
+    
+    args = parser.parse_args(sys.argv[1:])
 
+    config = Configuration(args.path+"/")
+    sensors = Sensors(args.path+"/")
 
     install(config)
     install(sensors)
     
-    debug(True)
-    run(host='localhost', port=8080, reloader=True)
+    debug(args.debug)
+    run(host=args.host, port=args.port, reloader=args.debug)
 
