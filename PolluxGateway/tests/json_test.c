@@ -291,12 +291,16 @@ int main(int argc, char * argv[])
 
     std::string filename(getCmdOption(argv, argv + argc, std::string("-c")));
 
-    if (!pconfig.get_configuration(filename))
-        std::cout<<"Configuration file not found. Can't get configuration."<<std::endl;
-    if (!pconfig.get_datastores(filename))
-        std::cout<<"Configuration file not found. Can't get datastores"<<std::endl;
-    if (!pconfig.get_sensors(filename))
-        std::cout<<"Sensor description file not found."<<std::endl;
+    if (pconfig.get_configuration(filename) < 0) {
+        std::cout<<"Can't get configuration. Reseting to defaults."<<std::endl;
+    if (pconfig.get_datastores(filename) < 0) {
+        std::cout<<"Can't get datastores. Exiting..."<<std::endl;
+        return -1;
+    }
+    if (pconfig.get_sensors(filename) < 0) {
+        std::cout<<"Can't get sensors. Exiting..."<<std::endl;
+        return -2
+    }
 
 
     /////////////// in run():
