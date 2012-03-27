@@ -85,6 +85,8 @@ typedef struct xbee_frame {
     uint8_t api_id;
     union frm_content {
         struct at {
+            uint8_t source_addr[8];
+            uint8_16_u network_addr;
             uint8_t frame_id;
             char command[2];
             uint8_t status;
@@ -119,6 +121,7 @@ class XbeeCommunicator : public Serial {
 
     void xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbytes, uint8_t* data, uint8_t frameid, uint8_t bradius, uint8_t options);
     void send_atcmd(const char* at_command, const char* param_value);
+    void send_remote_atcmd(uint8_t* addr64, uint16_t network, const char* at_command, const char* param_value);
     int rcpt_frame(XBeeFrame* frame);
 
     protected:

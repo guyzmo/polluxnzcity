@@ -33,7 +33,7 @@
 const int panid[2] = {0x2,0xA};
 const int venid[8] = {0x0, 0x0, 0x1, 0x3, 0xA, 0x2, 0x0, 0x0};
 
-uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x79 };
+uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
 
 void sigint_handler(int c) {
     Beagle::Leds::disable_leds();
@@ -206,6 +206,7 @@ class XbeeResult {
         uint8_t* get_node_address() {
             return node;
         }
+        /*
         uint16_t get_node_address_as_long() {
             uint16_t addr = 0;
             addr += (node[0]<<0);
@@ -218,6 +219,7 @@ class XbeeResult {
             addr += (node[7]<<56);
             return addr;
         }
+        */
         int get_network() {
             return network;
         }
@@ -554,7 +556,7 @@ class XbeePollux : public XbeeCommunicator {
 
         void run (XBeeFrame* frame) {
 
-            //XbeeCommunicator::run(frame); // print frame details
+            XbeeCommunicator::run(frame); // print frame details
             XbeeResult payload(frame);
 
             switch (frame->api_id) {

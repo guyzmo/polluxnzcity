@@ -84,14 +84,58 @@ void XbeeCommunicator::send_atcmd(const char* at_command, const char* param_valu
     ++frm_id; // increment frame id for next frame
 
     for (uint8_t i=0;i<strlen(at_command);++i) {
-        this->Serial::write(at_command[i]);     checksum += at_command[i];  // 5. SEND AT COMMAND
+        this->write(at_command[i]);     checksum += at_command[i];  // 5. SEND AT COMMAND
     }
 
     for (uint8_t i=0;i<strlen(param_value);++i) {
-        this->Serial::write(param_value[i]);    checksum += param_value[i]; // 6. SEND PARAMETERS
+        this->write(param_value[i]);    checksum += param_value[i]; // 6. SEND PARAMETERS
     }
 
     checksum = 0xff - (checksum);                                   // 10. SEND CHECKSUM
+    this->write(checksum);
+    debug_println("'");
+}
+
+void XbeeCommunicator::send_remote_atcmd(uint8_t* addr64, uint16_t network, const char* at_command, const char* param_value) {
+    debug_print("send_remote_at_cmd(");debug_print(at_command);debug_print(")\n");
+
+    uint16_t len = 0;
+    int checksum;
+    char* byte_ptr = NULL;
+
+    debug_print("Sending frame: '");
+    debug_print_hex(FRM_DLM);
+    Serial::write(FRM_DLM);                                                 // 1. SEND FRAME DELIMITER
+
+    // 1B for frm id + 1B for api id + 1B for option + 8 bytes for addr + 2 bytes for pan + size of the command (usually 2B) + size of the param (usually 0B)
+    len = strlen(at_command) + strlen(param_value)+13;
+    this->write((uint8_t)(len>>8));                                         // 2. SEND FRAME LENGTH
+    this->write((uint8_t)(len&0xFF));
+
+    this->write(API_RM_CMD);            checksum = API_RM_CMD;              // 3. SEND FRAME API Identifier (transmission request)
+    this->write(frm_id);                checksum += frm_id;                 // 4. SEND FRAME Unique ID
+
+    ++frm_id; // increment frame id for next frame
+
+    for (int8_t i=0;i<8;++i) {
+        this->write(*(addr64+i));       checksum += *(addr64+i);            // 5. SEND 64bit ADDRESS OF REMOTE MODULE
+    }
+    byte_ptr = (char*)&network;
+    for (int8_t i=1;i>=0;--i){
+        this->write(*(byte_ptr+i));     checksum += *(byte_ptr+i);          // 6. SEND PAN ID
+    }
+
+    this->write(0x02);                  checksum += 0x02;                   // 7. SEND OPTION (0x02 == commit changes without sending AC command)
+
+    for (uint8_t i=0;i<strlen(at_command);++i) {
+        this->write(at_command[i]);     checksum += at_command[i];  // 5. SEND AT COMMAND
+    }
+
+    for (uint8_t i=0;i<strlen(param_value);++i) {
+        this->write(param_value[i]);    checksum += param_value[i]; // 6. SEND PARAMETERS
+    }
+
+    checksum = 0xff - (checksum);                                           // 10. SEND CHECKSUM
     this->write(checksum);
     debug_println("'");
 }
@@ -123,6 +167,24 @@ int XbeeCommunicator::rcpt_frame(XBeeFrame* frame) {
                 frame->content.at.values[i] = this->read();       frame->checksum += frame->content.at.values[i];
             }
             break;
+
+        case RM_CMD_RESP:
+            frame->api_id = RM_CMD_RESP;                          frame->checksum += RM_CMD_RESP;
+            frame->content.at.frame_id = this->read();            frame->checksum += frame->content.at.frame_id;
+
+            frame->content.at.network_addr.i8.msb = this->read(); frame->checksum += frame->content.at.network_addr.i8.msb;
+            frame->content.at.network_addr.i8.lsb = this->read(); frame->checksum += frame->content.at.network_addr.i8.lsb;
+            for (uint8_t i=0;i<8;++i) {
+                frame->content.at.source_addr[i] = this->read();  frame->checksum += frame->content.at.source_addr[i];
+            }
+            frame->content.at.command[0] = this->read();          frame->checksum += frame->content.at.command[0];
+            frame->content.at.command[1] = this->read();          frame->checksum += frame->content.at.command[1];
+            frame->content.at.status = this->read();              frame->checksum += frame->content.at.status;
+            for (uint8_t i=0;i<frame->length.i16-15;++i) {
+                frame->content.at.values[i] = this->read();       frame->checksum += frame->content.at.values[i];
+            }
+            break;
+
 
         case TX_STATUS:
             frame->api_id = TX_STATUS;                            frame->checksum += TX_STATUS;
@@ -273,6 +335,23 @@ void XbeeCommunicator::print_frame(XBeeFrame* frame) {
             printf("values: "); printf("%02X\n", frame->content.at.values);
             break;
 
+        case RM_CMD_RESP:
+            printf(" ; REMOTE AT COMMAND RESPONSE\n");
+            printf("frm_id: "); printf("%02X\n", frame->content.at.frame_id);
+            printf("src_ad: "); print_data(frame->content.at.source_addr,8,HEX);
+            printf("net_ad: "); printf("%02X\n", frame->content.at.network_addr.i16);
+            printf("at_cmd: "); printf("%s\n", frame->content.at.command);
+            printf("status: "); printf("%02X ", frame->content.at.status);
+            switch (frame->content.at.status) {
+                case 0: printf("OK\n"); break;
+                case 1: printf("Error\n"); break;
+                case 2: printf("Invalid command\n"); break;
+                case 3: printf("Invalid Parameter\n");  break;
+            }
+            printf("values: "); printf("%02X\n", frame->content.at.values);
+
+            break;
+
         case TX_STATUS:
             printf(" ; TX STATUS\n");
             printf("frm_id: "); printf("%02X\n", frame->content.tx.frame_id);
@@ -329,8 +408,19 @@ int XbeeCommunicator::begin (const int* panid, const int* vendorid) {
 
     // discovery
     this->send_atcmd("ND", "");
-    //msleep(1000);
+    msleep(1000);
     this->send_atcmd("MY", "");
+    msleep(1000);
+//uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
+//    char buf[] = {0x1,0x2,0x3};
+//    send((char*)buf, gw_node, 0xFFFF);
+
+    uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
+    char high[] = { 0x5, 0x0 };
+    char low[] = { 0x4, 0x0 };
+    this->send_remote_atcmd(gw_node, 0xFFFF, "D0", high);
+    msleep(50);
+    this->send_remote_atcmd(gw_node, 0xFFFF, "D0", low);
 
     return ret;
 }
