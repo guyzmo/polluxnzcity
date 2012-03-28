@@ -1,5 +1,9 @@
 <%inherit file="base.tpl"/>
 <h1>Pollux nz city configuration utility</h1>
+%if welldone:
+<br />
+<div class="alert fade in alert-success">Configuration successfully updated<a class="close  fade in" data-dismiss="alert" href="#">&times;</a></div>
+%endif
 <form class="form-horizontal" method="post">
    <fieldset>
    <legend>General configuration</legend>

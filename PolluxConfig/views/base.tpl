@@ -9,6 +9,7 @@
 
 	<script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
 	<script type="text/javascript" src="/js/bootstrap.min.js"></script>
+	<script src="/js/bootstrap-alert.js"></script>
 	<script type="text/javascript" src="/js/custom.js"></script>${self.extra_js()}
 
     <link href="/css/bootstrap.min.css" rel="stylesheet">
@@ -53,7 +54,7 @@
 <div class="container">
 	${self.body()}
 <footer>
-  <p>&copy; Company 2012</p>
+  <p>PolluxNzCity™ By <a href="http://ckab.net">CKAB</a>© 2012</p>
 </footer>
 </div> <!-- /container -->
 </body>

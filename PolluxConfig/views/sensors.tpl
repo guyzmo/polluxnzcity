@@ -1,5 +1,9 @@
 <%inherit file="base.tpl"/>
 <h1>Pollux nz city configuration utility</h1>
+%if welldone:
+<br />
+<div class="alert alert-success">Configuration successfully updated<a class="close" data-dismiss="alert" href="#">&times;</a></div>
+%endif
 <form class="form-horizontal" method="post">
 
 <fieldset>
@@ -9,6 +13,7 @@
    <label class="control-label" for="sensor_addr">Sensor module at address</label>
    <div class="controls">
    <input type="text" class="input-xlarge" id="sensor_addr" name="sensor_addr" value="${name}">
+   <input type="hidden" id="sensor_addr_old" name="sensor_addr_old" value="${name}">
    <!--<p class="help-block">Supporting help text</p>-->
    </div>
    </div>
@@ -23,7 +28,10 @@
 	<tbody>
 		<tr>
 %for s in sensorl:
-			<td><input type="checkbox" name="${s["address"]}_${s["register"]}" id="${s["address"]}_${s["register"]}"/></td>
+<%
+checked = "checked" if s["activated"] else "" 
+%>
+			<td><input type="checkbox" name="${s["address"]}_${s["register"]}" id="${s["address"]}_${s["register"]}" ${checked} /></td>
 			<td><label for="${s["address"]}_${s["register"]}">${s["name"]}
 %if "unit" in s.keys():
 			(${s["unit"]})
