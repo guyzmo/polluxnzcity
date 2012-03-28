@@ -4,7 +4,8 @@
          /* The port where the XBee module is connected to */
         "tty_port" : "/dev/ttyO2",
         /* The sleep time between two updates from remote modules */
-        "wud_sleep_time" : "900"
+        "wud_sleep_time" : "900",
+        "activated": false
     },
     "datastores" : 
     { 
@@ -15,8 +16,9 @@
         },
         /* specific configuration for pachube data store */
         "pachube"   : { 
-            "post_url" : "",
-            "api_key"  : "" 
+            "post_url" : "http://theawesomepatchbe.com/api",
+            "api_key"  : "roxxkey",
+            "activated": false
         }
     }
 }

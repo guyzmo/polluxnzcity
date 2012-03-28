@@ -23,7 +23,7 @@
 	<tbody>
 		<tr>
 %for s in sensorl:
-			<td><input type="checkbox" name="${s["address"]}_${s["register"]}" id="${s["address"]}_${s["register"]}" /></td>
+			<td><input type="checkbox" name="${s["address"]}_${s["register"]}" id="${s["address"]}_${s["register"]}"/></td>
 			<td><label for="${s["address"]}_${s["register"]}">${s["name"]}
 %if "unit" in s.keys():
 			(${s["unit"]})

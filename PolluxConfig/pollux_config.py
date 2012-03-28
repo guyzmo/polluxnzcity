@@ -1,7 +1,8 @@
 #!/bin/env python
 
 
-from bottle import install, route, run, PluginError, HTTPError, debug, response, view, static_file
+from bottle import install, route, run, PluginError, HTTPError, debug, response, view, static_file, request
+from bottle import mako_view as view, mako_template as template
 
 from argparse import ArgumentParser
 
@@ -209,17 +210,56 @@ at respecting JSON's syntax.
 
 
 @route('/')
-@view('index')
+@view('accueil')
 def index():
-    return dict(config=config._config_map, datastores=config._datastores_map, sensors=sensors._sensors_map)
+    return dict(title="Homepage")
 
-@route('/images/<filename:re:.*\.png>#')
+@route('/sensors/')
+@view('sensors')
+def get_sensors():
+    return dict(title="Sensors",sensors=sensors._sensors_map)
+
+@route('/sensors/', method='POST')
+def post_sensors():
+    result = {request.forms.get('sensor_addr'):[]}         # build the start of the json
+    for key in request.forms.keys():                       # for each sensor return by form
+        if re.match("^0x[0-9]{1,3}_[0-9]{1,3}$",key):      # check if key is a valid I2C + Register addr
+            for sensor in sensors._sensors_map[request.forms.get('sensor_addr')]:            # get the matching sensor
+                print sensor,key
+                if sensor['address'] == key.split('_')[0] and sensor['register'] == key.split('_')[1]:
+                    result[request.forms.get('sensor_addr')].append(sensor)
+    return result
+
+    
+@route('/datastores/')
+@view('datastores')
+def get_datastores():
+    return dict(title="Datastores",datastores=config._datastores_map,)
+
+@route('/datastores/', method='POST')
+def post_datastores():
+    return "POST datastores"
+        
+@route('/advanced/')
+@view('advanced')
+def get_advanced():
+    return dict(title="Advanced",config=config._config_map)
+
+@route('/advanced/', method='POST')
+def post_advanced():
+    return '{"wud_sleep_time":"%s","tty_port":"%s"}' % (request.forms.get('wud_sleep_time'),request.forms.get('tty_port'))
+
+@route('/css/<filename>')
 def get_image(filename):
-    return static_file(filename, root='static/images/', mimetype='image/png')
+    return static_file(filename, root='static/css/')
+    
+@route('/img/<filename>')
+def get_image(filename):
+    return static_file(filename, root='static/img/')
 
 @route('/js/<filename>')
 def get_javascript(filename):
-    return static_file(filename, root='static/javascript/')
+    return static_file(filename, root='static/js/')
 
 @route('/sensor/list')
 def sensor_list():
@@ -237,7 +277,7 @@ def sensor_get_sensors(addr,i2c):
     response.content_type = 'application/json; charset=UTF-8'
     l = [sensor for sensor in sensors.get_module(addr) if sensor['address'] == i2c]
     return json.dumps(l)
-
+        
 @route('/sensor/<addr>/<i2c>/<reg>')
 def sensor_get_register(addr,i2c,reg):
     response.content_type = 'application/json; charset=UTF-8'
