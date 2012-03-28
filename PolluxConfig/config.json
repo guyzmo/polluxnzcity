@@ -4,15 +4,15 @@
          /* The port where the XBee module is connected to */
         "tty_port" : "/dev/ttyO2",
         /* The sleep time between two updates from remote modules */
-        "wud_sleep_time" : "900",
-        "activated": false
+        "wud_sleep_time" : "900"
     },
     "datastores" : 
     { 
         /* specific configuration for citypulse data store */
         "citypulse" : { 
             "post_url" : "http://www2.star-apic.com/citypulse/data/SetArduinoData",
-            "api_key"  : "123456" 
+            "api_key"  : "123456",
+	        "activated": true
         },
         /* specific configuration for pachube data store */
         "pachube"   : { 

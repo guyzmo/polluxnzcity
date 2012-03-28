@@ -6,18 +6,19 @@
 %for name, datastore in datastores.iteritems():
 <fieldset>
 <legend>${name} <a class="toggle" href="#" onclick="toggle('${name}')">[+]</a></legend>
-<div id="${name}" style="display:none"><div class="control-group">
-   <label class="control-label" for="${name}_activated">activated</label>
-   <div class="controls">
-   <input type="checkbox" name="${name}_activated" id="${name}_activated" />
-   <!--<p class="help-block">Supporting help text</p>-->
-   </div>
-   </div>
+<div id="${name}" style="display:none">
 %for key, value in datastore.iteritems():
 <div class="control-group">
    <label class="control-label" for="${key}">${key}</label>
    <div class="controls">
+%if key == "activated":
+<%
+checked = "checked" if value else "" 
+%>
+   <input type="checkbox" name="${key}" id="${key}" ${checked} />
+%else:
    <input type="text" class="input-xlarge" id="${key}" name="${key}" value="${value}">
+%endif
    <!--<p class="help-block">Supporting help text</p>-->
    </div>
    </div>

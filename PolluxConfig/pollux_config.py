@@ -225,16 +225,15 @@ def post_sensors():
     for key in request.forms.keys():                       # for each sensor return by form
         if re.match("^0x[0-9]{1,3}_[0-9]{1,3}$",key):      # check if key is a valid I2C + Register addr
             for sensor in sensors._sensors_map[request.forms.get('sensor_addr')]:            # get the matching sensor
-                print sensor,key
                 if sensor['address'] == key.split('_')[0] and sensor['register'] == key.split('_')[1]:
-                    result[request.forms.get('sensor_addr')].append(sensor)
+                    result[request.forms.get('sensor_addr')].append(sensor) # if sensor match add it to result
     return result
 
     
 @route('/datastores/')
 @view('datastores')
 def get_datastores():
-    return dict(title="Datastores",datastores=config._datastores_map,)
+    return dict(title="Datastores",datastores=config._datastores_map)
 
 @route('/datastores/', method='POST')
 def post_datastores():
