@@ -1,7 +1,8 @@
 #!/bin/env python
 
 
-from bottle import install, route, run, PluginError, HTTPError, debug, response, view, static_file
+from bottle import install, route, run, PluginError, HTTPError, debug, response, view, static_file, request
+from bottle import mako_view as view, mako_template as template
 
 from argparse import ArgumentParser
 
@@ -86,6 +87,7 @@ class BottlePluginBase(object):
             return callback
         
         def wrapper(*args, **kwargs):
+            print "call wrapper"
             kwargs[self.keyword] = self
             try:
                 rv = callback(*args, **kwargs)
@@ -139,30 +141,27 @@ at respecting JSON's syntax.
             self._datastores_map = d["datastores"]
 
     def save(self):
+        print "call save"
         try:
-            f = open(self._path+"_config.json","w")
+            f = open(self._path+"config.json","w")
             f.write(self.__CONFIG_COMMENT)
             f.write(json.dumps(dict(configuration=self._config_map, datastores=self._datastores_map), sort_keys=True, indent=4))
         finally:
             f.close()
     
+    def set_configuration(self, config_d):
+        self._config_map = config_d
+        self.set_modified()
+
+    def set_datastores(self, dstores_d):
+        self._datastores_map = dstores_d
+        self.set_modified()
+
     def get_configuration(self):
         return self._config_map
 
     def get_datastores(self):
-        return self._datastores_map.keys()
-
-    def get_datastore_config(self, name):
-        return self._datastores_map[name]
-
-    def add_datastore(self, name, keyval):
-        d = json.loads(keyval)
-        self._datastores_map[name] = d
-        self.set_modified()
-
-    def set_config(self, key, val):
-        self._config_map[key] = val
-        self.set_modified()
+        return self._datastores_map
 
 class Sensors(BottlePluginBase):
     __CONFIG_COMMENT="""/*********************************************************************
@@ -189,37 +188,97 @@ at respecting JSON's syntax.
         f = open(path+"sensors.json")
         s = remove_comments("".join(f.readlines()))
         self._sensors_map = json.loads(s)
+        f = open(path+"sensors_list.json") # TODO curl http://...ckab.net/.../sensors_list
+        s = remove_comments("".join(f.readlines()))
+        self._sensors_list = json.loads(s)
 
     def save(self):
-        f = open(self._path+"_sensors.json","w")
+        print "call save"
+        f = open(self._path+"sensors.json","w")
         f.write(self.__CONFIG_COMMENT)
         f.write(json.dumps(self._sensors_map, sort_keys=True, indent=4))
 
-    def get_modules(self):
-        return self._sensors_map.keys()
+    def get_sensors(self):
+        return self._sensors_map
 
-    def get_module(self, addr):
-        return self._sensors_map[addr]
+    def get_sensors_list(self):
+        return self._sensors_list
 
-    def set_module(self, addr, keyval):
-        d = json.loads(keyval)
-        self._sensors_map[addr] = d
+    def set_sensors(self, sensors_d):
+        self._sensors_map = sensors_d
         self.set_modified()
 
-
-
 @route('/')
-@view('index')
+@view('accueil')
 def index():
-    return dict(config=config._config_map, datastores=config._datastores_map, sensors=sensors._sensors_map)
+    return dict(title="Homepage")
 
-@route('/images/<filename:re:.*\.png>#')
+@route('/sensors/')
+@view('sensors')
+def get_sensors():
+    return dict(title="Sensors",sensors=sensors.get_sensors())
+
+@route('/sensors/', method='POST')
+@view('sensors')
+def post_sensors():
+    for sensor in sensors.get_sensors()[request.forms.get('sensor_addr_old')]:
+        sensor["activated"] = False
+    for key in request.forms.keys():                       # for each sensor return by form
+        if re.match("^0x[0-9]{1,3}_[0-9]{1,3}$",key):      # check if key is a valid I2C + Register addr
+            for sensor in sensors.get_sensors()[request.forms.get('sensor_addr_old')]: # get all locals sensors
+                if sensor['address'] == key.split('_')[0] and sensor['register'] == key.split('_')[1]: # if posted sensor is the current local sensor
+                    sensor['activated'] = True
+    result = sensors.get_sensors()
+    if request.forms.get('sensor_addr_old') != request.forms.get('sensor_addr'):
+        result[request.forms.get('sensor_addr')] = result[request.forms.get('sensor_addr_old')]
+        del(result[request.forms.get('sensor_addr_old')])
+    sensors.set_sensors(result)
+    sensors.save()
+    return dict(title="Sensors configuration Saved",sensors=sensors.get_sensors(),welldone=True)
+
+@route('/datastores/')
+@view('datastores')
+def get_datastores():
+    return dict(title="Datastores",datastores=config._datastores_map)
+
+@route('/datastores/', method='POST')
+@view('datastores')
+def post_datastores():
+    result = config.get_datastores()
+    for key in request.forms.keys():
+        key_name = "_".join(key.split("_")[1:])
+        print key_name
+        result[key.split("_")[0]][key_name] = request.forms.get(key)
+    config.set_datastores(result)
+    config.save()
+    return dict(title="Datastores configuration Saved",datastores=config._datastores_map,welldone=True)
+        
+@route('/advanced/')
+@view('advanced')
+def get_advanced():
+    return dict(title="Advanced",config=config._config_map)
+
+@route('/advanced/', method='POST')
+@view('advanced')
+def post_advanced():
+    result = config.get_configuration()
+    for key in request.forms.keys():
+        result[key] = request.forms.get(key)
+    config.set_configuration(result)
+    config.save()
+    return dict(title="Advanced configuration Saved",config=config._config_map,welldone=True)
+
+@route('/css/<filename>')
 def get_image(filename):
-    return static_file(filename, root='static/images/', mimetype='image/png')
+    return static_file(filename, root='static/css/')
+    
+@route('/img/<filename>')
+def get_image(filename):
+    return static_file(filename, root='static/img/')
 
 @route('/js/<filename>')
 def get_javascript(filename):
-    return static_file(filename, root='static/javascript/')
+    return static_file(filename, root='static/js/')
 
 @route('/sensor/list')
 def sensor_list():
@@ -237,7 +296,7 @@ def sensor_get_sensors(addr,i2c):
     response.content_type = 'application/json; charset=UTF-8'
     l = [sensor for sensor in sensors.get_module(addr) if sensor['address'] == i2c]
     return json.dumps(l)
-
+        
 @route('/sensor/<addr>/<i2c>/<reg>')
 def sensor_get_register(addr,i2c,reg):
     response.content_type = 'application/json; charset=UTF-8'

@@ -1,22 +1,42 @@
+/*********************************************************************
+                Pollux'NZ City configuration file
+
+This file configures general settings (in configuration section)
+and the datastores settings (in datastores section) are used to 
+configure where and how to push data to.
+
+in configuration section :
+    * tty_port : the serial port character device to be used to
+                    communicate with the zigbee module
+    * wud_sleep_time : the time the sensor module shall sleep 
+                    between two measures
+
+in datastores section :
+    * each subsection is the name of the matching datastore module
+        (to be included at compilation time, or it will be ignored)
+    * in each subsection, the values are used by the datastore module.
+        typically: 'post_url' for the address to post to, and 'api_key'
+        to sign the data.
+
+This file is generated automatically, please modify it using the
+tools given with the pollux'nz city software. Or be very careful
+at respecting JSON's syntax.
+*********************************************************************/
 {
-    "configuration" :
-    { 
-         /* The port where the XBee module is connected to */
-        "tty_port" : "/dev/ttyO2",
-        /* The sleep time between two updates from remote modules */
-        "wud_sleep_time" : "900"
-    },
-    "datastores" : 
-    { 
-        /* specific configuration for citypulse data store */
-        "citypulse" : { 
-            "post_url" : "http://www2.star-apic.com/citypulse/data/SetArduinoData",
-            "api_key"  : "123456" 
-        },
-        /* specific configuration for pachube data store */
-        "pachube"   : { 
-            "post_url" : "",
-            "api_key"  : "" 
+    "configuration": {
+        "tty_port": "/dev/ttyO2", 
+        "wud_sleep_time": "900"
+    }, 
+    "datastores": {
+        "citypulse": {
+            "activated": "on", 
+            "api_key": "123456", 
+            "post_url": "http://www2.star-apic.com/citypulse/data/SetArduinoData"
+        }, 
+        "pachube": {
+            "activated": "on", 
+            "api_key": "roxxkey", 
+            "post_url": "http://theawesomepatchbe.com/apiv2"
         }
     }
 }

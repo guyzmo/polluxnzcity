@@ -1,11 +1,62 @@
-{ 
-    "0x0013A20040698679" : 
-    [
-        { "name" : "Fan",                         "address" : "0x27", "register" : "0" },
-        { "name" : "Noise Level", "unit" : "dB",  "address" : "0x27", "register" : "1" },
-        { "name" : "Temperature", "unit" : "C",   "address" : "0x27", "register" : "2" },
-        { "name" : "Dust",        "unit" : "ppm", "address" : "0x26", "register" : "0" },
-        { "name" : "NO2",         "unit" : "ppm", "address" : "0x28", "register" : "0" },
-        { "name" : "CO",          "unit" : "ppm", "address" : "0x29", "register" : "0" } 
+/*********************************************************************
+                Pollux'NZ City sensors file
+
+This file defines the list of sensor modules that are enabled in
+each sensor. For each address, shall figure:
+
+    * a map containing either:
+        * name, unit, address and register for sensor submodules (e.g. Temperature)
+        * name, address and register for action submodules (e.g. Fan)
+
+The data figuring in this file is used to generate the data sent
+to the datastores.
+
+This file is generated automatically, please modify it using the
+tools given with the pollux'nz city software. Or be very careful
+at respecting JSON's syntax.
+*********************************************************************/
+{
+    "0x0013A20040698679": [
+        {
+            "activated": true, 
+            "address": "0x27", 
+            "name": "Fan", 
+            "register": "0"
+        }, 
+        {
+            "activated": true, 
+            "address": "0x27", 
+            "name": "Noise Level", 
+            "register": "1", 
+            "unit": "dB"
+        }, 
+        {
+            "activated": true, 
+            "address": "0x27", 
+            "name": "Temperature", 
+            "register": "2", 
+            "unit": "C"
+        }, 
+        {
+            "activated": true, 
+            "address": "0x26", 
+            "name": "Dust", 
+            "register": "0", 
+            "unit": "ppm"
+        }, 
+        {
+            "activated": false, 
+            "address": "0x28", 
+            "name": "NO2", 
+            "register": "0", 
+            "unit": "ppm"
+        }, 
+        {
+            "activated": false, 
+            "address": "0x29", 
+            "name": "CO", 
+            "register": "0", 
+            "unit": "ppm"
+        }
     ]
 }
