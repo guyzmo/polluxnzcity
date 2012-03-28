@@ -37,6 +37,8 @@
 #include <termios.h>
 #include <sys/epoll.h>
 
+#include <string>
+
 #include <pollux_toolbox.h>
 
 #define EPOLL_MAX_CONN 2
@@ -52,14 +54,14 @@ class SerialException {
 };
 
 class Serial {
-    const char* port;
+    const std::string port;
 
     int epfd;
     int fd;
     struct epoll_event events;
 
     public:
-        Serial(const char* port);
+        Serial(const std::string& port);
 
         int begin(int speed);
         int poll();

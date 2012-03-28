@@ -21,7 +21,7 @@ RM=/bin/rm -rf
 HEADERS=include/
 SRC=src/
 
-CFLAGS=-lgcrypt -lgpg-error -lcurl -g3 -std=c++0x -Wno-write-strings# -DVERBOSE
+CFLAGS=-lgcrypt -lgpg-error -lcurl -ljson -g3 -std=c++0x -Wno-write-strings -DVERBOSE
 
 %.o:
 	$(CXX) $(CFLAGS) -I$(HEADERS) -o $*.o -c $*.C

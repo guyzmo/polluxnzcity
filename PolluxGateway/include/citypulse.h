@@ -18,6 +18,9 @@ char* calculate_sha1(const char* msg, const char* key) {
     strncpy(message, msg, strlen(msg));
     strncpy(message+strlen(msg), key, strlen(key));
 
+    printf("%d\n", strlen(message));
+    printf("%s\n", message);
+
     /* Length of resulting sha1 hash - gcry_md_get_algo_dlen
      * returns digest lenght for an algo */
     int hash_len = gcry_md_get_algo_dlen( GCRY_MD_SHA1 );
@@ -32,7 +35,7 @@ char* calculate_sha1(const char* msg, const char* key) {
 
     /* calculate the SHA1 digest. This is a bit of a shortcut function
      * most gcrypt operations require the creation of a handle, etc. */
-    gcry_md_hash_buffer( GCRY_MD_SHA1, hash, message, msg_len );
+    gcry_md_hash_buffer( GCRY_MD_SHA1, hash, msg, strlen(msg) );
 
     /* Convert each byte to its 2 digit ascii
      * hex representation and place in out */

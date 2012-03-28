@@ -40,7 +40,7 @@ int SerialException::get_code() {
 
 // Serial class
 
-Serial::Serial(const char* port) : port(port) {}
+Serial::Serial(const std::string& port) : port(port) {}
 
 int Serial::begin(int speed) {
     debug_print("Serial.begin()\n");
@@ -48,7 +48,7 @@ int Serial::begin(int speed) {
     struct epoll_event ev;
     struct termios my_termios;
 
-    fd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    fd = open(port.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd == -1) {
         perror("Unable to open serial port.");
         return -1;

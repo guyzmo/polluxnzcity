@@ -26,7 +26,7 @@
 
 #include <xbee_communicator.h>
 
-void XbeeCommunicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbytes, uint8_t* data, uint8_t frameid, uint8_t bradius, uint8_t options) {
+void Xbee_communicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbytes, uint8_t* data, uint8_t frameid, uint8_t bradius, uint8_t options) {
     int checksum;
     uint8_t len;
 
@@ -63,7 +63,7 @@ void XbeeCommunicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbyte
     debug_println("'");
 }
 
-void XbeeCommunicator::send_atcmd(const char* at_command, const char* param_value) {
+void Xbee_communicator::send_atcmd(const char* at_command, const char* param_value) {
     debug_print("send_at_cmd(");debug_print(at_command);debug_print(")\n");
 
     uint16_t len = 0;
@@ -96,7 +96,7 @@ void XbeeCommunicator::send_atcmd(const char* at_command, const char* param_valu
     debug_println("'");
 }
 
-void XbeeCommunicator::send_remote_atcmd(uint8_t* addr64, uint16_t network, const char* at_command, const char* param_value) {
+void Xbee_communicator::send_remote_atcmd(uint8_t* addr64, uint16_t network, const char* at_command, const char* param_value) {
     debug_print("send_remote_at_cmd(");debug_print(at_command);debug_print(")\n");
 
     uint16_t len = 0;
@@ -140,7 +140,7 @@ void XbeeCommunicator::send_remote_atcmd(uint8_t* addr64, uint16_t network, cons
     debug_println("'");
 }
 
-int XbeeCommunicator::rcpt_frame(XBeeFrame* frame) {
+int Xbee_communicator::rcpt_frame(XBeeFrame* frame) {
     uint8_t b;
     frame->checksum = 0;
     //1. GET FRAME DELIMITER
@@ -172,11 +172,12 @@ int XbeeCommunicator::rcpt_frame(XBeeFrame* frame) {
             frame->api_id = RM_CMD_RESP;                          frame->checksum += RM_CMD_RESP;
             frame->content.at.frame_id = this->read();            frame->checksum += frame->content.at.frame_id;
 
-            frame->content.at.network_addr.i8.msb = this->read(); frame->checksum += frame->content.at.network_addr.i8.msb;
-            frame->content.at.network_addr.i8.lsb = this->read(); frame->checksum += frame->content.at.network_addr.i8.lsb;
             for (uint8_t i=0;i<8;++i) {
                 frame->content.at.source_addr[i] = this->read();  frame->checksum += frame->content.at.source_addr[i];
+                printf("(%02X)", frame->content.at.source_addr[i]);
             }
+            frame->content.at.network_addr.i8.msb = this->read(); frame->checksum += frame->content.at.network_addr.i8.msb;
+            frame->content.at.network_addr.i8.lsb = this->read(); frame->checksum += frame->content.at.network_addr.i8.lsb;
             frame->content.at.command[0] = this->read();          frame->checksum += frame->content.at.command[0];
             frame->content.at.command[1] = this->read();          frame->checksum += frame->content.at.command[1];
             frame->content.at.status = this->read();              frame->checksum += frame->content.at.status;
@@ -198,11 +199,11 @@ int XbeeCommunicator::rcpt_frame(XBeeFrame* frame) {
 
         case RX_PACKET:
             frame->api_id = RX_PACKET;                            frame->checksum += RX_PACKET;
-            frame->content.rx.network_addr.i8.msb = this->read(); frame->checksum += frame->content.rx.network_addr.i8.msb;
-            frame->content.rx.network_addr.i8.lsb = this->read(); frame->checksum += frame->content.rx.network_addr.i8.lsb;
             for (uint8_t i=0;i<8;++i) {
                 frame->content.rx.source_addr[i] = this->read();  frame->checksum += frame->content.rx.source_addr[i];
             }
+            frame->content.rx.network_addr.i8.msb = this->read(); frame->checksum += frame->content.rx.network_addr.i8.msb;
+            frame->content.rx.network_addr.i8.lsb = this->read(); frame->checksum += frame->content.rx.network_addr.i8.lsb;
             frame->content.rx.options = this->read();             frame->checksum += frame->content.rx.options;
             for (uint8_t i=0;i<frame->length.i16-RX_PACKET_LEN;++i) {
                 frame->content.rx.payload[i] = this->read();      frame->checksum += frame->content.rx.payload[i];
@@ -285,7 +286,7 @@ int XbeeCommunicator::rcpt_frame(XBeeFrame* frame) {
     return 1;
 }
 
-void XbeeCommunicator::print_data(uint8_t* data, uint16_t len, int type) {
+void Xbee_communicator::print_data(uint8_t* data, uint16_t len, int type) const {
     if (type == HEX) {
         for (uint16_t i=0;i<min(len,100);++i)
             printf("%02X", (uint8_t)data[i]);
@@ -296,7 +297,7 @@ void XbeeCommunicator::print_data(uint8_t* data, uint16_t len, int type) {
     printf("\n");
 }
 
-void XbeeCommunicator::print_frame(XBeeFrame* frame) {
+void Xbee_communicator::print_frame(XBeeFrame* frame) const {
     printf("-- Frame --\n");
     printf("length: "); printf("%d\n", frame->length.i16);
     printf("api_id: "); printf("%02X", frame->api_id);
@@ -396,10 +397,10 @@ void XbeeCommunicator::print_frame(XBeeFrame* frame) {
     printf("-- End of Frame --\n");
 }
 
-XbeeCommunicator::XbeeCommunicator(char* port) : Serial(port) {}
+Xbee_communicator::Xbee_communicator(const std::string& port) : Serial(port) {}
 
-int XbeeCommunicator::begin (const int* panid, const int* vendorid) {
-    debug_print("XbeeCommunicator.begin()\n");
+int Xbee_communicator::begin() {
+    debug_print("Xbee_communicator.begin()\n");
     int ret = Serial::begin(B9600);
     if (ret <= 0)
         return ret;
@@ -415,6 +416,7 @@ int XbeeCommunicator::begin (const int* panid, const int* vendorid) {
 //    char buf[] = {0x1,0x2,0x3};
 //    send((char*)buf, gw_node, 0xFFFF);
 
+    // TODO for each node in config file, WAKE UP !
     uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
     char high[] = { 0x5, 0x0 };
     char low[] = { 0x4, 0x0 };
@@ -425,7 +427,7 @@ int XbeeCommunicator::begin (const int* panid, const int* vendorid) {
     return ret;
 }
 
-int XbeeCommunicator::read(bool no_esc) {
+int Xbee_communicator::read(bool no_esc) {
     try {
         int c = Serial::read();
         msleep(TIMING);
@@ -441,7 +443,7 @@ int XbeeCommunicator::read(bool no_esc) {
     }
 }
 
-ssize_t XbeeCommunicator::write(uint8_t i) {
+ssize_t Xbee_communicator::write(uint8_t i) {
     size_t s=0;
 
     msleep(TIMING);
@@ -462,7 +464,7 @@ ssize_t XbeeCommunicator::write(uint8_t i) {
     }
 }
 
-void XbeeCommunicator::send(char* data) {
+void Xbee_communicator::send(char* data) {
     this->xmit_req(/* hardware addr */ (uint8_t*)COORDINATOR_ADDR,
                 /* network bcast */ (uint16_t)BROADCAST_NET,
                 /* data's length */ strlen(data), 
@@ -473,7 +475,7 @@ void XbeeCommunicator::send(char* data) {
     if (frm_id = 0xFF)
         frm_id = 1;
 }
-void XbeeCommunicator::send(char* data, uint8_t* addr=(uint8_t*)COORDINATOR_ADDR, uint16_t network=(uint16_t)BROADCAST_NET) {
+void Xbee_communicator::send(char* data, uint8_t* addr=(uint8_t*)COORDINATOR_ADDR, uint16_t network=(uint16_t)BROADCAST_NET) {
     this->xmit_req(/* hardware addr */ (uint8_t*)addr,
                 /* network bcast */ (uint16_t)network, 
                 /* data's length */ strlen(data), 
@@ -485,7 +487,7 @@ void XbeeCommunicator::send(char* data, uint8_t* addr=(uint8_t*)COORDINATOR_ADDR
         frm_id = 1;
 }
 
-void XbeeCommunicator::recv() {
+void Xbee_communicator::recv() {
     int err=0;
     char c=0;
     XBeeFrame frame;
@@ -520,7 +522,7 @@ void XbeeCommunicator::recv() {
     }
 }
 
-void XbeeCommunicator::run (XBeeFrame* frame) {
+void Xbee_communicator::run (XBeeFrame* frame) {
     this->print_frame(frame);
 }
 

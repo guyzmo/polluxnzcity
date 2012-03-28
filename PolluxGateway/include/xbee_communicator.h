@@ -115,7 +115,7 @@ typedef struct xbee_frame {
 
 // --------------------------------------------------------------- XBEE Lib
 
-class XbeeCommunicator : public Serial {
+class Xbee_communicator : public Serial {
 
     int frm_id;
 
@@ -125,13 +125,13 @@ class XbeeCommunicator : public Serial {
     int rcpt_frame(XBeeFrame* frame);
 
     protected:
-        void print_data(uint8_t* data, uint16_t len, int type);
-        void print_frame(XBeeFrame* frame);
+        void print_data(uint8_t* data, uint16_t len, int type) const;
+        void print_frame(XBeeFrame* frame) const;
         
     public:
-        XbeeCommunicator(char* port);
+        Xbee_communicator(const std::string& port);
 
-        int begin (const int* panid, const int* vendorid);
+        int begin ();
 
         int read(bool no_esc=false);
         ssize_t write(uint8_t i);
