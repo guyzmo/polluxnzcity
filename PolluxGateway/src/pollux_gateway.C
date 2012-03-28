@@ -461,27 +461,27 @@ class XbeePollux : public XbeeCommunicator {
             switch (payload.get_type()) {
                 case I2C_CHR:
                     json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()<<"\""\
-                               <<",\"v\":\""<<payload.get_value_as_char()<<"\""\
+                               <<",\"v\":"<<payload.get_value_as_char()\
                                <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()<<"\""\
-                               <<",\"p\":\"0\"}";
+                               <<",\"p\":0}";
                     break;
                 case I2C_INT:
                     json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()<<"\""\
-                               <<",\"v\":\""<<payload.get_value_as_int()<<"\""\
+                               <<",\"v\":"<<payload.get_value_as_int()\
                                <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()<<"\""\
-                               <<",\"p\":\"0\"}";
+                               <<",\"p\":0}";
                     break;
                 case I2C_FLT:
                     json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()<<"\""\
-                               <<",\"v\":\""<<payload.get_value_as_float()<<"\""\
+                               <<",\"v\":"<<payload.get_value_as_float()\
                                <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()<<"\""\
-                               <<",\"p\":\"0\"}";
+                               <<",\"p\":0}";
                     break;
                 case I2C_DBL:
                     json_string<<"{\"k\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_name()<<"\""\
-                               <<",\"v\":\""<<payload.get_value_as_double()<<"\""\
+                               <<",\"v\":"<<payload.get_value_as_double()\
                                <<",\"u\":\""<<sensors_map[payload.get_i2c_address()]->at(payload.get_i2c_register()).get_unit()<<"\""\
-                               <<",\"p\":\"0\"}";
+                               <<",\"p\":0}";
                     break;
                 default:
                     printf("measure from i2c(%02X,%02X) of type %d unsupported\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
@@ -614,7 +614,7 @@ int main(void) {
     sensor = new std::vector<Sensor>();
     sensor->push_back(Action("Fan",0x27, 0));
     sensor->push_back(Sensor("Noise level","dB",0x27, 1));
-    sensor->push_back(Sensor("Temperature","ºC", 0x27, 2));
+    sensor->push_back(Sensor("Temperature","degree C", 0x27, 2));
     sensors_map[0x27] = sensor;
 
     //sensor = new std::vector<Sensor>();
