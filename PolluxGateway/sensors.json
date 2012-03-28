@@ -1,0 +1,11 @@
+{ 
+    "0x0013A20040698675" : 
+        [
+        { "name" : "Fan",                         "address" : "0x27", "register" : "0" },
+        { "name" : "Noise Level", "unit" : "dB",  "address" : "0x27", "register" : "1" },
+        { "name" : "Temperature", "unit" : "C",   "address" : "0x27", "register" : "2" }/*,
+        { "name" : "Dust",        "unit" : "ppm", "address" : "0x26", "register" : "0" },
+        { "name" : "NO2",         "unit" : "ppm", "address" : "0x28", "register" : "0" },
+        { "name" : "CO",          "unit" : "ppm", "address" : "0x29", "register" : "1" } */
+    ]
+}
