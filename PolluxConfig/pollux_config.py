@@ -213,6 +213,11 @@ at respecting JSON's syntax.
 def index():
     return dict(title="Homepage")
 
+@route('/datas/')
+@view('datas')
+def datas():
+    return dict(title="My Datas")
+
 @route('/sensors/')
 @view('sensors')
 def get_sensors():
@@ -271,7 +276,11 @@ def post_advanced():
 @route('/css/<filename>')
 def get_image(filename):
     return static_file(filename, root='static/css/')
-    
+   
+@route('/data/<filename>')
+def get_image(filename):
+    return static_file(filename, root='static/data/')
+	
 @route('/img/<filename>')
 def get_image(filename):
     return static_file(filename, root='static/img/')

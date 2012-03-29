@@ -42,6 +42,7 @@
       <div class="nav-collapse">
         <ul class="nav">
           <li><a href="/">Home</a></li>
+          <li><a href="/datas/">MyDatas</a></li>
           <li><a href="/sensors/">Sensors</a></li>
           <li><a href="/datastores/">Datastores</a></li>
           <li><a href="/advanced/">Advanced</a></li>
