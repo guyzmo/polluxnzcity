@@ -59,14 +59,15 @@ class Serial {
     int epfd;
     int fd;
     struct epoll_event events;
+    int poll_wait;
 
     public:
-        Serial(const std::string& port);
+        Serial(const std::string& port, int poll_wait);
 
         int begin(int speed);
         int poll();
 
-        virtual void recv();
+        virtual void recv(int i);
 
         virtual char read();
         virtual ssize_t write(char* data, int len);

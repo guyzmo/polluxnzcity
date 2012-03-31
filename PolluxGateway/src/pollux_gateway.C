@@ -659,7 +659,41 @@ class Pollux_configurator {
             values_json_list.push_back(json_string.str());
             return;
         }
+        
+        void store_csv() {
+            ///// CSV PART
+            std::ostringstream csv_string;
+
+            /// date format
+            time_t rawtime;
+            struct tm * timeinfo;
+            char buffer [80];
+
+            time ( &rawtime );
+            timeinfo = localtime ( &rawtime );
+
+            strftime (buffer,80,"%Y/%m/%d %H:%M:%S",timeinfo);
+            csv_string << buffer <<",";
+            /// date format
+
+            for (std::vector<std::string>::iterator it=values_csv_list.begin() ; it < values_csv_list.end(); ++it )
+                if (it+1 != values_csv_list.end())
+                    csv_string << *it <<",";
+                else
+                    csv_string << *it;
+            values_csv_list.clear();
+            csv_string<<std::endl;
+
+            FILE* fd = fopen("sensor_values.csv","a");
+            fputs(csv_string.str().c_str(),fd);
+            fclose(fd);
+            std::cout<<"written data to file !"<<std::endl;
+            ///// CSV PART
+        }
+
         void push_data() {
+            store_csv();
+            
             // TODO : parsing datastores json file
             std::ostringstream json_string;
 
@@ -667,8 +701,9 @@ class Pollux_configurator {
             for (std::vector<std::string>::iterator it=values_json_list.begin() ; it < values_json_list.end(); ++it )
                 if (it+1 != values_json_list.end())
                     json_string << *it <<",";
-                else
-                    json_string << *it;
+            // TODO : parsing geoloc json file
+            json_string << "{\"k\": \"lat\", \"v\": 48.8706573 },";
+            json_string << "{\"k\": \"lon\", \"v\": 2.3413066 }";
             json_string<<"]";
 
             printf("Pushing data to citypulse: '%s'\n", json_string.str().c_str());
@@ -716,7 +751,8 @@ class Pollux_observer : public Xbee_communicator {
         sigaction(SIGINT, &sigIntHandler, NULL);
     }
     public:
-        Pollux_observer(Pollux_configurator& conf) : Xbee_communicator(conf.get_config_option(std::string("tty_port"))), config(conf) { 
+        Pollux_observer(Pollux_configurator& conf) : Xbee_communicator(conf.get_config_option(std::string("tty_port")), 
+                                                                       atoi(conf.get_config_option(std::string("wud_sleep_time")).c_str())), config(conf) { 
             Beagle::UART::enable_uart2();
             Beagle::Leds::enable_leds();
             Beagle::Leds::set_status_led();
@@ -738,6 +774,17 @@ class Pollux_observer : public Xbee_communicator {
                 send(buffer, frame.get_node_address(), frame.get_network());
             }
             delete(buffer);
+        }
+
+        void wake_up() {
+            // TODO: for each module
+            uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
+
+            char high[] = { 0x5, 0x0 };
+            char low[] = { 0x4, 0x0 };
+            this->send_remote_atcmd(gw_node, 0xFFFF, "D0", high);
+            msleep(50);
+            this->send_remote_atcmd(gw_node, 0xFFFF, "D0", low);
         }
 
         void run (XBeeFrame* frame) {

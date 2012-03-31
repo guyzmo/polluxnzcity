@@ -40,7 +40,7 @@ int SerialException::get_code() {
 
 // Serial class
 
-Serial::Serial(const std::string& port) : port(port) {}
+Serial::Serial(const std::string& port, int poll_wait) : port(port), poll_wait(poll_wait) {}
 
 int Serial::begin(int speed) {
     debug_print("Serial.begin()\n");
@@ -86,18 +86,19 @@ int Serial::begin(int speed) {
 int Serial::poll() {
     //printf("poll()\n");
 
-    int n = epoll_wait(epfd, &events, EPOLL_MAX_CONN, EPOLL_RUN_TIMEOUT);
+    int n = epoll_wait(epfd, &events, EPOLL_MAX_CONN, poll_wait*1000);
 
     if(n < 0)
         perror("Epoll failed");
-    else if(n==0)
+    else if(n==0) {
         printf("TIMEOUT\n");
-    else {
-        recv();
+        recv(1);
+    } else {
+        recv(0);
     }
 }
 
-void Serial::recv() {
+void Serial::recv(int i) {
     try {
         printf("Input: ");
         char c=-1;

@@ -177,6 +177,7 @@ class Pollux {
         nss_println("**** SLEEP MODE ****\n");
         // commit halting
         if (this->_halt) {
+            nss_println("sending halt command");
             char buf[] = {CMD_HALT,0,0,0,0,0};
             PolluxXbee::send((uint8_t*)buf,1);
         }

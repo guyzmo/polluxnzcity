@@ -396,7 +396,7 @@ void Xbee_communicator::print_frame(XBeeFrame* frame) const {
     printf("-- End of Frame --\n");
 }
 
-Xbee_communicator::Xbee_communicator(const std::string& port) : Serial(port) {}
+Xbee_communicator::Xbee_communicator(const std::string& port, int poll_wait) : Serial(port, poll_wait) {}
 
 int Xbee_communicator::begin() {
     debug_print("Xbee_communicator.begin()\n");
@@ -411,17 +411,6 @@ int Xbee_communicator::begin() {
     msleep(1000);
     this->send_atcmd("MY", "");
     msleep(1000);
-//uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
-//    char buf[] = {0x1,0x2,0x3};
-//    send((char*)buf, gw_node, 0xFFFF);
-
-    // TODO for each node in config file, WAKE UP !
-    uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
-    char high[] = { 0x5, 0x0 };
-    char low[] = { 0x4, 0x0 };
-    this->send_remote_atcmd(gw_node, 0xFFFF, "D0", high);
-    msleep(50);
-    this->send_remote_atcmd(gw_node, 0xFFFF, "D0", low);
 
     return ret;
 }
@@ -486,10 +475,13 @@ void Xbee_communicator::send(char* data, uint8_t* addr=(uint8_t*)COORDINATOR_ADD
         frm_id = 1;
 }
 
-void Xbee_communicator::recv() {
+void Xbee_communicator::recv(int i) {
     int err=0;
     char c=0;
     XBeeFrame frame;
+
+    if (i == 1)
+        return wake_up();
 
     for (int i=0;i<111;++i)
         frame.content.unknown[i] = 0x0;
@@ -523,5 +515,8 @@ void Xbee_communicator::recv() {
 
 void Xbee_communicator::run (XBeeFrame* frame) {
     this->print_frame(frame);
+}
+
+void Xbee_communicator::wake_up() {
 }
 
