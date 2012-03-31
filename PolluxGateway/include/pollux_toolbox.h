@@ -27,12 +27,14 @@
 
 #ifdef VERBOSE
 #   define debug_print(STR) printf("%s", STR);
+#   define debug_printf(...) printf(__VA_ARGS__);
 #   define debug_printc(STR) printf("%02X", STR);
 #   define debug_println(STR) printf("%s\n", STR);
 #   define debug_print_hex(STR) printf("%02X", STR);
 #   define debug_println_hex(STR) printf("%02X\n", STR);
 #else
 #   define debug_print(STR) 
+#   define debug_printf(...)
 #   define debug_printc(STR) 
 #   define debug_println(STR) 
 #   define debug_print_hex(STR) 

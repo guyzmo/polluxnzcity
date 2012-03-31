@@ -174,7 +174,6 @@ int Xbee_communicator::rcpt_frame(XBeeFrame* frame) {
 
             for (uint8_t i=0;i<8;++i) {
                 frame->content.at.source_addr[i] = this->read();  frame->checksum += frame->content.at.source_addr[i];
-                printf("(%02X)", frame->content.at.source_addr[i]);
             }
             frame->content.at.network_addr.i8.msb = this->read(); frame->checksum += frame->content.at.network_addr.i8.msb;
             frame->content.at.network_addr.i8.lsb = this->read(); frame->checksum += frame->content.at.network_addr.i8.lsb;

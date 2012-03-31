@@ -27,6 +27,10 @@
 
 #include <string>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
+#include <pollux_toolbox.h>
 #include <citypulse.h>
 #include <beaglebone.h>
 #include <xbee_communicator.h>
@@ -146,11 +150,13 @@ class Xbee_result {
             return node;
         }
         unsigned long long get_node_address_as_long() {
-            unsigned long long addr = 0;
+            uint64_t addr = 0;
             for (int i=0;i<8;++i) {
-                addr += (this->node[i]&0xFF) << 8*i;
+                addr = (addr<<8) | node[i];
             }
-            std::cout<<std::hex<<addr<<std::endl;
+
+            debug_printf("get_node_address_as_long(): long addr: %llx\n", addr);
+
             return addr;
         }
         int get_network() {
@@ -221,13 +227,13 @@ class Xbee_result {
         }
         void print() {
             char netstr[8];
-            if (command == 42)
-                printf("[RX] zigbee(Net:'%02X',Src:'%s') ; Content(len:%d,type:%s) : '%s'\n", get_network(), 
+            if (command == 42) {
+                debug_printf("[RX] zigbee(Net:'%02X',Src:'%s') ; Content(len:%d,type:%s) : '%s'\n", get_network(), 
                                                                                                 fmt_node_address((char*)netstr), 
                                                                                                 strlen(get_value_as_string()),
                                                                                                 fmt_type(),
                                                                                                 get_value_as_string());
-            else
+            } else
                 switch (type) {
                     case I2C_INT:
                         printf("[RX] zigbee(Net:'%02X',Src:'%s') ; i2c('%s',sensor:%02X:%d) ; Content(len:%d,type:%s) : '%d'\n", get_network(), 
@@ -495,6 +501,10 @@ class Pollux_configurator {
                 // if sensor declaration has name, address and register declared
                 for (int i=0;i<json_object_array_length(module);++i) {
                     struct json_object* sensor_module = json_object_array_get_idx(module, i);
+                    // skip deactivated modules
+                    if (json_object_has_key(sensor_module, "activated"))
+                        if (! json_object_get_boolean(json_object_object_get(sensor_module,"activated")))
+                            continue;
 
                     if (json_object_has_key(sensor_module, "name") && json_object_has_key(sensor_module, "address") && json_object_has_key(sensor_module, "register")) {
                         unsigned short int i2c_address, reg;
@@ -507,10 +517,12 @@ class Pollux_configurator {
                         delete(ss);
                         // if it is a Sensor module (i.e. that has a 'unit' key)
                         if (json_object_has_key(sensor_module, "unit")) {
+#ifdef VERBOSE
                             std::cout<<"module(0x"<<std::setw(16)<<std::setfill('0')<<std::hex<<zb_address<<":0x"<<i2c_address<<") := sensor("\
                                                                                                        <<json_object_get_string(json_object_object_get(sensor_module,"name"))<<","\
                                                                                                        <<json_object_get_string(json_object_object_get(sensor_module,"unit"))\
                                                                                                        <<",0x"<<std::hex<<i2c_address<<",0x"<<std::hex<<reg<<")"<<std::endl;
+#endif
                             sensors_map[zb_address][i2c_address].push_back(Sensor(json_object_get_string(json_object_object_get(sensor_module,"name")),
                                         json_object_get_string(json_object_object_get(sensor_module,"unit")),
                                         i2c_address, reg));
@@ -518,9 +530,11 @@ class Pollux_configurator {
                         } else  {
                             sensors_map[zb_address][i2c_address].push_back(Action(json_object_get_string(json_object_object_get(sensor_module,"name")),
                                         i2c_address, reg));
+#ifdef VERBOSE
                             std::cout<<"module(0x"<<std::setw(16)<<std::setfill('0')<<std::hex<<zb_address<<":0x"<<i2c_address<<") := action("\
                                                                                                        <<json_object_get_string(json_object_object_get(sensor_module,"name"))\
                                                                                                        <<",0x"<<std::hex<<i2c_address<<",0x"<<std::hex<<reg<<")"<<std::endl;
+#endif
                         }
                     }
                     module_iterator_map[zb_address].it = sensors_map[zb_address].begin();
@@ -530,70 +544,69 @@ class Pollux_configurator {
 
                 free(json_data);
             }
-                std::cout<<sensors_map[0x0013a20040698675][0x27][0].get_name()<<std::endl;
         }
 
         char* next_measure(unsigned long long int module) {
-            module = gw_node_l; // XXX HACKISH
             std::unordered_map<uint8_t, std::vector<Sensor> >::iterator& sensor_it = module_iterator_map[module].it;
             char* buf = (char*)malloc(sizeof(char)*3);
             buf[0] = 0x0;
             buf[1] = 0x0;
             buf[2] = 0x0;
-
-            /*
-            for(long_short_sensor_map::iterator iter = sensors_map.begin(); iter != sensors_map.end(); ++iter) {
-                unsigned long long k =  iter->first;
-                printf("%016X\n", k);
-            }
-            */
-                std::cout<<sensors_map[0x0013a20040698675][0x27][0].get_name()<<std::endl;
             
-
-                printf("%016X\n", module);
             if (sensors_map.size() == 0) {
-                std::cout<<"0"<<std::endl;
+                debug_print("sensors hashmap is empty. Can't get a measure.\n");
                 return buf;
 
             }
 
-            //if (sensors_map.find(gw_node_l) == sensors_map.end()) {
-            //    printf("1\n");
-            //    return buf;
-           // }
+            if (sensors_map.find(module) == sensors_map.end()) {
+                debug_printf("can't find module 0x%llx in sensors_map. Unknown zigbee module !\n", module);
+                return buf;
+            }
 
             if (sensor_it == sensors_map[module].end()) {
                 sensor_it = sensors_map[module].begin();
                 buf[0] = CMD_HALT;
                 buf[1] = 0x0;
                 buf[2] = 0x0;
-                std::cout<<"************** SENDING HALT COMMAND"<<std::endl;
+                printf("************** SENDING HALT COMMAND\n");
                 return buf;
-            }
+            } else if (sensor_it->second.size() > 1) 
+                if (module_iterator_map[module].stop == 0) {
+                    module_iterator_map[module].stop = sensor_it->second.size()-1;
+                    module_iterator_map[module].meas_idx = 0;
+                } else if (module_iterator_map[module].meas_idx < module_iterator_map[module].stop) {
+                    ++(module_iterator_map[module].meas_idx);
+                    /*debug_*/printf("************** SKIPPING MEASURE\n");
+                    return buf;
+                } else if (module_iterator_map[module].meas_idx == module_iterator_map[module].stop) {
+                    module_iterator_map[module].stop = 0;
+                    module_iterator_map[module].meas_idx = -1;
+                    /*debug_*/printf("************** LAST SKIPPING MEASURE\n");
 
-            if (sensor_it->second.size() > 1 and module_iterator_map[module].stop == 0) {
-                module_iterator_map[module].stop = sensor_it->second.size()-2;
-                module_iterator_map[module].meas_idx = 0;
-            } else if (module_iterator_map[module].meas_idx < module_iterator_map[module].stop) {
-                ++(module_iterator_map[module].meas_idx);
-                std::cout<<"************** SKIPPING MEASURE"<<std::endl;
-                return buf;
-            } else if (module_iterator_map[module].meas_idx == module_iterator_map[module].stop) {
-                module_iterator_map[module].stop = 0;
-                module_iterator_map[module].meas_idx = -1;
-                std::cout<<"************** LAST SKIPPING MEASURE"<<std::endl;
-                return buf;
-            }
+                    ++sensor_it;
+
+                    if (sensor_it == sensors_map[module].end()) {
+                        sensor_it = sensors_map[module].begin();
+                        buf[0] = CMD_HALT;
+                        buf[1] = 0x0;
+                        buf[2] = 0x0;
+                        printf("************** SENDING HALT COMMAND\n");
+                    }
+                    return buf;
+                }
 
             buf[0] = CMD_MEAS;
             buf[1] = (unsigned short int)(*sensor_it).first;
             buf[2] = (unsigned short int)(*sensor_it).second.size();
 
+            /*debug_*/printf("************** MEASURE(S) TO SEND: ");
             for (int i=0;i<(*sensor_it).second.size();++i)
-                std::cout<<"************** MEASURING: "<<(*sensor_it).second[i].get_name()<<std::endl;
-                printf("5\n");
+                /*debug_*/printf("%s, ", (*sensor_it).second[i].get_name().c_str());
+            /*debug_*/printf("\n");
 
-            ++sensor_it;
+            if (sensor_it->second.size() == 1) 
+                ++sensor_it;
 
             return buf;
         }
@@ -716,21 +729,22 @@ class Pollux_observer : public Xbee_communicator {
 
         void get_next_measure(Xbee_result& frame) {
             char* buffer = config.next_measure(frame.get_node_address_as_long());
-            printf("%02X, %02X, %02X\n", buffer[0], buffer[1], buffer[2]);
+
+            printf("buffer to send: %02X, %02X, %02X\n", buffer[0], buffer[1], buffer[2]);
             if (buffer[0] == 0x0)
                 printf("   -> skipping measure step\n");
             else {
-                printf("   -> sending measure to node %08X\n", frame.get_node_address_as_long());
-                send(buffer, frame.get_node_address(), 3);
+                printf("   -> sending measure to node %llx\n", frame.get_node_address_as_long());
+                send(buffer, frame.get_node_address(), frame.get_network());
             }
-            if (buffer[0] == CMD_HALT)
-                config.push_data();
             delete(buffer);
         }
 
         void run (XBeeFrame* frame) {
 
+#ifdef VERBOSE
             Xbee_communicator::run(frame); // print frame details
+#endif
             Xbee_result payload(frame);
 
             switch (frame->api_id) {
@@ -757,6 +771,10 @@ class Pollux_observer : public Xbee_communicator {
                             printf("*************** GOT WAKE UP\n");
                             get_next_measure(payload);
                             break;
+                        case CMD_HALT:
+                            printf("*************** GOT SLEEP DOWN\n");
+                            config.push_data();
+                            break;
                         case '*':
                             // just a comment ;)
                             break;
@@ -767,6 +785,20 @@ class Pollux_observer : public Xbee_communicator {
                     msleep(10);
                     Beagle::Leds::reset_rgb_led(Beagle::Leds::BLUE);
                     break;
+                case TX_STATUS:
+                    if (frame->content.tx.delivery_status != 0x00) {
+                        printf("Error sending frame: ");
+                        switch (frame->content.tx.delivery_status) {
+                            case 0x00: printf("Success\n"); break;
+                            case 0x02: printf("CCA Failure\n"); break;
+                            case 0x15: printf("Invalid destination endpoint\n"); break;
+                            case 0x21: printf("Network ACK Failure\n"); break;
+                            case 0x22: printf("Not Joined to Network\n"); break;
+                            case 0x23: printf("Self-addressed\n"); break;
+                            case 0x24: printf("Address Not Found\n"); break;
+                            case 0x25: printf("Route Not Found\n"); break;
+                        }
+                    }
                 default:
                     Beagle::Leds::set_rgb_led(Beagle::Leds::RED);
                     msleep(10);
@@ -871,37 +903,5 @@ int main(int argc, char* argv[]) {
         std::cerr<<"unbelievable exception"<<std::endl;
     }
     return 2;
-
-    /*
-    std::unordered_map<uint8_t, std::vector<Sensor>*> sensors_map;
-    std::vector<Sensor>* sensor;
-
-    sensor = new std::vector<Sensor>();
-    sensor->push_back(Sensor("Dust","ppm",0x26, 0));
-    sensors_map[0x26] = sensor;
-
-    sensor = new std::vector<Sensor>();
-    sensor->push_back(Action("Fan",0x27, 0));
-    sensor->push_back(Sensor("Noise level","dB",0x27, 1));
-    sensor->push_back(Sensor("Temperature","degree C", 0x27, 2));
-    sensors_map[0x27] = sensor;
-
-    //sensor = new std::vector<Sensor>();
-    //sensor->push_back(Sensor("CO","ppm",0x28));
-    //sensors_map[0x28] = sensor;
-    
-    //sensor = new std::vector<Sensor>();
-    //sensor->push_back(Sensor("NO2","ppm",0x29));
-    //sensors_map[0x29] = sensor;
-
-    Pollux_observer s = Pollux_observer("/dev/ttyO2",sensors_map);
-
-    if (s.begin(panid,venid) >= 0) {
-        for (;;) 
-            s.poll();
-        return 0;
-    }
-    return 1;
-    */
 }
 
