@@ -31,6 +31,7 @@
 
 class Pollux {
     i2c_result res;
+    bool _halt;
     uint8_t devlist[30];
     uint8_t devlist_idx;
 
@@ -113,6 +114,7 @@ class Pollux {
              * expected: 'hardware reset' and 'associated frames'
              */
             nss_println("**** WAKE MODE ****\n");
+            this->_halt=false;
 
             flashLed(LED_STA, 3, 100);
 
@@ -162,9 +164,9 @@ class Pollux {
             case CMD_MEAS:
                 for (uint8_t i=0;i<nb;++i)
                     do_measure(addr,i); //,params[i]);
-                    //do_measure(addr,i,params[i]); // XXX to be implemented
                 return 1;
             case CMD_HALT:
+                this->_halt = true;
                 return 0;
             default:
                 nss_println("### unknown command");
@@ -173,6 +175,11 @@ class Pollux {
 
     void halt() {
         nss_println("**** SLEEP MODE ****\n");
+        // commit halting
+        if (this->_halt) {
+            char buf[] = {CMD_HALT,0,0,0,0,0};
+            PolluxXbee::send((uint8_t*)buf,1);
+        }
         digitalWrite(LED_STA,LOW);
         // store watchdog sleep time
         // tell arduino to shuts itself down
