@@ -127,6 +127,7 @@ class Xbee_communicator : public Serial {
         void print_data(uint8_t* data, uint16_t len, int type) const;
         void print_frame(XBeeFrame* frame) const;
         void send_remote_atcmd(uint8_t* addr64, uint16_t network, const char* at_command, const char* param_value);
+        void send_remote_atcmd(uint64_t addr64, uint16_t network, const char* at_command, const char* param_value);
         
     public:
         Xbee_communicator(const std::string& port, int poll_wait);
@@ -138,6 +139,7 @@ class Xbee_communicator : public Serial {
 
         void send(char* payload);
         void send(char* payload, uint8_t* node, uint16_t net);
+        void send(char* payload, uint64_t node, uint16_t net);
         void recv(int i);
 
         virtual void run (XBeeFrame* frame);
