@@ -412,6 +412,8 @@ int Xbee_communicator::begin() {
     this->send_atcmd("MY", "");
     msleep(1000);
 
+    wake_up();
+
     return ret;
 }
 
@@ -518,5 +520,6 @@ void Xbee_communicator::run (XBeeFrame* frame) {
 }
 
 void Xbee_communicator::wake_up() {
+    printf("Got wakeup...\n");
 }
 
