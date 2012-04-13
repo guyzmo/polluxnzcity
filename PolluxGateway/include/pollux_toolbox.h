@@ -46,4 +46,12 @@
 #define HEX 1
 inline int min(int a, int b) { return (a < b) ? a : b; }
 
+#include <vector>
+#include <string>
+#include <unordered_map>
+
+typedef std::unordered_map<std::string /* target datastore */, std::unordered_map<std::string /* key */, std::string/* val */> > string_string_string_map;
+typedef std::unordered_map<std::string /* option */, std::string /* val */> string_string_map;
+
+
 #endif

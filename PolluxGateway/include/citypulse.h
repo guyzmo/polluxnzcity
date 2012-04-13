@@ -1,25 +1,31 @@
+// http://stackoverflow.com/questions/1602398/linux-dlopen-can-a-library-be-notified-when-it-is-loaded
+
 #ifndef __CITYPULSE_H__
 #define __CITYPULSE_H__
 
 #include <stdio.h>
 #include <string.h>
+#include <pollux_toolbox.h>
 
 #include <gcrypt.h>
 #include <curl/curl.h>
+
+#include <sstream>
 
 extern "C" {
 char* calculate_sha1(const char* msg, const char* key) {
     // code snippet found on http://ubuntuforums.org/archive/index.php/t-337664.html
 
     /* Length of message to encrypt */
-    int msg_len = strlen( msg )+strlen( key );
+    int msg_len = strlen( msg );
+    int key_len = strlen( key );
 
-    char* message = (char*)malloc(sizeof(char)*msg_len);
-    strncpy(message, msg, strlen(msg));
-    strncpy(message+strlen(msg), key, strlen(key));
+    char* message = (char*)malloc(sizeof(char)*(msg_len+key_len));
+    sprintf(message, "%s%s", msg, key);
 
-    printf("%d\n", strlen(message));
-    printf("%s\n", message);
+    debug_printf("calculate_sha1(): msg %d %s\n", strlen(msg), msg);
+    debug_printf("calculate_sha1(): key %d %s\n", strlen(key), key);
+    debug_printf("calculate_sha1(): msg+key %d %s\n", strlen(message), message);
 
     /* Length of resulting sha1 hash - gcry_md_get_algo_dlen
      * returns digest lenght for an algo */
@@ -35,7 +41,7 @@ char* calculate_sha1(const char* msg, const char* key) {
 
     /* calculate the SHA1 digest. This is a bit of a shortcut function
      * most gcrypt operations require the creation of a handle, etc. */
-    gcry_md_hash_buffer( GCRY_MD_SHA1, hash, msg, strlen(msg) );
+    gcry_md_hash_buffer( GCRY_MD_SHA1, hash, message, strlen(message) );
 
     /* Convert each byte to its 2 digit ascii
      * hex representation and place in out */
@@ -52,24 +58,20 @@ char* calculate_sha1(const char* msg, const char* key) {
     return out;
 }
 
-int post_to_citypulse(const char* content_string)
+int post_to_citypulse(const char* content_string, const char* url_fmt, const char* serial, const char* api_key, const char* proxy)
 {
     int err;
 
-    const char* url_fmt = "http://www2.star-apic.com/citypulse/data/SetArduinoData?s=%s&h=%s";
-    //const char* url_fmt = "http://192.168.69.225:42000/SetArduinoData?s=%s&h=%s";
-    const char* key = "123456";
-    char* hash = calculate_sha1(content_string, key);
-    char* url = (char*)malloc(sizeof(char)*strlen(url_fmt)+strlen(key)+strlen(hash));
+    char* hash = calculate_sha1(content_string, api_key);
+    char* url = (char*)malloc(sizeof(char)*strlen(url_fmt)+strlen(api_key)+strlen(hash));
     char* err_str = (char*)malloc(sizeof(char)*CURLOPT_ERRORBUFFER);
-
-    sprintf(url, url_fmt, key, hash);
 
     CURL *curl = curl_easy_init(); 
     if(curl) 
     { 
         curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, err_str);
         curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_PROXY, proxy);
         curl_easy_setopt(curl, CURLOPT_POST, 1); 
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, content_string); 
         curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(content_string)); 
@@ -89,6 +91,41 @@ int post_to_citypulse(const char* content_string)
 
     return err;
 }
+}
+
+int citypulse_post(std::vector<string_string_map*>& values_list, string_string_map& config) {
+    std::ostringstream val_string;
+    std::ostringstream url_fmt;
+    const char* proxy;
+
+    if (config.find("post_url") == config.end() or config.find("api_key") == config.end())
+        return -2;
+
+    if (config.find("proxy") == config.end())
+        proxy = "";
+    else
+        proxy = config["proxy"].c_str();
+
+    url_fmt<<config["post_url"].c_str()<<"?s=%s&h=%s";
+
+    val_string<<"[";
+
+    for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it) {
+        val_string<<"{\"k\":\""<<(**val_it)["k"]<<"\"";
+        val_string<<",\"v\":"<<(**val_it)["v"];
+        val_string<<",\"u\":\""<<(**val_it)["u"]<<"\"";
+        val_string<<",\"p\":"<<(**val_it)["p"]<<"}";
+        if (val_it+1 != values_list.end())
+            val_string<<",";
+    }
+
+    val_string<<"]";
+
+    return post_to_citypulse(val_string.str().c_str(), 
+                                url_fmt.str().c_str(), 
+                                /*serial*/config["api_key"].c_str(),
+                                config["api_key"].c_str(),
+                                proxy);
 }
 
 #endif
