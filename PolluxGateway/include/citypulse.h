@@ -17,11 +17,11 @@ char* calculate_sha1(const char* msg, const char* key) {
     // code snippet found on http://ubuntuforums.org/archive/index.php/t-337664.html
 
     /* Length of message to encrypt */
-    int msg_len = strlen( msg );
-    int key_len = strlen( key );
+    //int msg_len = strlen( msg );
+    //int key_len = strlen( key );
 
-    char* message = (char*)malloc(sizeof(char)*(msg_len+key_len));
-    sprintf(message, "%s%s", msg, key);
+    char* message = (char*)malloc(sizeof(char)*(strlen(msg)+strlen(key)));
+    snprintf(message, strlen(msg)+strlen(key), "%s%s", msg, key);
 
     debug_printf("calculate_sha1(): msg %d %s\n", strlen(msg), msg);
     debug_printf("calculate_sha1(): key %d %s\n", strlen(key), key);
@@ -50,9 +50,7 @@ char* calculate_sha1(const char* msg, const char* key) {
         snprintf ( p, 3, "%02x", hash[i] );
     }
 
-//#ifdef VERBOSE
-    printf( "hash value: %s\n", out );
-//#endif
+    debug_printf( "hash value: %s\n", out );
 
     free(message);
     return out;
@@ -83,7 +81,8 @@ int post_to_citypulse(const char* content_string, const char* url_fmt, const cha
 
         if (err < 0)
             printf("Error pushing to the web: %s\n", err_str);
-
+        
+        free(err_str);
         free(hash);
         free(url);
     } else
