@@ -37,15 +37,6 @@
 #include <citypulse.h>
 #include <local.h>
 
-const int panid[2] = {0x2,0xA};
-const int venid[8] = {0x0, 0x0, 0x1, 0x3, 0xA, 0x2, 0x0, 0x0};
-
-const uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
-const uint64_t gw_node_l = 0x0013A20040698675;
-
-////////////////////////////////////////////////////////////////////////////////
-
-
 ////////////////////////////////////////////////////////////////////////////////
 //#ifndef __XBEERESULT_H__
 //#define __XBEERESULT_H__
@@ -637,15 +628,15 @@ class Pollux_configurator {
             string_string_map* values = new string_string_map();
             std::ostringstream strconv;
 
-            if (sensors_map[gw_node_l].count(payload.get_i2c_address()) == 0) {
+            if (sensors_map[payload.get_node_address_as_long()].count(payload.get_i2c_address()) == 0) {
                 debug_printf("i2c address %02X is unknown.", payload.get_i2c_address());
                 return;
             }
-            if (sensors_map[gw_node_l][payload.get_i2c_address()].size() <= payload.get_i2c_register()) {
+            if (sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].size() <= payload.get_i2c_register()) {
                 debug_printf("measure #%d at i2c address %02X is invalid.", payload.get_i2c_register(), payload.get_i2c_address());
                 return;
             }
-            if (sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).is_ignored()) {
+            if (sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].at(payload.get_i2c_register()).is_ignored()) {
                 debug_printf("measure from i2c(%02X,%02X) of type %d is ignored\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
                 return;
             }
@@ -653,45 +644,45 @@ class Pollux_configurator {
             switch (payload.get_type()) {
                 case I2C_CHR:
                     strconv<<payload.get_value_as_char();
-                    (*values)["k"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
+                    (*values)["k"] = sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
                     (*values)["v"] = strconv.str();
-                    (*values)["u"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
+                    (*values)["u"] = sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
                     (*values)["p"] = "0";
                     break;
                 case I2C_INT:
                     strconv<<payload.get_value_as_int();
-                    (*values)["k"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
+                    (*values)["k"] = sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
                     (*values)["v"] = strconv.str();
-                    (*values)["u"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
+                    (*values)["u"] = sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
                     (*values)["p"] = "0";
                     break;
                 case I2C_FLT:
                     strconv<<payload.get_value_as_float();
-                    (*values)["k"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
+                    (*values)["k"] = sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
                     (*values)["v"] = strconv.str();
-                    (*values)["u"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
+                    (*values)["u"] = sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
                     (*values)["p"] = "0";
                     break;
                 case I2C_DBL:
                     strconv<<payload.get_value_as_float();
-                    (*values)["k"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
+                    (*values)["k"] = sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
                     (*values)["v"] = strconv.str();
-                    (*values)["u"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
+                    (*values)["u"] = sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
                     (*values)["p"] = "0";
                     break;
                 default:
-                    printf("measure from i2c(%02X,%02X) of type %d unsupported\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
+                    printf("    <- measure from i2c(%02X,%02X) of type %d unsupported\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
                     return;
             }
             values_list.push_back(values);
-            printf("measure from i2c(%02X,%02X)\n", payload.get_i2c_address(), payload.get_i2c_register());//, json_string.str().c_str());
+            printf("    <- measure from i2c(%02X,%02X) ", payload.get_i2c_address(), payload.get_i2c_register());//, json_string.str().c_str());
             return;
         }
         
         void push_data(long long unsigned int module) {
             std::ostringstream val_string;
 
-            if (geoloc_map.find("latitude") != geoloc_map.end() and geoloc_map.find("longitude") != geoloc_map.end() /*and geoloc_map.find("altitude") != geoloc_map.end()*/) {
+            if (geoloc_map.find("latitude") != geoloc_map.end() and geoloc_map.find("longitude") != geoloc_map.end() ) {
                 string_string_map* values = new string_string_map();
                 (*values)["k"] = "latitude";
                 (*values)["v"] = geoloc_map["latitude"];
@@ -701,13 +692,14 @@ class Pollux_configurator {
                 (*values)["k"] = "longitude";
                 (*values)["v"] = geoloc_map["longitude"];
                 values_list.push_back(values);
+            }
 
-                /*
+            if (geoloc_map.find("altitude") != geoloc_map.end()) {
+                string_string_map* values = new string_string_map();
                 values = new string_string_map();
                 (*values)["k"] = "altitude";
                 (*values)["v"] = geoloc_map["altitude"];
                 values_list.push_back(values);
-                */
             }
 
             for (string_string_string_map::iterator store_it = datastores_map.begin();store_it!=datastores_map.end();++store_it) {
@@ -733,9 +725,9 @@ class Pollux_configurator {
                         printf("local");
                         
                         if (store_csv(values_list, store_it->second) == 0)
-                            std::cout<<"written data to file !"<<std::endl;
+                            std::cout<<"    -> written data to file !"<<std::endl;
                         else
-                            std::cout<<"failed to write data in file !"<<std::endl;
+                            std::cout<<"    -> failed to write data in file !"<<std::endl;
                     }
                     for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it)
                         delete(*val_it);
