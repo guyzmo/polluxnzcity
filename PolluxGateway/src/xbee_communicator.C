@@ -96,6 +96,15 @@ void Xbee_communicator::send_atcmd(const char* at_command, const char* param_val
     debug_println("'");
 }
 
+void Xbee_communicator::send_remote_atcmd(uint64_t addr64, uint16_t network, const char* at_command, const char* param_value) {
+    uint8_t addr[8];
+
+    for (int i=0;i<8;++i)
+        addr[7-i] = ((addr64>>(i*8))&0xFF);
+
+    send_remote_atcmd(addr, network, at_command, param_value);
+}
+
 void Xbee_communicator::send_remote_atcmd(uint8_t* addr64, uint16_t network, const char* at_command, const char* param_value) {
     debug_print("send_remote_at_cmd(");debug_print(at_command);debug_print(")\n");
 
@@ -465,7 +474,7 @@ void Xbee_communicator::send(char* data) {
     if (frm_id = 0xFF)
         frm_id = 1;
 }
-void Xbee_communicator::send(char* data, uint8_t* addr=(uint8_t*)COORDINATOR_ADDR, uint16_t network=(uint16_t)BROADCAST_NET) {
+void Xbee_communicator::send(char* data, uint8_t* addr, uint16_t network) {
     this->xmit_req(/* hardware addr */ (uint8_t*)addr,
                 /* network bcast */ (uint16_t)network, 
                 /* data's length */ strlen(data), 
@@ -475,6 +484,14 @@ void Xbee_communicator::send(char* data, uint8_t* addr=(uint8_t*)COORDINATOR_ADD
                 /* options       */ (uint8_t)0);
     if (frm_id = 0xFF)
         frm_id = 1;
+}
+void Xbee_communicator::send(char* data, uint64_t addr64, uint16_t network) {
+    uint8_t addr[8];
+
+    for (int i=0;i<8;++i)
+        addr[i] = ((addr64>>(i*8))&0xFF);
+    
+    send(data, addr, network);
 }
 
 void Xbee_communicator::recv(int i) {
