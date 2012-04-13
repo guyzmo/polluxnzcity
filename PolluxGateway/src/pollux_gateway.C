@@ -386,8 +386,10 @@ class Pollux_configurator {
     mutable long_short_sensor_map sensors_map;
     mutable string_string_string_map datastores_map;
     mutable string_string_map configuration_map;
+    mutable string_string_map geoloc_map;
        
     std::vector<std::string> values_json_list;
+    std::vector<std::string> values_csv_list;
 
     typedef struct {
         unsigned int meas_idx;
@@ -441,6 +443,39 @@ class Pollux_configurator {
 
             free(json_data);
         }
+        void load_geoloc() {
+            std::ostringstream fname;
+            std::cout<<path<<std::endl;
+
+            fname << path << "config.json";
+            struct json_object *json_data;
+
+            json_data = json_object_from_file((char*)fname.str().c_str());
+            if (is_error(json_data)) {
+                throw Pollux_config_exception("Invalid JSON file. Please check your configuration file.");
+            }
+            if (!json_object_has_key(json_data,"geolocalisation")) {
+                throw Pollux_config_exception("Missing 'geolocalisation' token in configuration file.");
+            }
+
+            struct json_object* config = json_object_object_get(json_data, "geolocalisation");
+
+            if (!json_object_has_key(config,"latitude")) {
+                throw Pollux_config_exception("Missing 'latitude' token in geolocalisation section.");
+            }
+            if (!json_object_has_key(config,"longitude")) {
+                throw Pollux_config_exception("Missing 'longitude' token in geolocalisation section.");
+            }
+
+            json_object_object_foreach(config,key,value) {
+                geoloc_map[key] = json_object_get_string(json_object_object_get(config,key));
+#ifdef VERBOSE
+                std::cout<<"geoloc."<<key<<": "<<json_object_get_string(json_object_object_get(config,key))<<std::endl;
+#endif //VERBOSE
+            }
+
+            free(json_data);
+        }
         void load_datastores() {
             struct json_object *json_data;
             std::ostringstream fname;
@@ -464,7 +499,7 @@ class Pollux_configurator {
                     err<<"Missing 'post_url' token in datastore "<<name<<" section.";
                     throw Pollux_config_exception(err.str());
                 }
-                if (!json_object_has_key(datastore,"api_key")) {
+                if (!json_object_has_key(datastore,"format")) {
                     std::ostringstream err;
                     err<<"Missing 'api_key' token in datastore "<<name<<" section.";
                     throw Pollux_config_exception(err.str());
@@ -571,7 +606,7 @@ class Pollux_configurator {
                 buf[2] = 0x0;
                 printf("************** SENDING HALT COMMAND\n");
                 return buf;
-            } else if (sensor_it->second.size() > 1) 
+            } else if (sensor_it->second.size() > 1)
                 if (module_iterator_map[module].stop == 0) {
                     module_iterator_map[module].stop = sensor_it->second.size()-1;
                     module_iterator_map[module].meas_idx = 0;
@@ -581,19 +616,13 @@ class Pollux_configurator {
                     return buf;
                 } else if (module_iterator_map[module].meas_idx == module_iterator_map[module].stop) {
                     module_iterator_map[module].stop = 0;
-                    module_iterator_map[module].meas_idx = -1;
+                    module_iterator_map[module].meas_idx = 0;
                     /*debug_*/printf("************** LAST SKIPPING MEASURE\n");
 
                     ++sensor_it;
 
-                    if (sensor_it == sensors_map[module].end()) {
-                        sensor_it = sensors_map[module].begin();
-                        buf[0] = CMD_HALT;
-                        buf[1] = 0x0;
-                        buf[2] = 0x0;
-                        printf("************** SENDING HALT COMMAND\n");
-                    }
-                    return buf;
+                    free(buf);
+                    return next_measure(module);
                 }
 
             buf[0] = CMD_MEAS;
@@ -610,8 +639,12 @@ class Pollux_configurator {
 
             return buf;
         }
+        std::vector<string_string_map*> values_list;
         void store_measure(Xbee_result& payload) {
-            std::ostringstream json_string;
+            string_string_map* values = new string_string_map();
+            //std::ostringstream csv_string;
+            //std::ostringstream json_string;
+            std::ostringstream strconv;
 
             if (sensors_map[gw_node_l].count(payload.get_i2c_address()) == 0) {
                 printf("i2c address %02X is unknown.", payload.get_i2c_address());
@@ -628,39 +661,65 @@ class Pollux_configurator {
 
             switch (payload.get_type()) {
                 case I2C_CHR:
-                    json_string<<"{\"k\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name()<<"\""\
-                               <<",\"v\":"<<payload.get_value_as_char()\
-                               <<",\"u\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit()<<"\""\
-                               <<",\"p\":0}";
+                    //csv_string<<payload.get_value_as_char();
+                    //json_string<<"{\"k\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name()<<"\""\
+                    //           <<",\"v\":"<<payload.get_value_as_char()\
+                    //           <<",\"u\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit()<<"\""\
+                    //           <<",\"p\":0}";
+                    strconv<<payload.get_value_as_char();
+                    (*values)["k"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
+                    (*values)["v"] = strconv.str();
+                    (*values)["u"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
+                    (*values)["p"] = "0";
                     break;
                 case I2C_INT:
-                    json_string<<"{\"k\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name()<<"\""\
-                               <<",\"v\":"<<payload.get_value_as_int()\
-                               <<",\"u\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit()<<"\""\
-                               <<",\"p\":0}";
+                    //csv_string<<payload.get_value_as_int();
+                    //json_string<<"{\"k\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name()<<"\""\
+                    //           <<",\"v\":"<<payload.get_value_as_int()\
+                    //           <<",\"u\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit()<<"\""\
+                    //           <<",\"p\":0}";
+                    strconv<<payload.get_value_as_int();
+                    (*values)["k"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
+                    (*values)["v"] = strconv.str();
+                    (*values)["u"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
+                    (*values)["p"] = "0";
                     break;
                 case I2C_FLT:
-                    json_string<<"{\"k\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name()<<"\""\
-                               <<",\"v\":"<<payload.get_value_as_float()\
-                               <<",\"u\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit()<<"\""\
-                               <<",\"p\":0}";
+                    //csv_string<<payload.get_value_as_float();
+                    //json_string<<"{\"k\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name()<<"\""\
+                    //           <<",\"v\":"<<payload.get_value_as_float()\
+                    //           <<",\"u\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit()<<"\""\
+                    //           <<",\"p\":0}";
+                    strconv<<payload.get_value_as_float();
+                    (*values)["k"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
+                    (*values)["v"] = strconv.str();
+                    (*values)["u"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
+                    (*values)["p"] = "0";
                     break;
                 case I2C_DBL:
-                    json_string<<"{\"k\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name()<<"\""\
-                               <<",\"v\":"<<payload.get_value_as_double()\
-                               <<",\"u\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit()<<"\""\
-                               <<",\"p\":0}";
+                    //csv_string<<payload.get_value_as_double();
+                    //json_string<<"{\"k\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name()<<"\""\
+                    //           <<",\"v\":"<<payload.get_value_as_double()\
+                    //           <<",\"u\":\""<<sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit()<<"\""\
+                    //           <<",\"p\":0}";
+                    strconv<<payload.get_value_as_float();
+                    (*values)["k"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_name();
+                    (*values)["v"] = strconv.str();
+                    (*values)["u"] = sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).get_unit();
+                    (*values)["p"] = "0";
                     break;
                 default:
                     printf("measure from i2c(%02X,%02X) of type %d unsupported\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
                     return;
             }
-            printf("measure from i2c(%02X,%02X) : %s\n", payload.get_i2c_address(), payload.get_i2c_register(), json_string.str().c_str());
-            values_json_list.push_back(json_string.str());
+            values_list.push_back(values);
+            printf("measure from i2c(%02X,%02X)\n", payload.get_i2c_address(), payload.get_i2c_register());//, json_string.str().c_str());
+            //values_csv_list.push_back(csv_string.str());
+            //values_json_list.push_back(json_string.str());
             return;
         }
         
-        void store_csv() {
+        void store_csv(const char* val_string) {
             ///// CSV PART
             std::ostringstream csv_string;
 
@@ -674,15 +733,9 @@ class Pollux_configurator {
 
             strftime (buffer,80,"%Y/%m/%d %H:%M:%S",timeinfo);
             csv_string << buffer <<",";
+            
             /// date format
-
-            for (std::vector<std::string>::iterator it=values_csv_list.begin() ; it < values_csv_list.end(); ++it )
-                if (it+1 != values_csv_list.end())
-                    csv_string << *it <<",";
-                else
-                    csv_string << *it;
-            values_csv_list.clear();
-            csv_string<<std::endl;
+            csv_string << val_string;
 
             FILE* fd = fopen("sensor_values.csv","a");
             fputs(csv_string.str().c_str(),fd);
@@ -691,33 +744,68 @@ class Pollux_configurator {
             ///// CSV PART
         }
 
-        void push_data() {
-            store_csv();
-            
-            // TODO : parsing datastores json file
-            std::ostringstream json_string;
+        //std::vector<string_string_map> values_list;
+        void push_data(long long unsigned int module) {
+            // TODO: export the parsing in the external module !
+            std::ostringstream val_string;
+            for (string_string_string_map::iterator store_it = datastores_map.begin();store_it!=datastores_map.end();++store_it) {
+                if (store_it->second["activated"] != "false") {
+                    if (store_it->first == "citypulse") {
+                        printf("citypulse\n");
 
-            json_string<<"[";
-            for (std::vector<std::string>::iterator it=values_json_list.begin() ; it < values_json_list.end(); ++it )
-                if (it+1 != values_json_list.end())
-                    json_string << *it <<",";
-            // TODO : parsing geoloc json file
-            json_string << "{\"k\": \"lat\", \"v\": 48.8706573 },";
-            json_string << "{\"k\": \"lon\", \"v\": 2.3413066 }";
-            json_string<<"]";
+                        val_string<<"[";
 
-            printf("Pushing data to citypulse: '%s'\n", json_string.str().c_str());
-            if (post_to_citypulse(json_string.str().c_str()) == 0) {
-                printf("    -> success\n");
-                Beagle::Leds::set_rgb_led(Beagle::Leds::GREEN);
-                msleep(100);
-                Beagle::Leds::reset_rgb_led(Beagle::Leds::GREEN);
-            } else {
-                printf("    -> failure\n");
-                Beagle::Leds::set_rgb_led(Beagle::Leds::RED);
-                msleep(100);
-                Beagle::Leds::reset_rgb_led(Beagle::Leds::RED);
+                        //for (std::vector<std::string>::iterator it=values_json_list.begin() ; it < values_json_list.end(); ++it )
+                        //    if (it+1 != values_json_list.end())
+                        //        json_string << *it <<",";
+                        //    else
+                        //        json_string << *it;
+
+                        for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it) {
+                            val_string<<"{\"k\":\""<<(**val_it)["k"]<<"\"";
+                            val_string<<",\"v\":"<<(**val_it)["v"];
+                            val_string<<",\"u\":\""<<(**val_it)["u"]<<"\"";
+                            val_string<<",\"p\":"<<(**val_it)["p"]<<"}";
+                            if (val_it+1 != values_list.end())
+                                val_string<<",";
+                        }
+                        
+                        if (geoloc_map.find("latitude") != geoloc_map.end() and geoloc_map.find("longitude") != geoloc_map.end()) {
+                            val_string << ",{\"k\": \"lat\", \"v\": "<<geoloc_map["latitude"]<<" },";
+                            val_string << "{\"k\": \"lon\", \"v\": "<<geoloc_map["longitude"]<<" }";
+                        }
+
+                        val_string<<"]";
+
+                        printf("Pushing data to citypulse: '%s'\n", val_string.str().c_str());
+                        if (post_to_citypulse(val_string.str().c_str()) == 0) {
+                            printf("    -> success\n");
+                            Beagle::Leds::set_rgb_led(Beagle::Leds::GREEN);
+                            msleep(100);
+                            Beagle::Leds::reset_rgb_led(Beagle::Leds::GREEN);
+                        } else {
+                            printf("    -> failure\n");
+                            Beagle::Leds::set_rgb_led(Beagle::Leds::RED);
+                            msleep(100);
+                            Beagle::Leds::reset_rgb_led(Beagle::Leds::RED);
+                        }
+                        values_json_list.clear();
+                    } else if  (store_it->first == "pachube") {
+                        printf("pachube\n");
+                    } else if  (store_it->first == "local") {
+                        printf("local\n");
+                        for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it) {
+                            val_string<<",\"u\":\""<<(**val_it)["u"];
+                            if (val_it+1 != values_list.end())
+                                val_string<<",";
+                            val_string<<std::endl;
+                        }
+                        store_csv(val_string.str().c_str()); 
+                    }
+                    values_list.clear();
+                }
             }
+
         }
 };
 
@@ -777,7 +865,7 @@ class Pollux_observer : public Xbee_communicator {
         }
 
         void wake_up() {
-            // TODO: for each module
+            printf("waking up module..\n");
             uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
 
             char high[] = { 0x5, 0x0 };
@@ -820,7 +908,7 @@ class Pollux_observer : public Xbee_communicator {
                             break;
                         case CMD_HALT:
                             printf("*************** GOT SLEEP DOWN\n");
-                            config.push_data();
+                            config.push_data(payload.get_node_address_as_long());
                             break;
                         case '*':
                             // just a comment ;)
@@ -928,6 +1016,7 @@ int main(int argc, char* argv[]) {
             pconfig.load_configuration();
             pconfig.load_datastores();
             pconfig.load_sensors();
+            pconfig.load_geoloc();
         } catch (Pollux_config_exception pce) {
             std::cerr<<pce.what()<<std::endl;
             std::cerr<<"Can't load configuration, exiting..."<<std::endl;
