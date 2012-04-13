@@ -27,13 +27,15 @@
 
 #include <string>
 
-#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
 #include <pollux_toolbox.h>
-#include <citypulse.h>
 #include <beaglebone.h>
 #include <xbee_communicator.h>
+
+
+#include <citypulse.h>
+#include <local.h>
 
 const int panid[2] = {0x2,0xA};
 const int venid[8] = {0x0, 0x0, 0x1, 0x3, 0xA, 0x2, 0x0, 0x0};
@@ -119,17 +121,17 @@ class Xbee_result {
 
                     } else {
                         // i2c
-                        printf("CMD %02X ", frame->content.rx.payload[0]);
+                        debug_printf("Parsing results: CMD %02X ", frame->content.rx.payload[0]);
                         command = frame->content.rx.payload[0];
-                        printf("ADDR %02X ", frame->content.rx.payload[1]);
+                        debug_printf("ADDR %02X ", frame->content.rx.payload[1]);
                         addr =  frame->content.rx.payload[1];
-                        printf("REG %d ", frame->content.rx.payload[2]);
+                        debug_printf("REG %d ", frame->content.rx.payload[2]);
                         reg = frame->content.rx.payload[2];
 
                         // content
-                        printf("LEN %d ", frame->content.rx.payload[3]);
+                        debug_printf("LEN %d ", frame->content.rx.payload[3]);
                         length = frame->content.rx.payload[3];
-                        printf("TYPE %02X\n", frame->content.rx.payload[4]);
+                        debug_printf("TYPE %02X\n", frame->content.rx.payload[4]);
                         type = frame->content.rx.payload[4];
                         for (int i=0;i<length;++i) 
                             v.buffer[i] = (char)(frame->content.rx.payload)[i+5];
@@ -316,15 +318,6 @@ class Xbee_result {
 
 #include <stdexcept>
 
-// [{"v":22.0,"u":"ppm","p":"50","k":"NO2"},
-//  {"v":22.0,"u":"ppm","p":"50","k":"SO2"},
-//  {"v":18.0,"u":"ppm","p":"50","k":"CO2"},
-//  {"v":22.0,"u":"ppm","p":"50","k":"PM10"},
-//  {"v":22.0,"u":"ppm","p":"50","k":"lat"},
-//  {"v":22.0,"u":"ppm","p":"50","k":"lon"}]
-const char* JSON_DATA_FMT  = "[%s]";
-const char* JSON_VALUE_FMT = "{\"k\":%s, \"v\":%s, \"u\":%s, \"p\":%d}";
-
 class Sensor {
     std::string name;
     std::string unit;
@@ -388,6 +381,7 @@ class Pollux_configurator {
        
     std::vector<string_string_map*> values_list;
 
+    // iterators
     typedef struct {
         unsigned int meas_idx;
         unsigned int stop;
@@ -395,10 +389,13 @@ class Pollux_configurator {
     } module_iter;
     std::unordered_map<unsigned long long, module_iter> module_iterator_map;
 
+    long_short_sensor_map::iterator current_sensor_it;
+
     std::string& path;
 
     public:
         Pollux_configurator(std::string& path) : path(path){
+             current_sensor_it = sensors_map.begin();
         }
         const std::string& get_config_option(std::string key) const {
             return configuration_map[key];
@@ -409,9 +406,8 @@ class Pollux_configurator {
 
         void load_configuration() {
             std::ostringstream fname;
-            std::cout<<path<<std::endl;
 
-            fname << path << "config.json";
+            fname << path << "/config.json";
             struct json_object *json_data;
 
             json_data = json_object_from_file((char*)fname.str().c_str());
@@ -442,9 +438,8 @@ class Pollux_configurator {
         }
         void load_geoloc() {
             std::ostringstream fname;
-            std::cout<<path<<std::endl;
 
-            fname << path << "config.json";
+            fname << path << "/config.json";
             struct json_object *json_data;
 
             json_data = json_object_from_file((char*)fname.str().c_str());
@@ -477,7 +472,7 @@ class Pollux_configurator {
             struct json_object *json_data;
             std::ostringstream fname;
 
-            fname << path << "config.json";
+            fname << path << "/config.json";
 
             json_data = json_object_from_file((char*)fname.str().c_str());
             if (is_error(json_data)) {
@@ -506,7 +501,7 @@ class Pollux_configurator {
             struct json_object *json_data;
             std::ostringstream fname;
 
-            fname << path << "sensors.json";
+            fname << path << "/sensors.json";
 
             json_data = json_object_from_file((char*)fname.str().c_str());
 
@@ -539,12 +534,12 @@ class Pollux_configurator {
                         delete(ss);
                         // if it is a Sensor module (i.e. that has a 'unit' key)
                         if (json_object_has_key(sensor_module, "unit")) {
-#ifdef VERBOSE
+//#ifdef VERBOSE
                             std::cout<<"module(0x"<<std::setw(16)<<std::setfill('0')<<std::hex<<zb_address<<":0x"<<i2c_address<<") := sensor("\
                                                                                                        <<json_object_get_string(json_object_object_get(sensor_module,"name"))<<","\
                                                                                                        <<json_object_get_string(json_object_object_get(sensor_module,"unit"))\
                                                                                                        <<",0x"<<std::hex<<i2c_address<<",0x"<<std::hex<<reg<<")"<<std::endl;
-#endif
+//#endif
                             sensors_map[zb_address][i2c_address].push_back(Sensor(json_object_get_string(json_object_object_get(sensor_module,"name")),
                                         json_object_get_string(json_object_object_get(sensor_module,"unit")),
                                         i2c_address, reg));
@@ -552,20 +547,26 @@ class Pollux_configurator {
                         } else  {
                             sensors_map[zb_address][i2c_address].push_back(Action(json_object_get_string(json_object_object_get(sensor_module,"name")),
                                         i2c_address, reg));
-#ifdef VERBOSE
+//#ifdef VERBOSE
                             std::cout<<"module(0x"<<std::setw(16)<<std::setfill('0')<<std::hex<<zb_address<<":0x"<<i2c_address<<") := action("\
                                                                                                        <<json_object_get_string(json_object_object_get(sensor_module,"name"))\
                                                                                                        <<",0x"<<std::hex<<i2c_address<<",0x"<<std::hex<<reg<<")"<<std::endl;
-#endif
+//#endif
                         }
                     }
                     module_iterator_map[zb_address].it = sensors_map[zb_address].begin();
-                    module_iterator_map[zb_address].meas_idx=-1;
+                    module_iterator_map[zb_address].meas_idx=0;
                     module_iterator_map[zb_address].stop=0;
                 }
 
                 free(json_data);
             }
+        }
+
+        long long unsigned int next_module() {
+            if (current_sensor_it == sensors_map.end())
+                current_sensor_it = sensors_map.begin();
+            return (current_sensor_it++)->first;
         }
 
         char* next_measure(unsigned long long int module) {
@@ -591,7 +592,7 @@ class Pollux_configurator {
                 buf[0] = CMD_HALT;
                 buf[1] = 0x0;
                 buf[2] = 0x0;
-                printf("************** SENDING HALT COMMAND\n");
+                debug_printf("************** SENDING HALT COMMAND\n");
                 return buf;
             } else if (sensor_it->second.size() > 1)
                 if (module_iterator_map[module].stop == 0) {
@@ -599,12 +600,12 @@ class Pollux_configurator {
                     module_iterator_map[module].meas_idx = 0;
                 } else if (module_iterator_map[module].meas_idx < module_iterator_map[module].stop) {
                     ++(module_iterator_map[module].meas_idx);
-                    /*debug_*/printf("************** SKIPPING MEASURE\n");
+                    debug_printf("************** SKIPPING MEASURE\n");
                     return buf;
                 } else if (module_iterator_map[module].meas_idx == module_iterator_map[module].stop) {
                     module_iterator_map[module].stop = 0;
                     module_iterator_map[module].meas_idx = 0;
-                    /*debug_*/printf("************** LAST SKIPPING MEASURE\n");
+                    debug_printf("************** LAST SKIPPING MEASURE\n");
 
                     ++sensor_it;
 
@@ -631,15 +632,15 @@ class Pollux_configurator {
             std::ostringstream strconv;
 
             if (sensors_map[gw_node_l].count(payload.get_i2c_address()) == 0) {
-                printf("i2c address %02X is unknown.", payload.get_i2c_address());
+                debug_printf("i2c address %02X is unknown.", payload.get_i2c_address());
                 return;
             }
             if (sensors_map[gw_node_l][payload.get_i2c_address()].size() <= payload.get_i2c_register()) {
-                printf("measure #%d at i2c address %02X is invalid.", payload.get_i2c_register(), payload.get_i2c_address());
+                debug_printf("measure #%d at i2c address %02X is invalid.", payload.get_i2c_register(), payload.get_i2c_address());
                 return;
             }
             if (sensors_map[gw_node_l][payload.get_i2c_address()].at(payload.get_i2c_register()).is_ignored()) {
-                printf("measure from i2c(%02X,%02X) of type %d is ignored\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
+                debug_printf("measure from i2c(%02X,%02X) of type %d is ignored\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
                 return;
             }
 
@@ -681,38 +682,6 @@ class Pollux_configurator {
             return;
         }
         
-        void store_csv(std::vector<string_string_map*>& val_list) {
-            ///// CSV PART
-            std::ostringstream csv_string;
-
-            /// date format
-            time_t rawtime;
-            struct tm * timeinfo;
-            char buffer [80];
-
-            time ( &rawtime );
-            timeinfo = localtime ( &rawtime );
-
-            strftime (buffer,80,"%Y/%m/%d %H:%M:%S",timeinfo);
-            csv_string << buffer <<",";
-            /// date format
-            
-            for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it) {
-                if ((**val_it)["k"] == "longitude" or (**val_it)["k"] == "latitude" or (**val_it)["k"] == "altitude")
-                    continue;
-                csv_string<<",\"u\":\""<<(**val_it)["u"];
-                if (val_it+1 != values_list.end())
-                    csv_string<<",";
-                csv_string<<std::endl;
-            }
-
-            FILE* fd = fopen("sensor_values.csv","a");
-            fputs(csv_string.str().c_str(),fd);
-            fclose(fd);
-            std::cout<<"written data to file !"<<std::endl;
-            ///// CSV PART
-        }
-
         void push_data(long long unsigned int module) {
             std::ostringstream val_string;
 
@@ -738,7 +707,7 @@ class Pollux_configurator {
             for (string_string_string_map::iterator store_it = datastores_map.begin();store_it!=datastores_map.end();++store_it) {
                 if (store_it->second["activated"] != "false") {
                     if (store_it->first == "citypulse") {
-                        printf("citypulse\n");
+                        printf("citypulse");
 
                         if (citypulse_post(values_list, store_it->second) == 0) {
                             printf("    -> success\n");
@@ -752,11 +721,15 @@ class Pollux_configurator {
                             Beagle::Leds::reset_rgb_led(Beagle::Leds::RED);
                         }
                     } else if  (store_it->first == "pachube") {
-                        printf("pachube\n");
+                        printf("pachube");
+                        printf(" N.A.\n");
                     } else if  (store_it->first == "local") {
-                        printf("local\n");
+                        printf("local");
                         
-                        store_csv(values_list); 
+                        if (store_csv(values_list, store_it->second) == 0)
+                            std::cout<<"written data to file !"<<std::endl;
+                        else
+                            std::cout<<"failed to write data in file !"<<std::endl;
                     }
                     for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it)
                         delete(*val_it);
@@ -812,7 +785,7 @@ class Pollux_observer : public Xbee_communicator {
         void get_next_measure(Xbee_result& frame) {
             char* buffer = config.next_measure(frame.get_node_address_as_long());
 
-            printf("buffer to send: %02X, %02X, %02X\n", buffer[0], buffer[1], buffer[2]);
+            debug_printf("buffer to send: %02X, %02X, %02X\n", buffer[0], buffer[1], buffer[2]);
             if (buffer[0] == 0x0)
                 printf("   -> skipping measure step\n");
             else {
@@ -823,14 +796,15 @@ class Pollux_observer : public Xbee_communicator {
         }
 
         void wake_up() {
-            printf("waking up module..\n");
-            uint8_t gw_node[] = { 0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x86, 0x75 };
+            const char high[] = { 0x5, 0x0 };
+            const char low[] = { 0x4, 0x0 };
+            long long unsigned int module = config.next_module();
 
-            char high[] = { 0x5, 0x0 };
-            char low[] = { 0x4, 0x0 };
-            this->send_remote_atcmd(gw_node, 0xFFFF, "D0", high);
+            std::cout<<"waking up module: "<<std::hex<<module<<std::endl;
+
+            this->send_remote_atcmd(module, 0xFFFF, "D0", high);
             msleep(50);
-            this->send_remote_atcmd(gw_node, 0xFFFF, "D0", low);
+            this->send_remote_atcmd(module, 0xFFFF, "D0", low);
         }
 
         void run (XBeeFrame* frame) {
@@ -966,6 +940,12 @@ int main(int argc, char* argv[]) {
         else if (cli_args.has("-p") && cli_args.has("--path")) {
             std::cerr<<"Can't have both -p or --path. Please choose one. Exiting..."<<std::endl;
             ::exit(1);
+        }
+        
+        if (path_name.length() > 0) {
+            std::string::iterator it = path_name.end() - 1;
+            if (*it == '/')
+                path_name.erase(it);
         }
 
         Pollux_configurator pconfig(path_name);
