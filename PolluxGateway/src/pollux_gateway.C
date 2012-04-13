@@ -359,7 +359,7 @@ class Action : public Sensor {
 };
 
 typedef std::unordered_map<unsigned long long /* ZigBee Address */, std::unordered_map<uint8_t /* i2c addr */, std::vector<Sensor>/* sensor list */ > > long_short_sensor_map;
-
+typedef std::unordered_map<unsigned long long, std::vector<Sensor> > long_sensors_map;
 
 inline bool json_object_has_key(struct json_object* obj, const std::string& key) {
     json_object_object_foreach(obj, k,v) {
@@ -375,6 +375,7 @@ class Pollux_config_exception : public std::runtime_error {
 };
 class Pollux_configurator {
     mutable long_short_sensor_map sensors_map;
+    mutable long_sensors_map sensors_ordered_map;
     mutable string_string_string_map datastores_map;
     mutable string_string_map configuration_map;
     mutable string_string_map geoloc_map;
@@ -385,7 +386,7 @@ class Pollux_configurator {
     typedef struct {
         unsigned int meas_idx;
         unsigned int stop;
-        std::unordered_map<uint8_t, std::vector<Sensor> >::iterator it;
+        std::vector<Sensor>::iterator it;
     } module_iter;
     std::unordered_map<unsigned long long, module_iter> module_iterator_map;
 
@@ -534,29 +535,28 @@ class Pollux_configurator {
                         delete(ss);
                         // if it is a Sensor module (i.e. that has a 'unit' key)
                         if (json_object_has_key(sensor_module, "unit")) {
-//#ifdef VERBOSE
+#ifdef VERBOSE
                             std::cout<<"module(0x"<<std::setw(16)<<std::setfill('0')<<std::hex<<zb_address<<":0x"<<i2c_address<<") := sensor("\
                                                                                                        <<json_object_get_string(json_object_object_get(sensor_module,"name"))<<","\
                                                                                                        <<json_object_get_string(json_object_object_get(sensor_module,"unit"))\
                                                                                                        <<",0x"<<std::hex<<i2c_address<<",0x"<<std::hex<<reg<<")"<<std::endl;
-//#endif
+#endif
                             sensors_map[zb_address][i2c_address].push_back(Sensor(json_object_get_string(json_object_object_get(sensor_module,"name")),
                                         json_object_get_string(json_object_object_get(sensor_module,"unit")),
                                         i2c_address, reg));
+                            sensors_ordered_map[zb_address].push_back(sensors_map[zb_address][i2c_address].back());
                             // if it is an Action module (i.e. that has *no* 'unit' key)
                         } else  {
                             sensors_map[zb_address][i2c_address].push_back(Action(json_object_get_string(json_object_object_get(sensor_module,"name")),
                                         i2c_address, reg));
-//#ifdef VERBOSE
+                            sensors_ordered_map[zb_address].push_back(sensors_map[zb_address][i2c_address].back());
+#ifdef VERBOSE
                             std::cout<<"module(0x"<<std::setw(16)<<std::setfill('0')<<std::hex<<zb_address<<":0x"<<i2c_address<<") := action("\
                                                                                                        <<json_object_get_string(json_object_object_get(sensor_module,"name"))\
                                                                                                        <<",0x"<<std::hex<<i2c_address<<",0x"<<std::hex<<reg<<")"<<std::endl;
-//#endif
+#endif
                         }
                     }
-                    module_iterator_map[zb_address].it = sensors_map[zb_address].begin();
-                    module_iterator_map[zb_address].meas_idx=0;
-                    module_iterator_map[zb_address].stop=0;
                 }
 
                 free(json_data);
@@ -566,11 +566,16 @@ class Pollux_configurator {
         long long unsigned int next_module() {
             if (current_sensor_it == sensors_map.end())
                 current_sensor_it = sensors_map.begin();
+
+            module_iterator_map[current_sensor_it->first].it = sensors_ordered_map[current_sensor_it->first].begin();
+            module_iterator_map[current_sensor_it->first].meas_idx=0;
+            module_iterator_map[current_sensor_it->first].stop=0;
+
             return (current_sensor_it++)->first;
         }
 
-        char* next_measure(unsigned long long int module) {
-            std::unordered_map<uint8_t, std::vector<Sensor> >::iterator& sensor_it = module_iterator_map[module].it;
+        char* next_measure(unsigned long long int module, bool inner=false) {
+            std::vector<Sensor>::iterator& sensor_it = module_iterator_map[module].it;
             char* buf = (char*)malloc(sizeof(char)*3);
             buf[0] = 0x0;
             buf[1] = 0x0;
@@ -587,19 +592,20 @@ class Pollux_configurator {
                 return buf;
             }
 
-            if (sensor_it == sensors_map[module].end()) {
-                sensor_it = sensors_map[module].begin();
+            if (sensor_it == sensors_ordered_map[module].end()) {
+                sensor_it = sensors_ordered_map[module].begin();
                 buf[0] = CMD_HALT;
                 buf[1] = 0x0;
                 buf[2] = 0x0;
                 debug_printf("************** SENDING HALT COMMAND\n");
                 return buf;
-            } else if (sensor_it->second.size() > 1)
+            } else if (sensors_map[module][sensor_it->get_address()].size() > 1 and !inner)
                 if (module_iterator_map[module].stop == 0) {
-                    module_iterator_map[module].stop = sensor_it->second.size()-1;
+                    module_iterator_map[module].stop = sensors_map[module][sensor_it->get_address()].size()-1;
                     module_iterator_map[module].meas_idx = 0;
                 } else if (module_iterator_map[module].meas_idx < module_iterator_map[module].stop) {
                     ++(module_iterator_map[module].meas_idx);
+                    ++sensor_it;
                     debug_printf("************** SKIPPING MEASURE\n");
                     return buf;
                 } else if (module_iterator_map[module].meas_idx == module_iterator_map[module].stop) {
@@ -610,19 +616,19 @@ class Pollux_configurator {
                     ++sensor_it;
 
                     free(buf);
-                    return next_measure(module);
+                    return next_measure(module, true);
                 }
 
             buf[0] = CMD_MEAS;
-            buf[1] = (unsigned short int)(*sensor_it).first;
-            buf[2] = (unsigned short int)(*sensor_it).second.size();
+            buf[1] = sensor_it->get_address();
+            buf[2] = sensors_map[module][sensor_it->get_address()].size();
 
             /*debug_*/printf("************** MEASURE(S) TO SEND: ");
-            for (int i=0;i<(*sensor_it).second.size();++i)
-                /*debug_*/printf("%s, ", (*sensor_it).second[i].get_name().c_str());
+            for (int i=0;i<sensors_map[module][sensor_it->get_address()].size();++i)
+                /*debug_*/printf("%s, ", sensors_map[module][sensor_it->get_address()][i].get_name().c_str());
             /*debug_*/printf("\n");
 
-            if (sensor_it->second.size() == 1) 
+            if (sensors_map[module][sensor_it->get_address()].size() == 1) 
                 ++sensor_it;
 
             return buf;
