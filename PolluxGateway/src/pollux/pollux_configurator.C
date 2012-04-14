@@ -22,10 +22,6 @@
 #include <pollux/pollux_sensors.h>
 #include <pollux/pollux_configurator.h>
 
-// XXX to be removed
-#include <citypulse.h>
-#include <local.h>
-
 using namespace pollux;
 
 inline bool json_object_has_key(struct json_object* obj, const std::string& key) {
@@ -137,6 +133,10 @@ void Pollux_configurator::load_geoloc() {
     free(json_data);
 }
 void Pollux_configurator::load_datastores() {
+    void *handle;
+    int (*push_to_datastore)(std::vector<string_string_map*>& values_list, string_string_map& config);
+    char *error;
+
     struct json_object *json_data;
     std::ostringstream fname;
 
@@ -154,6 +154,31 @@ void Pollux_configurator::load_datastores() {
     struct json_object* datastores = json_object_object_get(json_data, "datastores");
 
     json_object_object_foreach(datastores,name,datastore) {
+        std::ostringstream addon_name;
+        // find name of the addon
+        addon_name<<"extensions/datastores/"<<name<<".so";
+
+        // open the addon
+        handle = dlopen (addon_name.str().c_str(), RTLD_LAZY);
+        if (!handle) {
+            std::cerr<<"WARNING: can't find add-on for "<<name<<std::endl;
+            std::cerr<<"         reason: "<<dlerror()<<std::endl;
+            continue;
+        }
+
+        dlerror();	/* Clear any existing error */
+
+        // get the functor
+        push_to_datastore = (int (*)(std::vector<std::unordered_map<std::basic_string<char>, std::basic_string<char> >*>&, pollux::string_string_map&))dlsym(handle, "push_to_datastore");
+        if ((error = dlerror()) != NULL)  {
+            std::cerr<<"WARNING: can't load add-on for "<<name<<std::endl;
+            std::cerr<<"         reason: "<<error<<std::endl;
+            continue;
+        }
+
+        // store the functor
+        datastores_addon_map[name] = push_to_datastore;
+
         json_object_object_foreach(datastore,key,value) {
 #ifdef VERBOSE
             printf("datastore(%s).%s: '%s'\n", name, key, json_object_get_string(json_object_object_get(datastore,key)));
@@ -379,6 +404,22 @@ void Pollux_configurator::push_data(long long unsigned int module) {
 
     for (string_string_string_map::iterator store_it = datastores_map.begin();store_it!=datastores_map.end();++store_it) {
         if (store_it->second["activated"] != "false") {
+            if (datastores_addon_map.find(store_it->first) != datastores_addon_map.end()) {
+                if (datastores_addon_map["name"](values_list, store_it->second) == 0) {
+                    printf("    -> success\n");
+                    beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
+                    msleep(100);
+                    beagle::Leds::reset_rgb_led(beagle::Leds::GREEN);
+                } else {
+                    printf("    -> failure\n");
+                    beagle::Leds::set_rgb_led(beagle::Leds::RED);
+                    msleep(100);
+                    beagle::Leds::reset_rgb_led(beagle::Leds::RED);
+                }
+            } else {
+                std::cerr<<"can't find add-on for module: "<<store_it->first<<std::endl;
+            }
+            /*
             if (store_it->first == "citypulse") {
                 printf("citypulse");
 
@@ -404,6 +445,7 @@ void Pollux_configurator::push_data(long long unsigned int module) {
                 else
                     std::cout<<"    -> failed to write data in file !"<<std::endl;
             }
+            */
             for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it)
                 delete(*val_it);
             values_list.clear();

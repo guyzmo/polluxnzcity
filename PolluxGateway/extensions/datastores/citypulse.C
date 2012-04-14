@@ -90,7 +90,6 @@ int post_to_citypulse(const char* content_string, const char* url_fmt, const cha
 
     return err;
 }
-}
 
 int push_to_datastore(std::vector<pollux::string_string_map*>& values_list, pollux::string_string_map& config) {
     std::ostringstream val_string;
@@ -125,4 +124,5 @@ int push_to_datastore(std::vector<pollux::string_string_map*>& values_list, poll
                                 /*serial*/config["api_key"].c_str(),
                                 config["api_key"].c_str(),
                                 proxy);
+}
 }

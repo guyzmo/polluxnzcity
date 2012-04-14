@@ -23,13 +23,14 @@
 
 #include <pollux/pollux_sensors.h>
 #include <pollux/types.h>
-
 #include <xbee/xbee_result.h>
-
 #include <beaglebone/beaglebone.h>
 
 #include <json/json.h>
 
+#include <dlfcn.h>
+
+#include <functional>
 #include <sstream>
 #include <iomanip>
 #include <iostream>
@@ -42,6 +43,11 @@ class Pollux_configurator {
     mutable string_string_string_map datastores_map;
     mutable string_string_map configuration_map;
     mutable string_string_map geoloc_map;
+
+    typedef int(*datastore_functor_type)(std::vector<std::unordered_map<std::basic_string<char>, std::basic_string<char> >*>&, string_string_map&);
+    mutable std::unordered_map<std::string, datastore_functor_type> datastores_addon_map;
+
+
        
     std::vector<string_string_map*> values_list;
 

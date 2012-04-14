@@ -26,6 +26,7 @@
 #include <sstream>
 #include <vector>
 
+extern "C" {
 int push_to_datastore(std::vector<pollux::string_string_map*>& values_list, pollux::string_string_map& config) {
     std::ostringstream csv_string;
 
@@ -61,5 +62,6 @@ int push_to_datastore(std::vector<pollux::string_string_map*>& values_list, poll
     fclose(fd);
     
     return 0;
+}
 }
 #endif
