@@ -3,29 +3,29 @@
 #ifndef __CITYPULSE_H__
 #define __CITYPULSE_H__
 
-#include <stdio.h>
-#include <string.h>
-#include <pollux_toolbox.h>
-
-#include <gcrypt.h>
-#include <curl/curl.h>
+#include <pollux/types.h>
 
 #include <sstream>
 
 extern "C" {
+
+#include <stdio.h>
+#include <string.h>
+
+#include <gcrypt.h>
+#include <curl/curl.h>
+
 char* calculate_sha1(const char* msg, const char* key) {
     // code snippet found on http://ubuntuforums.org/archive/index.php/t-337664.html
-
-    /* Length of message to encrypt */
-    //int msg_len = strlen( msg );
-    //int key_len = strlen( key );
 
     char* message = (char*)malloc(sizeof(char)*(strlen(msg)+strlen(key)));
     snprintf(message, strlen(msg)+strlen(key), "%s%s", msg, key);
 
-    debug_printf("calculate_sha1(): msg %d %s\n", strlen(msg), msg);
-    debug_printf("calculate_sha1(): key %d %s\n", strlen(key), key);
-    debug_printf("calculate_sha1(): msg+key %d %s\n", strlen(message), message);
+#ifdef VERBOSE
+    printf("calculate_sha1(): msg %d %s\n", strlen(msg), msg);
+    printf("calculate_sha1(): key %d %s\n", strlen(key), key);
+    printf("calculate_sha1(): msg+key %d %s\n", strlen(message), message);
+#endif
 
     /* Length of resulting sha1 hash - gcry_md_get_algo_dlen
      * returns digest lenght for an algo */
@@ -50,7 +50,9 @@ char* calculate_sha1(const char* msg, const char* key) {
         snprintf ( p, 3, "%02x", hash[i] );
     }
 
-    debug_printf( "hash value: %s\n", out );
+#ifdef VERBOSE
+    printf( "hash value: %s\n", out );
+#endif
 
     free(message);
     return out;

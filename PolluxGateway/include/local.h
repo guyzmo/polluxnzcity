@@ -16,15 +16,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * resources that helped:
- *  https://banu.com/blog/2/how-to-use-epoll-a-complete-example-in-c/
- *  http://stackoverflow.com/questions/27247/could-you-recommend-some-guides-about-epoll-on-linux
- *  https://github.com/milkymist/milkymist/blob/master/tools/flterm.c
- *
- * Serial communication library
  */
 
+#ifndef __LOCAL_H__
+#define __LOCAL_H__
+
+#include <pollux/types.h>
+
+#include <sstream>
+#include <vector>
 
 int store_csv(std::vector<string_string_map*>& values_list, string_string_map& config) {
     std::ostringstream csv_string;
@@ -62,3 +62,4 @@ int store_csv(std::vector<string_string_map*>& values_list, string_string_map& c
     
     return 0;
 }
+#endif

@@ -24,7 +24,7 @@
  * Xbee Light Communicator Library
  */
 
-#include <xbee_communicator.h>
+#include <xbee/xbee_communicator.h>
 
 void Xbee_communicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbytes, uint8_t* data, uint8_t frameid, uint8_t bradius, uint8_t options) {
     int checksum;
@@ -407,9 +407,9 @@ void Xbee_communicator::print_frame(XBeeFrame* frame) const {
 
 Xbee_communicator::Xbee_communicator(const std::string& port, int poll_wait) : Serial(port, poll_wait) {}
 
-int Xbee_communicator::begin() {
+int Xbee_communicator::begin(int speed) {
     debug_print("Xbee_communicator.begin()\n");
-    int ret = Serial::begin(B9600);
+    int ret = Serial::begin(speed);
     if (ret <= 0)
         return ret;
 

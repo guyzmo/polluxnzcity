@@ -28,18 +28,16 @@
 #ifndef __BEAGLE_SERIAL_H__
 #define __BEAGLE_SERIAL_H__
 
-#include <fcntl.h>      // read
+#include <fcntl.h>      // open
 #include <stdio.h>      // printf
 #include <unistd.h>     //open
-#include <string.h>     // memset
+#include <string.h>     // memset, strerror
 #include <errno.h>
 #include <stdlib.h>
 #include <termios.h>
 #include <sys/epoll.h>
 
 #include <string>
-
-#include <pollux_toolbox.h>
 
 #define EPOLL_MAX_CONN 2
 #define EPOLL_RUN_TIMEOUT -1

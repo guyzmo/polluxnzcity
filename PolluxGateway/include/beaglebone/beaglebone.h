@@ -25,8 +25,6 @@
 
 #include <fcntl.h>      // read
 #include <unistd.h>     // open
-#include <signal.h>
-#include <stdlib.h>
 #include <stdio.h>
 
 namespace Beagle {

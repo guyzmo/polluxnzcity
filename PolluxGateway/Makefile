@@ -31,8 +31,10 @@ RM=/bin/rm -rf
 INSTALL=/usr/bin/install
 SYSD=/bin/systemctl
 
-HEADERS=include/
-SRC=src/
+HEADERS=include
+SRC=src
+
+SOURCES=$(SRC)/xbee $(SRC)/pollux $(SRC)/beaglebone
 
 DEFINES=
 ifeq "$(VERBOSE)" "1"
@@ -41,14 +43,26 @@ endif
 
 CFLAGS=-lgcrypt -lgpg-error -lcurl -ljson -g3 -std=c++0x -Wno-write-strings $(DEFINES)
 
-pollux_gateway: $(SRC)/pollux_gateway.C src/beagle_serial.o src/xbee_communicator.o
+.PHONY: all
+
+all: pollux_gateway
+
+SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
+OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
+$(warning $(SOURCE_FILES))
+$(warning $(OBJECT_FILES))
+
+pollux_gateway: $(SRC)/pollux_gateway.C $(OBJECT_FILES)
 	$(CXX) $(CFLAGS) -I$(HEADERS) -o $@ $^
 
-%.o:
+%.o: $(SOURCE_FILES)
 	$(CXX) $(CFLAGS) -I$(HEADERS) -o $*.o -c $*.C
 
 clean:
-	$(RM) src/*.o pollux_gateway
+	$(RM) $(OBJECT_FILES) pollux_gateway
+
+package:
+	@echo "TODO"
 
 install:
 	$(INSTALL) -d /var/lib/pollux

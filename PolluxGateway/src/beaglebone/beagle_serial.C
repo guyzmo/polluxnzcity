@@ -25,7 +25,7 @@
  * Serial communication library
  */
 
-#include <beagle_serial.h>
+#include <beaglebone/beagle_serial.h>
 
 // Serial Exception class
 
@@ -43,7 +43,6 @@ int SerialException::get_code() {
 Serial::Serial(const std::string& port, int poll_wait) : port(port), poll_wait(poll_wait) {}
 
 int Serial::begin(int speed) {
-    debug_print("Serial.begin()\n");
     int res;
     struct epoll_event ev;
     struct termios my_termios;
@@ -84,8 +83,6 @@ int Serial::begin(int speed) {
 }
 
 int Serial::poll() {
-    //printf("poll()\n");
-
     int n = epoll_wait(epfd, &events, EPOLL_MAX_CONN, poll_wait*1000);
 
     if(n < 0)
@@ -119,18 +116,15 @@ char Serial::read() {
     if( size > 0 )
         return c;
     else if( size == 0 || errno == 11) {
-        //printf("No input\n");
         return -1;
     }
     throw(SerialException(errno));
 }
 
 ssize_t Serial::write(char* data, int len) {
-    //printf("Serial.write(%s)\n", data);
     ::write(fd, data, len);
 }
 
 ssize_t Serial::write(uint8_t data) {
-    //printf("\nSerial.write(%x)\n", data);
     ::write(fd, &data, sizeof(data));
 }
