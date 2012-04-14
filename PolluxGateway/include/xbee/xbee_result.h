@@ -42,6 +42,8 @@
 #define I2C_CHR 8
 #define I2C_STR 16
 
+namespace xbee {
+
 class Xbee_result {
     // CONTENT
     int type;
@@ -89,4 +91,7 @@ class Xbee_result {
         char* get_value_as_string();
         void print();
 };
+
+}
+
 #endif // __XBEERESULT_H__

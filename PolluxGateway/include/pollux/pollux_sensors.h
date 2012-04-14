@@ -26,6 +26,8 @@
 #include <stdexcept>
 #include <unordered_map>
 
+namespace pollux {
+
 class Sensor {
     std::string name;
     std::string unit;
@@ -58,6 +60,8 @@ class Pollux_config_exception : public std::runtime_error {
     public:
         Pollux_config_exception(const std::string& m) : runtime_error(m) {}
 };
+
+}
 
 #endif // __POLLUX_CONFIGURATOR_H__
 

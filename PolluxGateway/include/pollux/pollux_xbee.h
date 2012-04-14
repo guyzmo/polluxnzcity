@@ -31,7 +31,9 @@
 
 void sigint_handler(int c);
 
-class Pollux_observer : public Xbee_communicator {
+namespace pollux {
+
+class Pollux_observer : public xbee::Xbee_communicator {
     Pollux_configurator& config;
 
     int meas_idx;
@@ -42,12 +44,14 @@ class Pollux_observer : public Xbee_communicator {
         Pollux_observer(Pollux_configurator& conf);
         ~Pollux_observer();
 
-        void get_next_measure(Xbee_result& frame);
+        void get_next_measure(xbee::Xbee_result& frame);
 
         void wake_up();
 
-        void run (XBeeFrame* frame);
+        void run (xbee::XBeeFrame* frame);
 };
+
+}
 
 #endif // __XBEE_POLLUX_H__
 

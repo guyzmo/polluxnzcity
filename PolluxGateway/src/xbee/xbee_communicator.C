@@ -26,6 +26,9 @@
 
 #include <xbee/xbee_communicator.h>
 
+using namespace xbee;
+using namespace beagle;
+
 void Xbee_communicator::xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbytes, uint8_t* data, uint8_t frameid, uint8_t bradius, uint8_t options) {
     int checksum;
     uint8_t len;

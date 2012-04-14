@@ -21,11 +21,13 @@
 #include <pollux/pollux_xbee.h>
 
 void sigint_handler(int c) {
-    Beagle::Leds::disable_leds();
-    Beagle::UART::disable_uart2();
+    beagle::Leds::disable_leds();
+    beagle::UART::disable_uart2();
     printf("Exiting...\n");
     exit(0);
 }
+
+using namespace pollux;
 
 void Pollux_observer::setup_signal() {
     struct sigaction sigIntHandler;
@@ -38,17 +40,17 @@ void Pollux_observer::setup_signal() {
 }
 Pollux_observer::Pollux_observer(Pollux_configurator& conf) : Xbee_communicator(conf.get_config_option(std::string("tty_port")), 
                                                                 atoi(conf.get_config_option(std::string("wud_sleep_time")).c_str())), config(conf) { 
-    Beagle::UART::enable_uart2();
-    Beagle::Leds::enable_leds();
-    Beagle::Leds::set_status_led();
+    beagle::UART::enable_uart2();
+    beagle::Leds::enable_leds();
+    beagle::Leds::set_status_led();
     this->setup_signal();
     meas_idx=0;
 }
 Pollux_observer::~Pollux_observer() {
-    Beagle::Leds::disable_leds();
+    beagle::Leds::disable_leds();
 }
 
-void Pollux_observer::get_next_measure(Xbee_result& frame) {
+void Pollux_observer::get_next_measure(xbee::Xbee_result& frame) {
     char* buffer = config.next_measure(frame.get_node_address_as_long());
 
     debug_printf("buffer to send: %02X, %02X, %02X\n", buffer[0], buffer[1], buffer[2]);
@@ -73,24 +75,24 @@ void Pollux_observer::wake_up() {
     this->send_remote_atcmd(module, 0xFFFF, "D0", low);
 }
 
-void Pollux_observer::run (XBeeFrame* frame) {
+void Pollux_observer::run (xbee::XBeeFrame* frame) {
 
 #ifdef VERBOSE
     Xbee_communicator::run(frame); // print frame details
 #endif
-    Xbee_result payload(frame);
+    xbee::Xbee_result payload(frame);
 
     switch (frame->api_id) {
         case AT_CMD_RESP:
-            //Beagle::Leds::set_rgb_led(Beagle::Leds::GREEN);
+            //beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
 
             printf("[AT] Command: '%s' ; Values: '%X'\n", frame->content.at.command, frame->content.at.values);
 
             msleep(50);
-            //Beagle::Leds::reset_rgb_led(Beagle::Leds::GREEN);
+            //beagle::Leds::reset_rgb_led(beagle::Leds::GREEN);
             break;
         case RX_PACKET:
-            Beagle::Leds::set_rgb_led(Beagle::Leds::BLUE);
+            beagle::Leds::set_rgb_led(beagle::Leds::BLUE);
 
             payload.print();
 
@@ -116,7 +118,7 @@ void Pollux_observer::run (XBeeFrame* frame) {
             }
 
             msleep(10);
-            Beagle::Leds::reset_rgb_led(Beagle::Leds::BLUE);
+            beagle::Leds::reset_rgb_led(beagle::Leds::BLUE);
             break;
         case TX_STATUS:
             if (frame->content.tx.delivery_status != 0x00) {
@@ -133,10 +135,10 @@ void Pollux_observer::run (XBeeFrame* frame) {
                 }
             }
         default:
-            Beagle::Leds::set_rgb_led(Beagle::Leds::RED);
+            beagle::Leds::set_rgb_led(beagle::Leds::RED);
             msleep(10);
             printf("Incoming frame (%02X) that's not useful.\n", frame->api_id);
-            Beagle::Leds::reset_rgb_led(Beagle::Leds::RED);
+            beagle::Leds::reset_rgb_led(beagle::Leds::RED);
             break;
     }
 }

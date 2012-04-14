@@ -26,8 +26,12 @@
 #include <string>
 #include <unordered_map>
 
+namespace pollux {
+
 typedef std::unordered_map<std::string /* target datastore */, std::unordered_map<std::string /* key */, std::string/* val */> > string_string_string_map;
 typedef std::unordered_map<std::string /* option */, std::string /* val */> string_string_map;
+
+}
 
 
 #endif

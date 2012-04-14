@@ -26,7 +26,7 @@
 #include <sstream>
 #include <vector>
 
-int store_csv(std::vector<string_string_map*>& values_list, string_string_map& config) {
+int store_csv(std::vector<pollux::string_string_map*>& values_list, pollux::string_string_map& config) {
     std::ostringstream csv_string;
 
     /// date format
@@ -44,7 +44,7 @@ int store_csv(std::vector<string_string_map*>& values_list, string_string_map& c
     csv_string << buffer <<",";
     /// date format
 
-    for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it) {
+    for (std::vector<pollux::string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it) {
         if ((**val_it)["k"] == "longitude" or (**val_it)["k"] == "latitude" or (**val_it)["k"] == "altitude")
             continue;
         csv_string<<(**val_it)["v"];

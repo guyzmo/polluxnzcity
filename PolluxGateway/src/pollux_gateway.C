@@ -73,20 +73,20 @@ int main(int argc, char* argv[]) {
                 path_name.erase(it);
         }
 
-        Pollux_configurator pconfig(path_name);
+        pollux::Pollux_configurator pconfig(path_name);
 
         try {
             pconfig.load_configuration();
             pconfig.load_datastores();
             pconfig.load_sensors();
             pconfig.load_geoloc();
-        } catch (Pollux_config_exception pce) {
+        } catch (pollux::Pollux_config_exception pce) {
             std::cerr<<pce.what()<<std::endl;
             std::cerr<<"Can't load configuration, exiting..."<<std::endl;
             ::exit(1);
         }
 
-        Pollux_observer s = Pollux_observer(pconfig);
+        pollux::Pollux_observer s(pconfig);
 
         if (s.begin(B9600) >= 0) {
             for (;;)

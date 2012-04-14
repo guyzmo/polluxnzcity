@@ -34,6 +34,8 @@
 #include <iomanip>
 #include <iostream>
 
+namespace pollux {
+
 class Pollux_configurator {
     mutable long_short_sensor_map sensors_map;
     mutable long_sensors_map sensors_ordered_map;
@@ -68,10 +70,12 @@ class Pollux_configurator {
         long long unsigned int next_module();
 
         char* next_measure(unsigned long long int module, bool inner=false);
-        void store_measure(Xbee_result& payload);
+        void store_measure(xbee::Xbee_result& payload);
         
         void push_data(long long unsigned int module);
 };
+
+} // namespace pollux
 
 #endif // __POLLUX_CONFIGURATOR_H__
 

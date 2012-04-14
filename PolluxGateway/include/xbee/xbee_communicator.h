@@ -36,8 +36,9 @@
 #include <string.h>
 
 // --------------------------------------------------------------- XBEE Lib
+namespace xbee {
 
-class Xbee_communicator : public Serial {
+class Xbee_communicator : public beagle::Serial {
 
     int frm_id;
 
@@ -68,5 +69,7 @@ class Xbee_communicator : public Serial {
         virtual void wake_up();
 
 };
+
+}
 
 #endif // __XBEE_COMM_H__

@@ -26,6 +26,8 @@
 
 // --------------------------------------------------------------- Xbee Union Types
 
+namespace xbee {
+
 typedef union two_bytes {
     uint16_t i16;
     struct bytes {
@@ -66,5 +68,7 @@ typedef struct xbee_frame {
     } content;
     uint16_t checksum;
 } XBeeFrame;
+
+}
 
 #endif

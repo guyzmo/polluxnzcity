@@ -49,14 +49,12 @@ all: pollux_gateway
 
 SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
 OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
-$(warning $(SOURCE_FILES))
-$(warning $(OBJECT_FILES))
 
 pollux_gateway: $(SRC)/pollux_gateway.C $(OBJECT_FILES)
 	$(CXX) $(CFLAGS) -I$(HEADERS) -o $@ $^
 
-%.o: $(SOURCE_FILES)
-	$(CXX) $(CFLAGS) -I$(HEADERS) -o $*.o -c $*.C
+$(SRC)/%.o: $(SOURCE_FILES)
+	$(CXX) $(CFLAGS) -I$(HEADERS) -o $(SRC)/$*.o -c $(SRC)/$*.C
 
 clean:
 	$(RM) $(OBJECT_FILES) pollux_gateway

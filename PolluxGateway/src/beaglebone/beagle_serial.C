@@ -27,6 +27,8 @@
 
 #include <beaglebone/beagle_serial.h>
 
+using namespace beagle;
+
 // Serial Exception class
 
 SerialException::SerialException(int i) : code(i) {}

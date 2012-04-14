@@ -94,7 +94,7 @@ int post_to_citypulse(const char* content_string, const char* url_fmt, const cha
 }
 }
 
-int citypulse_post(std::vector<string_string_map*>& values_list, string_string_map& config) {
+int citypulse_post(std::vector<pollux::string_string_map*>& values_list, pollux::string_string_map& config) {
     std::ostringstream val_string;
     std::ostringstream url_fmt;
     const char* proxy;
@@ -111,7 +111,7 @@ int citypulse_post(std::vector<string_string_map*>& values_list, string_string_m
 
     val_string<<"[";
 
-    for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it) {
+    for (std::vector<pollux::string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it) {
         val_string<<"{\"k\":\""<<(**val_it)["k"]<<"\"";
         val_string<<",\"v\":"<<(**val_it)["v"];
         val_string<<",\"u\":\""<<(**val_it)["u"]<<"\"";

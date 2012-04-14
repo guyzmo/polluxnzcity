@@ -59,9 +59,13 @@
 #   define TIMING 10
 #endif
 
+namespace xbee {
+
 /* default addresses */
 const uint8_t COORDINATOR_ADDR[8] = {0,0,0,0,0,0,0,0};
 const uint8_t BROADCAST_ADDR[8] = {0,0,0,0,0,0,0xff,0xff};
 const uint16_t BROADCAST_NET = 0xFFFE;
+
+}
 
 #endif

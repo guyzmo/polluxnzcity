@@ -26,6 +26,8 @@
 #include <citypulse.h>
 #include <local.h>
 
+using namespace pollux;
+
 inline bool json_object_has_key(struct json_object* obj, const std::string& key) {
     json_object_object_foreach(obj, k,v) {
         if (std::string(k) == key) 
@@ -298,7 +300,7 @@ char* Pollux_configurator::next_measure(unsigned long long int module, bool inne
 
     return buf;
 }
-void Pollux_configurator::store_measure(Xbee_result& payload) {
+void Pollux_configurator::store_measure(xbee::Xbee_result& payload) {
     string_string_map* values = new string_string_map();
     std::ostringstream strconv;
 
@@ -383,14 +385,14 @@ void Pollux_configurator::push_data(long long unsigned int module) {
 
                 if (citypulse_post(values_list, store_it->second) == 0) {
                     printf("    -> success\n");
-                    Beagle::Leds::set_rgb_led(Beagle::Leds::GREEN);
+                    beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
                     msleep(100);
-                    Beagle::Leds::reset_rgb_led(Beagle::Leds::GREEN);
+                    beagle::Leds::reset_rgb_led(beagle::Leds::GREEN);
                 } else {
                     printf("    -> failure\n");
-                    Beagle::Leds::set_rgb_led(Beagle::Leds::RED);
+                    beagle::Leds::set_rgb_led(beagle::Leds::RED);
                     msleep(100);
-                    Beagle::Leds::reset_rgb_led(Beagle::Leds::RED);
+                    beagle::Leds::reset_rgb_led(beagle::Leds::RED);
                 }
             } else if  (store_it->first == "pachube") {
                 printf("pachube");

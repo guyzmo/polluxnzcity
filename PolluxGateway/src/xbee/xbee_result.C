@@ -21,6 +21,8 @@
 
 #include <xbee/xbee_result.h>
 
+using namespace xbee;
+
 void Xbee_result::reset() { 
     for (int i=0;i<32;++i) v.buffer[i] = 0; 
     for (int i=0;i<8;++i) node[i] = 0; 

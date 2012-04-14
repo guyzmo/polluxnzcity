@@ -253,7 +253,14 @@ def post_datastores():
     for key in request.forms.keys():
         key_name = "_".join(key.split("_")[1:])
         print key_name
-        result[key.split("_")[0]][key_name] = request.forms.get(key)
+	if "activated" in key_name:
+            if request.forms.get(key) != "":
+                result[key.split("_")[0]][key_name] = True
+            else:
+                result[key.split("_")[0]][key_name] = False
+        else:
+            result[key.split("_")[0]][key_name] = request.forms.get(key)
+            
     config.set_datastores(result)
     config.save()
     return dict(title="Datastores configuration Saved",datastores=config._datastores_map,welldone=True)

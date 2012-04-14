@@ -27,7 +27,7 @@
 #include <unistd.h>     // open
 #include <stdio.h>
 
-namespace Beagle {
+namespace beagle {
 
 struct UART {
     static void enable_uart2() {

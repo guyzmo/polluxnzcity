@@ -43,6 +43,8 @@
 #define EPOLL_RUN_TIMEOUT -1
 #define BUFF_SIZE 50
 
+namespace beagle {
+
 class SerialException {
     int code;
     public:
@@ -71,5 +73,7 @@ class Serial {
         virtual ssize_t write(char* data, int len);
         virtual ssize_t write(uint8_t data);
 };
+
+} // namespace beagle
 
 #endif // __BEAGLE_SERIAL_H__
