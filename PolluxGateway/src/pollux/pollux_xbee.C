@@ -20,11 +20,13 @@
  */
 #include <pollux/pollux_xbee.h>
 
+extern "C" {
 void sigint_handler(int c) {
     beagle::Leds::disable_leds();
     beagle::UART::disable_uart2();
     printf("Exiting...\n");
     exit(0);
+}
 }
 
 using namespace pollux;
@@ -55,7 +57,7 @@ void Pollux_observer::get_next_measure(xbee::Xbee_result& frame) {
 
     debug_printf("buffer to send: %02X, %02X, %02X\n", buffer[0], buffer[1], buffer[2]);
     if (buffer[0] == 0x0)
-        printf("   -> skipping measure step\n");
+        std::cout<<"   -> skipping measure step"<<std::endl;
     else {
         printf("   -> sending measure to node %llx\n", frame.get_node_address_as_long());
         send(buffer, frame.get_node_address(), frame.get_network());
@@ -98,16 +100,16 @@ void Pollux_observer::run (xbee::XBeeFrame* frame) {
 
             switch (payload.get_i2c_command()) {
                 case CMD_MEAS:
-                    printf("*************** GOT MEASURE\n");
+                    std::cout<<"   <- recv measure"<<std::endl;
                     config.store_measure(payload);
                     get_next_measure(payload);
                     break;
                 case CMD_INIT:
-                    printf("*************** GOT WAKE UP\n");
+                    std::cout<<"   <- recv wake up"<<std::endl;
                     get_next_measure(payload);
                     break;
                 case CMD_HALT:
-                    printf("*************** GOT SLEEP DOWN\n");
+                    std::cout<<"   <- recv sleep down"<<std::endl;
                     config.push_data(payload.get_node_address_as_long());
                     break;
                 case '*':
@@ -122,16 +124,16 @@ void Pollux_observer::run (xbee::XBeeFrame* frame) {
             break;
         case TX_STATUS:
             if (frame->content.tx.delivery_status != 0x00) {
-                printf("Error sending frame: ");
+                std::cerr<<"Error sending frame: "<<std::endl;
                 switch (frame->content.tx.delivery_status) {
-                    case 0x00: printf("Success\n"); break;
-                    case 0x02: printf("CCA Failure\n"); break;
-                    case 0x15: printf("Invalid destination endpoint\n"); break;
-                    case 0x21: printf("Network ACK Failure\n"); break;
-                    case 0x22: printf("Not Joined to Network\n"); break;
-                    case 0x23: printf("Self-addressed\n"); break;
-                    case 0x24: printf("Address Not Found\n"); break;
-                    case 0x25: printf("Route Not Found\n"); break;
+                    case 0x00: std::cerr<<"Success"<<std::endl; break;
+                    case 0x02: std::cerr<<"CCA Failure"<<std::endl; break;
+                    case 0x15: std::cerr<<"Invalid destination endpoint"<<std::endl; break;
+                    case 0x21: std::cerr<<"Network ACK Failure"<<std::endl; break;
+                    case 0x22: std::cerr<<"Not Joined to Network"<<std::endl; break;
+                    case 0x23: std::cerr<<"Self-addressed"<<std::endl; break;
+                    case 0x24: std::cerr<<"Address Not Found"<<std::endl; break;
+                    case 0x25: std::cerr<<"Route Not Found"<<std::endl; break;
                 }
             }
         default:

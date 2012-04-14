@@ -29,7 +29,9 @@
 
 #include <signal.h>
 
+extern "C" {
 void sigint_handler(int c);
+}
 
 namespace pollux {
 
