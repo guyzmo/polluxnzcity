@@ -1,10 +1,8 @@
 // http://stackoverflow.com/questions/1602398/linux-dlopen-can-a-library-be-notified-when-it-is-loaded
-
-#ifndef __CITYPULSE_H__
-#define __CITYPULSE_H__
-
+//
 #include <pollux/types.h>
 
+#include <vector>
 #include <sstream>
 
 extern "C" {
@@ -94,7 +92,7 @@ int post_to_citypulse(const char* content_string, const char* url_fmt, const cha
 }
 }
 
-int citypulse_post(std::vector<pollux::string_string_map*>& values_list, pollux::string_string_map& config) {
+int push_to_datastore(std::vector<pollux::string_string_map*>& values_list, pollux::string_string_map& config) {
     std::ostringstream val_string;
     std::ostringstream url_fmt;
     const char* proxy;
@@ -128,5 +126,3 @@ int citypulse_post(std::vector<pollux::string_string_map*>& values_list, pollux:
                                 config["api_key"].c_str(),
                                 proxy);
 }
-
-#endif

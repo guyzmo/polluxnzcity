@@ -41,11 +41,11 @@ ifeq "$(VERBOSE)" "1"
 DEFINES+=-DVERBOSE 
 endif
 
-CFLAGS=-lgcrypt -lgpg-error -lcurl -ljson -g3 -std=c++0x -Wno-write-strings $(DEFINES)
+CFLAGS=-ldl -ljson -g3 -rdynamic -std=c++0x -Wno-write-strings $(DEFINES)
 
 .PHONY: all
 
-all: pollux_gateway
+all: pollux_gateway extensions/datastores/citypulse.so extensions/datastores/local.so
 
 SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
 OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
@@ -53,11 +53,17 @@ OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
 pollux_gateway: $(SRC)/pollux_gateway.C $(OBJECT_FILES)
 	$(CXX) $(CFLAGS) -I$(HEADERS) -o $@ $^
 
+extensions/datastores/citypulse.so: extensions/datastores/citypulse.C
+	$(CXX) -shared -lgcrypt -lgpg-error -lcurl -g3 -std=c++0x -Wno-write-strings -I$(HEADERS) $(DEFINES) -o $@ $^
+
+extensions/datastores/local.so: extensions/datastores/local.C
+	$(CXX) -shared -std=c++0x -Wno-write-strings -I$(HEADERS) $(DEFINES) -o $@ $^
+
 $(SRC)/%.o: $(SOURCE_FILES)
 	$(CXX) $(CFLAGS) -I$(HEADERS) -o $(SRC)/$*.o -c $(SRC)/$*.C
 
 clean:
-	$(RM) $(OBJECT_FILES) pollux_gateway
+	$(RM) $(OBJECT_FILES) extensions/datastores/citypulse.so extensions/datastores/local.so pollux_gateway
 
 package:
 	@echo "TODO"

@@ -26,7 +26,7 @@
 #include <sstream>
 #include <vector>
 
-int store_csv(std::vector<pollux::string_string_map*>& values_list, pollux::string_string_map& config) {
+int push_to_datastore(std::vector<pollux::string_string_map*>& values_list, pollux::string_string_map& config) {
     std::ostringstream csv_string;
 
     /// date format
