@@ -293,7 +293,6 @@ char* Pollux_configurator::next_measure(unsigned long long int module, bool inne
     /*debug_*/printf("    -> measure(s) to send: ");
     for (int i=0;i<sensors_map[module][sensor_it->get_address()].size();++i)
         /*debug_*/printf("%s, ", sensors_map[module][sensor_it->get_address()][i].get_name().c_str());
-    /*debug_*/printf("\n");
 
     if (sensors_map[module][sensor_it->get_address()].size() == 1) 
         ++sensor_it;
