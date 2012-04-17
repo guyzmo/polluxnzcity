@@ -169,7 +169,7 @@ void Pollux_configurator::load_datastores() {
         dlerror();	/* Clear any existing error */
 
         // get the functor
-        push_to_datastore = (int (*)(std::vector<std::unordered_map<std::basic_string<char>, std::basic_string<char> >*>&, pollux::string_string_map&))dlsym(handle, "push_to_datastore");
+        push_to_datastore = (datastore_functor_type)dlsym(handle, "push_to_datastore");
         if ((error = dlerror()) != NULL)  {
             std::cerr<<"WARNING: can't load add-on for "<<name<<std::endl;
             std::cerr<<"         reason: "<<error<<std::endl;
@@ -405,13 +405,14 @@ void Pollux_configurator::push_data(long long unsigned int module) {
     for (string_string_string_map::iterator store_it = datastores_map.begin();store_it!=datastores_map.end();++store_it) {
         if (store_it->second["activated"] != "false") {
             if (datastores_addon_map.find(store_it->first) != datastores_addon_map.end()) {
-                if (datastores_addon_map["name"](values_list, store_it->second) == 0) {
-                    printf("    -> success\n");
+                std::cout<<store_it->first;
+                if ((*datastores_addon_map[store_it->first])(values_list, store_it->second) == 0) {
+                    std::cout<<"    -> success"<<std::endl;
                     beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
                     msleep(100);
                     beagle::Leds::reset_rgb_led(beagle::Leds::GREEN);
                 } else {
-                    printf("    -> failure\n");
+                    std::cout<<"    -> failure\n"<<std::endl;
                     beagle::Leds::set_rgb_led(beagle::Leds::RED);
                     msleep(100);
                     beagle::Leds::reset_rgb_led(beagle::Leds::RED);
@@ -419,33 +420,7 @@ void Pollux_configurator::push_data(long long unsigned int module) {
             } else {
                 std::cerr<<"can't find add-on for module: "<<store_it->first<<std::endl;
             }
-            /*
-            if (store_it->first == "citypulse") {
-                printf("citypulse");
-
-                if (citypulse_post(values_list, store_it->second) == 0) {
-                    printf("    -> success\n");
-                    beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
-                    msleep(100);
-                    beagle::Leds::reset_rgb_led(beagle::Leds::GREEN);
-                } else {
-                    printf("    -> failure\n");
-                    beagle::Leds::set_rgb_led(beagle::Leds::RED);
-                    msleep(100);
-                    beagle::Leds::reset_rgb_led(beagle::Leds::RED);
-                }
-            } else if  (store_it->first == "pachube") {
-                printf("pachube");
-                printf(" N.A.\n");
-            } else if  (store_it->first == "local") {
-                printf("local");
-                
-                if (store_csv(values_list, store_it->second) == 0)
-                    std::cout<<"    -> written data to file !"<<std::endl;
-                else
-                    std::cout<<"    -> failed to write data in file !"<<std::endl;
-            }
-            */
+            
             for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it)
                 delete(*val_it);
             values_list.clear();
