@@ -5,7 +5,7 @@ install sensors_list.json /etc/pollux
 install pollux_webserv.conf /etc/pollux
 install pollux_config.service /lib/systemd/system/
 systemctl daemon-reload
-python setup.py install
+python setup.py install --record .installed_files.lst
 systemctl enable pollux_config.service
 echo
 echo "start me with: systemctl start pollux_config.service"
