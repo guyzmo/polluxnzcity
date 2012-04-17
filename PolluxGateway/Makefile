@@ -46,7 +46,7 @@ CFLAGS=-ldl -ljson -g3 -rdynamic -std=c++0x -Wno-write-strings $(DEFINES)
 
 .PHONY: all
 
-all: pollux_gateway extensions/datastores/citypulse.so extensions/datastores/local.so
+all: pollux_gateway pollux_calibrator extensions/datastores/citypulse.so extensions/datastores/local.so
 
 SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
 OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
@@ -54,6 +54,10 @@ INCLUDES=$(patsubst %,-I%,$(HEADERS))
 
 pollux_gateway: $(SRC)/pollux_gateway.C $(OBJECT_FILES)
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
+
+pollux_calibrator: $(SRC)/pollux_calibrator.C $(OBJECT_FILES)
+	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
+
 
 extensions/datastores/citypulse.so: extensions/datastores/citypulse.C
 	$(CXX) -shared -lgcrypt -lgpg-error -lcurl -g3 -std=c++0x -Wno-write-strings $(INCLUDES) $(DEFINES) -o $@ $^

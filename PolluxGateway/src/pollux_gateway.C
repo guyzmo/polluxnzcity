@@ -33,7 +33,7 @@
 #include <xbee/xbee_communicator.h>
 
 #include <pollux/pollux_xbee.h>
-#include <pollux/pollux_configurator.h>
+#include <pollux/pollux_prober.h>
 
 #include <string>
 #include <iostream>
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
                 path_ext.erase(it);
         }
 
-        pollux::Pollux_configurator pconfig(path_conf, path_ext);
+        pollux::Pollux_prober pconfig(path_conf, path_ext);
 
         try {
             pconfig.load_configuration();

@@ -38,31 +38,30 @@
 namespace pollux {
 
 class Pollux_configurator {
-    mutable long_short_sensor_map sensors_map;
-    mutable long_sensors_map sensors_ordered_map;
-    mutable string_string_string_map datastores_map;
-    mutable string_string_map configuration_map;
-    mutable string_string_map geoloc_map;
+    protected:
+        mutable long_short_sensor_map sensors_map;
+        mutable long_sensors_map sensors_ordered_map;
+        mutable string_string_string_map datastores_map;
+        mutable string_string_map configuration_map;
+        mutable string_string_map geoloc_map;
 
-    typedef int(*datastore_functor_type)(std::vector<std::unordered_map<std::basic_string<char>, std::basic_string<char> >*>&, string_string_map&);
-    mutable std::unordered_map<std::string, datastore_functor_type> datastores_addon_map;
+        typedef int(*datastore_functor_type)(std::vector<std::unordered_map<std::basic_string<char>, std::basic_string<char> >*>&, string_string_map&);
+        mutable std::unordered_map<std::string, datastore_functor_type> datastores_addon_map;
+        
+        std::vector<string_string_map*> values_list;
 
+        // iterators
+        typedef struct {
+            unsigned int meas_idx;
+            unsigned int stop;
+            std::vector<Sensor>::iterator it;
+        } module_iter;
+        std::unordered_map<unsigned long long, module_iter> module_iterator_map;
 
-       
-    std::vector<string_string_map*> values_list;
+        long_short_sensor_map::iterator current_sensor_it;
 
-    // iterators
-    typedef struct {
-        unsigned int meas_idx;
-        unsigned int stop;
-        std::vector<Sensor>::iterator it;
-    } module_iter;
-    std::unordered_map<unsigned long long, module_iter> module_iterator_map;
-
-    long_short_sensor_map::iterator current_sensor_it;
-
-    std::string& path_conf;
-    std::string& path_ext;
+        std::string& path_conf;
+        std::string& path_ext;
 
     public:
         Pollux_configurator(std::string& conf, std::string& ext);
@@ -74,12 +73,12 @@ class Pollux_configurator {
         void load_datastores();
         void load_sensors();
 
-        long long unsigned int next_module();
+        virtual long long unsigned int next_module() = 0;
 
-        char* next_measure(unsigned long long int module, bool inner=false);
-        void store_measure(xbee::Xbee_result& payload);
+        virtual char* next_measure(unsigned long long int module, bool inner=false) = 0;
+        virtual void store_measure(xbee::Xbee_result& payload) = 0;
         
-        void push_data(long long unsigned int module);
+        virtual void push_data(long long unsigned int module) = 0;
 };
 
 } // namespace pollux
