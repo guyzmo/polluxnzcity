@@ -1,0 +1,15 @@
+[Unit]
+Description=Pollux NZ City Gateway Service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/lib/pollux
+ExecStart=/usr/local/bin/pollux_gateway 2&>1 > /var/log/pollux_gateway.log
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -STOP $MAINPID
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+
