@@ -5,7 +5,7 @@ After=syslog.target network.target
 [Service]
 Type=simple
 WorkingDirectory=/var/lib/pollux
-ExecStart=/usr/local/bin/pollux_gateway 2&>1 > /var/log/pollux_gateway.log
+ExecStart=/usr/local/bin/pollux_gateway -c /etc/pollux -e /usr/lib/pollux 2&>1 > /var/log/pollux_gateway.log
 ExecReload=/bin/kill -HUP $MAINPID
 ExecStop=/bin/kill -STOP $MAINPID
 Restart=on-abort
