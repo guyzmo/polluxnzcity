@@ -21,7 +21,8 @@
 VERBOSE?=0
 
 # destination directories for install
-DEST_INSTALL=/usr/local/bin/
+DESTDIR?=/
+DEST_INSTALL=$(DESTDIR)usr/bin/
 DEST_SYSTEMD=/lib/systemd/system/
 
 ########################################################################################
@@ -31,7 +32,7 @@ RM=/bin/rm -rf
 INSTALL=/usr/bin/install
 SYSD=/bin/systemctl
 
-HEADERS=include
+HEADERS=include /opt/local/arm-none-linux-gnueabi/usr/include /opt/local/include/
 SRC=src
 
 SOURCES=$(SRC)/xbee $(SRC)/pollux $(SRC)/beaglebone
@@ -49,18 +50,19 @@ all: pollux_gateway extensions/datastores/citypulse.so extensions/datastores/loc
 
 SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
 OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
+INCLUDES=$(patsubst %,-I%,$(HEADERS))
 
 pollux_gateway: $(SRC)/pollux_gateway.C $(OBJECT_FILES)
-	$(CXX) $(CFLAGS) -I$(HEADERS) -o $@ $^
+	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
 
 extensions/datastores/citypulse.so: extensions/datastores/citypulse.C
-	$(CXX) -shared -lgcrypt -lgpg-error -lcurl -g3 -std=c++0x -Wno-write-strings -I$(HEADERS) $(DEFINES) -o $@ $^
+	$(CXX) -shared -lgcrypt -lgpg-error -lcurl -g3 -std=c++0x -Wno-write-strings $(INCLUDES) $(DEFINES) -o $@ $^
 
 extensions/datastores/local.so: extensions/datastores/local.C
-	$(CXX) -shared -std=c++0x -Wno-write-strings -I$(HEADERS) $(DEFINES) -o $@ $^
+	$(CXX) -shared -std=c++0x -Wno-write-strings $(INCLUDES) $(DEFINES) -o $@ $^
 
 $(SRC)/%.o: $(SOURCE_FILES)
-	$(CXX) $(CFLAGS) -I$(HEADERS) -o $(SRC)/$*.o -c $(SRC)/$*.C
+	$(CXX) $(CFLAGS) $(INCLUDES) -o $(SRC)/$*.o -c $(SRC)/$*.C
 
 clean:
 	$(RM) $(OBJECT_FILES) extensions/datastores/citypulse.so extensions/datastores/local.so pollux_gateway
@@ -69,6 +71,13 @@ package:
 	@echo "TODO"
 
 install:
+	$(INSTALL) -d $(DESTDIR)var/lib/pollux
+	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
+
+uninstall:
+	$(RM) $(DEST_INSTALL)/pollux_gateway
+
+manual-install:
 	$(INSTALL) -d /var/lib/pollux
 	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
 	$(INSTALL) pollux_gateway.service $(DEST_SYSTEMD)
@@ -76,7 +85,7 @@ install:
 	$(SYSD) enable pollux_gateway.service
 	@echo "to launch me just do : systemctl start pollux_gateway.service or reboot"
 
-uninstall:
+manual-uninstall:
 	$(SYSD) stop pollux_gateway.service
 	$(SYSD) disable pollux_gateway.service
 	$(SYSD) --system daemon-reload
