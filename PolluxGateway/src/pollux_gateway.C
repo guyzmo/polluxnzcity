@@ -50,30 +50,47 @@ int main(int argc, char* argv[]) {
                 <<"Pollux'NZ City Gateway module"<<std::endl\
                 <<std::endl\
                 <<"optional arguments:"<<std::endl\
-                <<"	-p, --path PATH		Path to the configuration directory (default: /etc/pollux)"<<std::endl\
+                <<"	-c, --conf PATH		Path to the configuration directory (default: /etc/pollux)"<<std::endl\
+                <<"	-e, --ext PATH		Path to the plugin base directory (default: /usr/lib/pollux)"<<std::endl\
                 <<"	-h, --help		This help screen"<<std::endl\
                 <<std::endl;
             ::exit(0);
         }
 
-        std::string path_name= "/etc/pollux";
+        std::string path_conf= "/etc/pollux";
+        std::string path_ext= "/usr/lib/pollux";
 
-        if (cli_args.has("-p") && !cli_args.has("--path"))
-            path_name = cli_args.get("-p");
-        else if (!cli_args.has("-p") && cli_args.has("--path"))
-            path_name = cli_args.get("--path");
-        else if (cli_args.has("-p") && cli_args.has("--path")) {
-            std::cerr<<"Can't have both -p or --path. Please choose one. Exiting..."<<std::endl;
+        if (cli_args.has("-c") && !cli_args.has("--conf"))
+            path_conf = cli_args.get("-c");
+        else if (!cli_args.has("-c") && cli_args.has("--conf"))
+            path_conf = cli_args.get("--conf");
+        else if (cli_args.has("-c") && cli_args.has("--conf")) {
+            std::cerr<<"Can't have both -c or --conf. Please choose one. Exiting..."<<std::endl;
+            ::exit(1);
+        }
+
+        if (path_conf.length() > 0) {
+            std::string::iterator it = path_conf.end() - 1;
+            if (*it == '/')
+                path_conf.erase(it);
+        }
+        
+        if (cli_args.has("-e") && !cli_args.has("--ext"))
+            path_ext = cli_args.get("-e");
+        else if (!cli_args.has("-e") && cli_args.has("--ext"))
+            path_ext = cli_args.get("--ext");
+        else if (cli_args.has("-e") && cli_args.has("--ext")) {
+            std::cerr<<"Can't have both -e or --ext. Please choose one. Exiting..."<<std::endl;
             ::exit(1);
         }
         
-        if (path_name.length() > 0) {
-            std::string::iterator it = path_name.end() - 1;
+        if (path_ext.length() > 0) {
+            std::string::iterator it = path_ext.end() - 1;
             if (*it == '/')
-                path_name.erase(it);
+                path_ext.erase(it);
         }
 
-        pollux::Pollux_configurator pconfig(path_name);
+        pollux::Pollux_configurator pconfig(path_conf, path_ext);
 
         try {
             pconfig.load_configuration();

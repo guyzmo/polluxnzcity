@@ -58,7 +58,7 @@ bool Action::is_ignored() {
     return ignored;
 }
 
-Pollux_configurator::Pollux_configurator(std::string& path) : path(path){
+Pollux_configurator::Pollux_configurator(std::string& conf, std::string& ext) : path_conf(conf), path_ext(ext) {
         current_sensor_it = sensors_map.begin();
 }
 const std::string& Pollux_configurator::get_config_option(std::string key) const {
@@ -71,7 +71,7 @@ const std::string& Pollux_configurator::get_datastore_value(std::string& ds, std
 void Pollux_configurator::load_configuration() {
     std::ostringstream fname;
 
-    fname << path << "/config.json";
+    fname << path_conf << "/config.json";
     struct json_object *json_data;
 
     json_data = json_object_from_file((char*)fname.str().c_str());
@@ -103,7 +103,7 @@ void Pollux_configurator::load_configuration() {
 void Pollux_configurator::load_geoloc() {
     std::ostringstream fname;
 
-    fname << path << "/config.json";
+    fname << path_conf << "/config.json";
     struct json_object *json_data;
 
     json_data = json_object_from_file((char*)fname.str().c_str());
@@ -140,7 +140,7 @@ void Pollux_configurator::load_datastores() {
     struct json_object *json_data;
     std::ostringstream fname;
 
-    fname << path << "/config.json";
+    fname << path_conf << "/config.json";
 
     json_data = json_object_from_file((char*)fname.str().c_str());
     if (is_error(json_data)) {
@@ -156,7 +156,7 @@ void Pollux_configurator::load_datastores() {
     json_object_object_foreach(datastores,name,datastore) {
         std::ostringstream addon_name;
         // find name of the addon
-        addon_name<<"extensions/datastores/"<<name<<".so";
+        addon_name<<path_ext<<"/extensions/datastores/"<<name<<".so";
 
         // open the addon
         handle = dlopen (addon_name.str().c_str(), RTLD_LAZY);
@@ -194,7 +194,7 @@ void Pollux_configurator::load_sensors() {
     struct json_object *json_data;
     std::ostringstream fname;
 
-    fname << path << "/sensors.json";
+    fname << path_conf << "/sensors.json";
 
     json_data = json_object_from_file((char*)fname.str().c_str());
 

@@ -61,10 +61,11 @@ class Pollux_configurator {
 
     long_short_sensor_map::iterator current_sensor_it;
 
-    std::string& path;
+    std::string& path_conf;
+    std::string& path_ext;
 
     public:
-        Pollux_configurator(std::string& path);
+        Pollux_configurator(std::string& conf, std::string& ext);
         const std::string& get_config_option(std::string key) const;
         const std::string& get_datastore_value(std::string& ds, std::string& value) const;
 
