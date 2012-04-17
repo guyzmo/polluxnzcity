@@ -38,5 +38,10 @@ at respecting JSON's syntax.
             "api_key": "roxxkey", 
             "post_url": "http://theawesomepatchbe.com/apiv2"
         }
+    }, 
+    "geolocalisation": {
+        "address": "CKAB", 
+        "latitude": "48.8706573", 
+        "longitude": "2.3413066"
     }
 }

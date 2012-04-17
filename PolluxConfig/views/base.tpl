@@ -10,11 +10,13 @@
 	<script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
 	<script type="text/javascript" src="/js/bootstrap.min.js"></script>
 	<script src="/js/bootstrap-alert.js"></script>
-	<script type="text/javascript" src="/js/custom.js"></script>${self.extra_js()}
+	<script type="text/javascript" src="/js/custom.js"></script>
+    ${self.extra_js()}
 
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <style>body { padding-top: 60px; } </style>
-    <link href="/css/bootstrap-responsive.min.css" rel="stylesheet">${self.extra_css()}
+    <link href="/css/bootstrap-responsive.min.css" rel="stylesheet">
+    ${self.extra_css()}
 
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -38,7 +40,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </a>
-      <a class="brand" href="#">Project name</a>
+      <a class="brand" href="/">Pollux'NZ City</a>
       <div class="nav-collapse">
         <ul class="nav">
           <li><a href="/">Home</a></li>

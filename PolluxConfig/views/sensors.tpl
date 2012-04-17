@@ -1,22 +1,26 @@
 <%inherit file="base.tpl"/>
+
 <h1>Pollux nz city configuration utility</h1>
 %if welldone:
 <br />
 <div class="alert alert-success">Configuration successfully updated<a class="close" data-dismiss="alert" href="#">&times;</a></div>
+%else:
+<div id="osm_err" class="alert alert-error hide fade in" data-alert="alert"><a class="close" data-dismiss="alert" href="#">&times;</a><span id="osm_err_t"></span></div>
 %endif
 <form class="form-horizontal" method="post">
 
 <fieldset>
    <legend>Sensor List</legend>
 %for name, sensorl in sensors.iteritems():
+<h3>Sensor</h3><br />
 <div class="control-group">
-   <label class="control-label" for="sensor_addr">Sensor module at address</label>
+   <label class="control-label" for="sensor_addr">Sensor's address</label>
    <div class="controls">
-   <input type="text" class="input-xlarge" id="sensor_addr" name="sensor_addr" value="${name}">
-   <input type="hidden" id="sensor_addr_old" name="sensor_addr_old" value="${name}">
-   <!--<p class="help-block">Supporting help text</p>-->
+    <input type="text" class="input-medium" id="sensor_addr" name="sensor_addr" value="${name}">
+    <input type="hidden" id="sensor_addr_old" name="sensor_addr_old" value="${name}">
+    <!--<p class="help-block">Supporting help text</p>-->
    </div>
-   </div>
+</div>
 
 <table class="table table-striped table-bordered">
    	<thead>
@@ -26,8 +30,8 @@
    		</tr>
    	</thead>
 	<tbody>
-		<tr>
 %for s in sensorl:
+		<tr>
 <%
 checked = "checked" if s["activated"] else "" 
 %>
@@ -37,7 +41,7 @@ checked = "checked" if s["activated"] else ""
 			(${s["unit"]})
 %endif
 			</label></td>
-		<tr>
+		</tr>
 %endfor
    	</tbody>
    </table>

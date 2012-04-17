@@ -1,0 +1,13 @@
+[Unit]
+Description=Pollux NZ City Configuration Service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/pollux/pollux_webserv.conf
+ExecStart=/usr/bin/pollux_serv -H $HOST -P $PORT -p $CONFIG_PATH -d $DATA_PATH -D
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+

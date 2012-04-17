@@ -1,17 +1,16 @@
 #!/bin/env python
 
 
-from bottle import install, route, run, PluginError, HTTPError, debug, response, view, static_file, request
+from bottle import install, route, run, PluginError, HTTPError, debug, response, view, static_file, request, TEMPLATE_PATH
 from bottle import mako_view as view, mako_template as template
 
+import pollux.static
+import pollux.views
+
 from argparse import ArgumentParser
-
 import inspect
-
 import json
-
 import sys
-
 import re
 
 def remove_comments(text):
@@ -136,6 +135,9 @@ at respecting JSON's syntax.
         finally:
             f.close()
         d = json.loads(s)
+        if not "geolocalisation" in d.keys():
+            d["geolocalisation"] = {"latitude":"", "longitude":"", "address":""}
+        self._geoloc_map = d["geolocalisation"]
         if "configuration" in d and "datastores" in d:
             self._config_map = d["configuration"]
             self._datastores_map = d["datastores"]
@@ -145,7 +147,7 @@ at respecting JSON's syntax.
         try:
             f = open(self._path+"config.json","w")
             f.write(self.__CONFIG_COMMENT)
-            f.write(json.dumps(dict(configuration=self._config_map, datastores=self._datastores_map), sort_keys=True, indent=4))
+            f.write(json.dumps(dict(configuration=self._config_map, geolocalisation=self._geoloc_map, datastores=self._datastores_map), sort_keys=True, indent=4))
         finally:
             f.close()
     
@@ -157,11 +159,18 @@ at respecting JSON's syntax.
         self._datastores_map = dstores_d
         self.set_modified()
 
+    def set_geoloc(self, geoloc_d):
+        self._geoloc_map = geoloc_d
+        self.set_modified()
+
     def get_configuration(self):
         return self._config_map
 
     def get_datastores(self):
         return self._datastores_map
+
+    def get_geoloc(self):
+        return self._geoloc_map
 
 class Sensors(BottlePluginBase):
     __CONFIG_COMMENT="""/*********************************************************************
@@ -237,6 +246,13 @@ def post_sensors():
     if request.forms.get('sensor_addr_old') != request.forms.get('sensor_addr'):
         result[request.forms.get('sensor_addr')] = result[request.forms.get('sensor_addr_old')]
         del(result[request.forms.get('sensor_addr_old')])
+    #if request.forms.get('longitude') != "" and request.forms.get('latitude') != "":
+    #    d = { 'name' : 'longitude',
+    #          'value' : request.forms.get('longitude') }
+    #    result.append(d)
+    #    d = { 'name' : 'latitude',
+    #          'value' : request.forms.get('latitude') }
+    #    result.append(d)
     sensors.set_sensors(result)
     sensors.save()
     return dict(title="Sensors configuration Saved",sensors=sensors.get_sensors(),welldone=True)
@@ -244,26 +260,24 @@ def post_sensors():
 @route('/datastores/')
 @view('datastores')
 def get_datastores():
-    return dict(title="Datastores",datastores=config._datastores_map)
+    return dict(title="Datastores",datastores=config.get_datastores(),geoloc=config.get_geoloc())
 
 @route('/datastores/', method='POST')
 @view('datastores')
 def post_datastores():
     result = config.get_datastores()
+    geo_map = config.get_geoloc()
     for key in request.forms.keys():
         key_name = "_".join(key.split("_")[1:])
         print key_name
-	if "activated" in key_name:
-            if request.forms.get(key) != "":
-                result[key.split("_")[0]][key_name] = True
-            else:
-                result[key.split("_")[0]][key_name] = False
+        if key.split("_")[0] == "geo":
+            geo_map[key_name] = request.forms.get(key)
         else:
             result[key.split("_")[0]][key_name] = request.forms.get(key)
-            
     config.set_datastores(result)
+    config.set_geoloc(geo_map)
     config.save()
-    return dict(title="Datastores configuration Saved",datastores=config._datastores_map,welldone=True)
+    return dict(title="Datastores configuration Saved",datastores=config.get_datastores(),geoloc=config.get_geoloc(),welldone=True)
         
 @route('/advanced/')
 @view('advanced')
@@ -280,21 +294,27 @@ def post_advanced():
     config.save()
     return dict(title="Advanced configuration Saved",config=config._config_map,welldone=True)
 
-@route('/css/<filename>')
-def get_image(filename):
-    return static_file(filename, root='static/css/')
-   
+import urllib2
+@route('/geoloc/<query>')
+def get_geoloc(query):
+    v = urllib2.urlopen('http://nominatim.openstreetmap.org/search/?format=json&q=%s' % (query,)).read()
+    return v
+
 @route('/data/<filename>')
-def get_image(filename):
-    return static_file(filename, root='static/data/')
+def get_data(filename):
+    return static_file(filename, root=config.VARLIB_PATH)
+
+@route('/css/<filename>')
+def get_css(filename):
+    return static_file(filename, root=pollux.static.__path__[0]+'/css/')
 	
 @route('/img/<filename>')
 def get_image(filename):
-    return static_file(filename, root='static/img/')
+    return static_file(filename, root=pollux.static.__path__[0]+'/img/')
 
 @route('/js/<filename>')
 def get_javascript(filename):
-    return static_file(filename, root='static/js/')
+    return static_file(filename, root=pollux.static.__path__[0]+'/js/')
 
 @route('/sensor/list')
 def sensor_list():
@@ -341,28 +361,28 @@ def config_list():
 def config_get(key):
     return config.get_configuration()[key]
 
-if __name__ == "__main__":
+def start():
     parser = ArgumentParser(prog=sys.argv[0],
                 description="Pollux'NZ City configurator")
 
     parser.add_argument("-V", '--version', action='version', version="%(prog)s version 0")
     
-    parser.add_argument("-d",
+    parser.add_argument("-D",
                         "--debug",
                         dest="debug",
                         action="store_true",
                         default=False,
                         help="Debug mode")
-    parser.add_argument("-P",
+    parser.add_argument("-p",
                         "--path",
                         dest="path",
                         default=".",
                         help='path to configuration directory. e.g. /etc/pollux/')
-    parser.add_argument("-c",
-                        "--cache",
-                        dest="cache_path",
-                        default="/tmp/",
-                        help='Directory where all cached objects (session, files) will be stored.\nDefaults to "/tmp/bf/"')
+    parser.add_argument("-d",
+                        "--data",
+                        dest="data_path",
+                        default="/var/lib/pollux",
+                        help='Directory where sensor_values.csv lays')
     # HOST ARGUMENT
     parser.add_argument("-H",
                         "--host",
@@ -370,7 +390,7 @@ if __name__ == "__main__":
                         default='0.0.0.0',
                         help='Host to serve the web application on.')
     # PORT ARGUMENT
-    parser.add_argument("-p",
+    parser.add_argument("-P",
                         "--port",
                         dest="port",
                         default='8080',
@@ -378,8 +398,16 @@ if __name__ == "__main__":
     
     args = parser.parse_args(sys.argv[1:])
 
+    global config
+    global sensors
+
     config = Configuration(args.path+"/")
     sensors = Sensors(args.path+"/")
+
+    TEMPLATE_PATH.insert(0,pollux.views.__path__[0])
+    config.VARLIB_PATH=args.data_path
+
+    TEMPLATE_PATH
 
     install(config)
     install(sensors)
@@ -387,3 +415,5 @@ if __name__ == "__main__":
     debug(args.debug)
     run(host=args.host, port=args.port, reloader=args.debug)
 
+if __name__ == "__main__":
+    start()
