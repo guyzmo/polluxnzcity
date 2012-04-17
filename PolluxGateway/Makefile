@@ -75,11 +75,13 @@ install:
 	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
 
 uninstall:
-	$(RM) $(DEST_INSTALL)/pollux_gateway
+	$(RM) $(DEST_INSTALL)/pollux_gateway /usr/lib/pollux/extensions/datastores/*.so
 
 manual-install:
 	$(INSTALL) -d /var/lib/pollux
+	$(INSTALL) -d /usr/lib/pollux/extensions/datastores
 	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
+	$(INSTALL) -D extensions/datastores/*.so /usr/lib/pollux/extensions/datastores
 	$(INSTALL) pollux_gateway.service $(DEST_SYSTEMD)
 	$(SYSD) daemon-reload
 	$(SYSD) enable pollux_gateway.service
