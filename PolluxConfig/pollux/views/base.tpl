@@ -9,7 +9,6 @@
 
 	<script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
 	<script type="text/javascript" src="/js/bootstrap.min.js"></script>
-	<script src="/js/bootstrap-alert.js"></script>
 	<script type="text/javascript" src="/js/custom.js"></script>
     ${self.extra_js()}
 

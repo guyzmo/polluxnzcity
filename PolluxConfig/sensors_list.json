@@ -4,5 +4,5 @@
 { "name" : "Temperature", "unit" : "C",   "address" : "0x27", "register" : "2", "activated" : false },
 { "name" : "Dust",        "unit" : "ppm", "address" : "0x26", "register" : "0", "activated" : false },
 { "name" : "NO2",         "unit" : "ppm", "address" : "0x28", "register" : "0", "activated" : false },
-{ "name" : "CO",          "unit" : "ppm", "address" : "0x29", "register" : "0", "activated" : false } 
+{ "name" : "CO",          "unit" : "ppm", "address" : "0x28", "register" : "1", "activated" : false } 
 ]

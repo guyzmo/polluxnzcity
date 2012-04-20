@@ -1,7 +1,7 @@
 #!/bin/env python
 
 
-from bottle import install, route, run, PluginError, HTTPError, debug, response, view, static_file, request, TEMPLATE_PATH
+from bottle import install, route, run, PluginError, HTTPError, debug, response, static_file, request, TEMPLATE_PATH
 from bottle import mako_view as view, mako_template as template
 
 import pollux.static
@@ -12,6 +12,7 @@ import inspect
 import json
 import sys
 import re
+import gc
 
 def remove_comments(text):
     """ remove c-style comments.
@@ -100,8 +101,43 @@ class BottlePluginBase(object):
         # Replace the route callback with the wrapped one.
         return wrapper
 
-class Configuration(BottlePluginBase):
-    __CONFIG_COMMENT="""/*********************************************************************
+class PolluxPluginBase(BottlePluginBase):
+    def __init__(self, name):
+        BottlePluginBase.__init__(self,name)
+        self._parse_error = None
+
+    def reload_maps(self, path, map_names):
+        try:
+            for name in map_names:
+                self.load_json(path, name)
+            self._parse_error = None
+        except Exception, err:
+            self._parse_error = err
+
+    def load_json(self, path, name):
+        """
+        load a json file from %path%/%name%+".json" and store it into self._%name% in current object
+        """
+        try:
+            f = open(path+name+".json", "r")
+            s = remove_comments("".join(f.readlines()))
+            setattr(self, "_"+name+"_map", json.loads(s))
+        finally:
+            f.close()
+
+    def store_json(self, name):
+        try:
+            f = open(self._path+name+".json","w")
+            f.write(self.COMMENT)
+            f.write(json.dumps(getattr(self, "_"+name+"_map"), sort_keys=True, indent=4))
+        finally:
+            f.close()
+
+    def get_error(self):
+        return self._parse_error
+
+class Configuration(PolluxPluginBase):
+    COMMENT="""/*********************************************************************
                 Pollux'NZ City configuration file
 
 This file configures general settings (in configuration section)
@@ -121,59 +157,49 @@ in datastores section :
         typically: 'post_url' for the address to post to, and 'api_key'
         to sign the data.
 
+in geolocalisation section :
+    * defines the latitude, longitude, altitude and address of the device
+
 This file is generated automatically, please modify it using the
 tools given with the pollux'nz city software. Or be very careful
 at respecting JSON's syntax.
 *********************************************************************/
 """
     def __init__(self, path):
-        BottlePluginBase.__init__(self,"pconfig")
+        PolluxPluginBase.__init__(self,"config")
         self._path = path
-        f = open(path+"config.json")
-        try:
-            s = remove_comments("".join(f.readlines()))
-        finally:
-            f.close()
-        d = json.loads(s)
-        if not "geolocalisation" in d.keys():
-            d["geolocalisation"] = {"latitude":"", "longitude":"", "address":""}
-        self._geoloc_map = d["geolocalisation"]
-        if "configuration" in d and "datastores" in d:
-            self._config_map = d["configuration"]
-            self._datastores_map = d["datastores"]
+        self.reload_config()
+
+    def reload_config(self):
+        self.reload_maps(self._path, ["config"])
 
     def save(self):
         print "call save"
-        try:
-            f = open(self._path+"config.json","w")
-            f.write(self.__CONFIG_COMMENT)
-            f.write(json.dumps(dict(configuration=self._config_map, geolocalisation=self._geoloc_map, datastores=self._datastores_map), sort_keys=True, indent=4))
-        finally:
-            f.close()
+        self.store_json("config")
     
     def set_configuration(self, config_d):
-        self._config_map = config_d
+        self._config_map["configuration"] = config_d
         self.set_modified()
 
     def set_datastores(self, dstores_d):
-        self._datastores_map = dstores_d
+        self._config_map["datastores"] = dstores_d
         self.set_modified()
 
     def set_geoloc(self, geoloc_d):
-        self._geoloc_map = geoloc_d
+        self._config_map["geolocalisation"] = geoloc_d
         self.set_modified()
 
     def get_configuration(self):
-        return self._config_map
+        return self._config_map["configuration"]
 
     def get_datastores(self):
-        return self._datastores_map
+        return self._config_map["datastores"]
 
     def get_geoloc(self):
-        return self._geoloc_map
+        return self._config_map["geolocalisation"]
 
-class Sensors(BottlePluginBase):
-    __CONFIG_COMMENT="""/*********************************************************************
+class Sensors(PolluxPluginBase):
+    COMMENT="""/*********************************************************************
                 Pollux'NZ City sensors file
 
 This file defines the list of sensor modules that are enabled in
@@ -194,24 +220,20 @@ at respecting JSON's syntax.
     def __init__(self, path):
         BottlePluginBase.__init__(self,"sensors")
         self._path = path
-        f = open(path+"sensors.json")
-        s = remove_comments("".join(f.readlines()))
-        self._sensors_map = json.loads(s)
-        f = open(path+"sensors_list.json") # TODO curl http://...ckab.net/.../sensors_list
-        s = remove_comments("".join(f.readlines()))
-        self._sensors_list = json.loads(s)
+        self.reload_config()
+
+    def reload_config(self):
+        self.reload_maps(self._path, ["sensors", "sensors_list"])
 
     def save(self):
         print "call save"
-        f = open(self._path+"sensors.json","w")
-        f.write(self.__CONFIG_COMMENT)
-        f.write(json.dumps(self._sensors_map, sort_keys=True, indent=4))
+        self.store_json("sensors")
 
     def get_sensors(self):
         return self._sensors_map
 
     def get_sensors_list(self):
-        return self._sensors_list
+        return self._sensors_list_map
 
     def set_sensors(self, sensors_d):
         self._sensors_map = sensors_d
@@ -230,11 +252,15 @@ def datas():
 @route('/sensors/')
 @view('sensors')
 def get_sensors():
-    return dict(title="Sensors",sensors=sensors.get_sensors())
+    if sensors.get_error():
+        raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
+    return dict(title="Sensors",sensors=sensors)
 
 @route('/sensors/', method='POST')
 @view('sensors')
 def post_sensors():
+    if sensors.get_error():
+        raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     for sensor in sensors.get_sensors()[request.forms.get('sensor_addr_old')]:
         sensor["activated"] = False
     for key in request.forms.keys():                       # for each sensor return by form
@@ -246,53 +272,58 @@ def post_sensors():
     if request.forms.get('sensor_addr_old') != request.forms.get('sensor_addr'):
         result[request.forms.get('sensor_addr')] = result[request.forms.get('sensor_addr_old')]
         del(result[request.forms.get('sensor_addr_old')])
-    #if request.forms.get('longitude') != "" and request.forms.get('latitude') != "":
-    #    d = { 'name' : 'longitude',
-    #          'value' : request.forms.get('longitude') }
-    #    result.append(d)
-    #    d = { 'name' : 'latitude',
-    #          'value' : request.forms.get('latitude') }
-    #    result.append(d)
+
     sensors.set_sensors(result)
     sensors.save()
-    return dict(title="Sensors configuration Saved",sensors=sensors.get_sensors(),welldone=True)
+    return dict(title="Sensors configuration Saved", message="Configuration successfully saved.",sensors=sensors,welldone=True)
 
 @route('/datastores/')
 @view('datastores')
 def get_datastores():
+    if config.get_error():
+        raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     return dict(title="Datastores",datastores=config.get_datastores(),geoloc=config.get_geoloc())
 
 @route('/datastores/', method='POST')
 @view('datastores')
 def post_datastores():
+    if config.get_error():
+        raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     result = config.get_datastores()
+    for n,kv in result.iteritems():
+        kv["activated"] = False
+        
     geo_map = config.get_geoloc()
     for key in request.forms.keys():
         key_name = "_".join(key.split("_")[1:])
-        print key_name
         if key.split("_")[0] == "geo":
             geo_map[key_name] = request.forms.get(key)
         else:
-            result[key.split("_")[0]][key_name] = request.forms.get(key)
+            if key_name == "activated":
+                result[key.split("_")[0]][key_name] = True
+            else:
+                result[key.split("_")[0]][key_name] = request.forms.get(key)
     config.set_datastores(result)
     config.set_geoloc(geo_map)
     config.save()
-    return dict(title="Datastores configuration Saved",datastores=config.get_datastores(),geoloc=config.get_geoloc(),welldone=True)
+    return dict(title="Datastores configuration Saved", message="Configuration successfully saved.",datastores=config.get_datastores(),geoloc=config.get_geoloc(),welldone=True)
         
 @route('/advanced/')
 @view('advanced')
 def get_advanced():
-    return dict(title="Advanced",config=config._config_map)
+    return dict(title="Advanced",config=config.get_configuration())
 
 @route('/advanced/', method='POST')
 @view('advanced')
 def post_advanced():
+    if config.get_error():
+        raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     result = config.get_configuration()
     for key in request.forms.keys():
         result[key] = request.forms.get(key)
     config.set_configuration(result)
     config.save()
-    return dict(title="Advanced configuration Saved",config=config._config_map,welldone=True)
+    return dict(title="Advanced configuration Saved", message="Configuration successfully saved.",config=config.get_configuration(),welldone=True)
 
 import urllib2
 @route('/geoloc/<query>')
@@ -316,12 +347,37 @@ def get_image(filename):
 def get_javascript(filename):
     return static_file(filename, root=pollux.static.__path__[0]+'/js/')
 
+import urllib2
+@route('/sensors/reload')
+@view('advanced')
+def sensors_reload():
+    response = urllib2.urlopen("http://files.ckab.net/b61af528/sensors_list.json")
+    try:
+        sensors_list_str = response.read()
+
+        try:
+            f = open(sensors._path+"sensors_list.json","w")
+            f.write(sensors_list_str)
+        finally:
+            f.close()
+        sensors.reload_config()
+        if sensors.get_error():
+            raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
+        return dict(title="Configuration reloaded", message="Sensor's list successfully upgraded",config=config.get_configuration(),welldone=True)
+
+    except Exception, err:
+        return dict(title="Configuration reloaded", message="Sensor's list failed to upgrade: "+err,config=config.get_configuration(),failed=True)
+
 @route('/sensor/list')
 def sensor_list():
+    if sensors.get_error():
+        raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     return json.dumps(sensors.get_modules())
 
 @route('/sensor/<addr>')
 def sensor_get(addr):
+    if sensors.get_error():
+        raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     response.content_type = 'application/json; charset=UTF-8'
     l = list(set([sensor['address'] for sensor in sensors.get_module(addr)]))
     l.sort
@@ -329,12 +385,16 @@ def sensor_get(addr):
 
 @route('/sensor/<addr>/<i2c>')
 def sensor_get_sensors(addr,i2c):
+    if sensors.get_error():
+        raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     response.content_type = 'application/json; charset=UTF-8'
     l = [sensor for sensor in sensors.get_module(addr) if sensor['address'] == i2c]
     return json.dumps(l)
         
 @route('/sensor/<addr>/<i2c>/<reg>')
 def sensor_get_register(addr,i2c,reg):
+    if sensors.get_error():
+        raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     response.content_type = 'application/json; charset=UTF-8'
     l = [sensor for sensor in sensors.get_module(addr) if sensor['address'] == i2c and sensor['register'] == reg]
     if len(l) == 0:
@@ -345,21 +405,114 @@ def sensor_get_register(addr,i2c,reg):
 
 @route('/datastore/list')
 def datastore_list():
+    if config.get_error():
+        raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     response.content_type = 'application/json; charset=UTF-8'
     return json.dumps(config.get_datastores())
 
 @route('/datastore/<name>')
 def datastore_get(name):
+    if config.get_error():
+        raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     response.content_type = 'application/json; charset=UTF-8'
     return json.dumps(config.get_datastore_config(name))
 
 @route('/config/list')
 def config_list():
+    if config.get_error():
+        raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     return config.get_configuration()
 
 @route('/config/<key>')
 def config_get(key):
+    if config.get_error():
+        raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     return config.get_configuration()[key]
+
+@route('/config/reload')
+@view('advanced')
+def config_reload():
+    sensors.reload_config()
+    if sensors.get_error():
+        raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
+    config.reload_config()
+    if config.get_error():
+        raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
+    return dict(title="Configuration reloaded", message="Configuration successfully reloaded",config=config.get_configuration(),welldone=True)
+
+@route('/system/restart')
+@view('advanced')
+def restart_service():
+    try:
+        import subprocess
+        subprocess.check_call(['/usr/bin/sudo', '/bin/systemctl', 'restart', 'pollux_gateway.service'])
+        return dict(title="Service restarted",config=config.get_configuration(),message="Service successfully restarted.",welldone=True)
+    except:
+        return dict(title="Service restart failure.",message="Couldn't restart service. Check logs.",config=config.get_configuration(),failed=True)
+    
+import tarfile    
+@route('/system/module/upload', method="POST")
+@view('advanced')
+def upload_module():
+    name = request.forms.name
+    module = request.files.module
+    try:
+        json_viewed=False
+        so_viewed=False
+        if name and module and module.file:
+            filename = module.filename
+
+            # Open tarfile
+            tar = tarfile.open(mode="r:gz", fileobj = module.file)
+
+            if len(tar.getnames()) == 0:
+                raise Exception("No file was found in uploaded file")
+
+
+            # Iterate over every member
+            for member in tar.getnames():
+                if member.endswith("json"):
+                    if not name in member:
+                        raise Exception("JSON filename shall be: "+name+".json")
+                    try:
+                        f = open(tar.extractfile(member), "r")
+                        s = remove_comments("".join(f.readlines()))
+                        datastore = json.loads(s)
+                        config.get_datastore()[name] = datastore[name]
+                    finally:
+                        json_viewed=True
+                        f.close()
+                elif member.endswith("so"):
+                    if not name in member:
+                        raise Exception("SO library shall be: "+name+".json")
+                    try:
+                        f = open(tar.extractfile(member), "r")
+                        fout = open(config.USRLIB_PATH+"/extensions/datastores/"+name+".so","w")
+                        fout.write(f.read())
+                        fout.close()
+                    finally:
+                        so_viewed=True
+                        f.close()
+                        fout.close()
+        else:
+            raise Exception("Form has not been correctly filled in. Try again !")
+        if json_viewed is False and so_viewed is False:
+            raise Exception("No valid file has been found in the package.")
+        return dict(title="Module loaded.", message="Module loaded, you can now <a href='/datastores/'>configure it</a>",config=config.get_configuration(),welldone=True)
+    except Exception, err:
+        return dict(title="Failure to load module.", message="Failed to load module: "+str(err),config=config.get_configuration(),failed=True)
+
+@route('/system/logs')
+@view('logs')
+def view_logs():
+    try:
+        f = open('/var/log/messages','r')
+        return dict(title="Log Viewer",logs=f.readlines()[-100:])
+    finally:
+        logs = None
+        gc.collect()
+        f.close()
+    raise HTTPError(500, "Feature not yet implemented. Really sorry.")
 
 def start():
     parser = ArgumentParser(prog=sys.argv[0],
@@ -383,6 +536,11 @@ def start():
                         dest="data_path",
                         default="/var/lib/pollux",
                         help='Directory where sensor_values.csv lays')
+    parser.add_argument("-l",
+                        "--lib",
+                        dest="lib_path",
+                        default="/usr/lib/pollux",
+                        help='Directory where the modules lay')
     # HOST ARGUMENT
     parser.add_argument("-H",
                         "--host",
@@ -406,6 +564,7 @@ def start():
 
     TEMPLATE_PATH.insert(0,pollux.views.__path__[0])
     config.VARLIB_PATH=args.data_path
+    config.USRLIB_PATH=args.lib_path
 
     TEMPLATE_PATH
 

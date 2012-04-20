@@ -11,43 +11,56 @@
 
 <fieldset>
    <legend>Sensor List</legend>
-%for name, sensorl in sensors.iteritems():
-<h3>Sensor</h3><br />
-<div class="control-group">
-   <label class="control-label" for="sensor_addr">Sensor's address</label>
-   <div class="controls">
-    <input type="text" class="input-medium" id="sensor_addr" name="sensor_addr" value="${name}">
-    <input type="hidden" id="sensor_addr_old" name="sensor_addr_old" value="${name}">
-    <!--<p class="help-block">Supporting help text</p>-->
-   </div>
-</div>
-
-<table class="table table-striped table-bordered">
-   	<thead>
-   		<tr>
-   			<th width="80px">Activated</th>
-   			<th>Sensor</th>
-   		</tr>
-   	</thead>
-	<tbody>
-%for s in sensorl:
-		<tr>
+%for name, sensorsl in sensors.get_sensors().iteritems():
+    <div id="accordion_${name}" class="accordion">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <div class="control-group">
+                    <label class="control-label" for="sensor_addr"><a data-toggle="collapse" data-parent="#accordion_${name}" href="#collapse_${name}">Sensor's address</a></label>
+                    <div class="controls">
+                        <input type="text" class="input-medium" id="sensor_addr" name="sensor_addr" value="${name}">
+                        <input type="hidden" id="sensor_addr_old" name="sensor_addr_old" value="${name}">
+                    </div>
+                </div>
+            </div>
+            <div id="collapse_${name}" classe="accordion-body collapse">
+                <div class="accordion-inner">
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th width="80px">Activated</th>
+                                <th>Sensor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
 <%
-checked = "checked" if s["activated"] else "" 
+sensorsl_names = [s["name"] for s in sensorsl]
+sensorsd_activ = dict([(s["name"],s["activated"]) for s in sensorsl])
 %>
-			<td><input type="checkbox" name="${s["address"]}_${s["register"]}" id="${s["address"]}_${s["register"]}" ${checked} /></td>
-			<td><label for="${s["address"]}_${s["register"]}">${s["name"]}
+%for s in sensors.get_sensors_list():
+                            <tr>
+<%
+checked = "checked" if s["name"] in sensorsl_names and sensorsd_activ[s["name"]] else "" 
+%>
+                                <td><input type="checkbox" name="${s["address"]}_${s["register"]}" id="${s["address"]}_${s["register"]}" ${checked} /></td>
+                                <td><label for="${s["address"]}_${s["register"]}">${s["name"]}
 %if "unit" in s.keys():
-			(${s["unit"]})
+                                        (${s["unit"]})
 %endif
-			</label></td>
-		</tr>
+                                    </label>
+                                </td>
+                            </tr>
 %endfor
-   	</tbody>
-   </table>
-
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <input type="button" class="btn btn-medium" value="Delete sensor" disabled /><br />
+        </div>
+    </div>
 %endfor
+    <input type="button" class="btn btn-medium" value="Add a sensor" disabled /><br />
 
-</fieldset>
 	<center><input type="submit" class="btn btn-primary btn-large"/></center>
+</fieldset>
 </form>

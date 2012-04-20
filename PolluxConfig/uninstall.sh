@@ -8,8 +8,8 @@ systemctl daemon-reload && echo "done" || echo "failed"
 echo -n "Removing all files: configuration: "
 rm -rf  /etc/pollux/ /lib/systemd/system/pollux_config.service && echo -n "done" || echo -n "failed"
 echo -n " ; python files: "
-cat .installed_files.lst | xargs rm -rf && echo "done" || echo "failed"
-rm -f .installed_files.lst
+cat /var/lib/pollux/installed_files.lst | xargs rm -rf && echo "done" || echo "failed"
+rm -f /var/lib/pollux/installed_files.lst
 
 echo
 echo "pollux config uninstalled"

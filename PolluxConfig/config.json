@@ -28,15 +28,21 @@ at respecting JSON's syntax.
         "wud_sleep_time": "900"
     }, 
     "datastores": {
+        "local": {
+            "activated": true,
+            "post_url": "/var/lib/pollux/sensors_data.csv"
+        },
         "citypulse": {
-            "activated": "on", 
+            "activated": true, 
             "api_key": "123456", 
             "post_url": "http://www2.star-apic.com/citypulse/data/SetArduinoData"
         }, 
         "pachube": {
-            "activated": "on", 
+            "activated": false, 
             "api_key": "roxxkey", 
-            "post_url": "http://theawesomepatchbe.com/apiv2"
+            "feed": "1977",
+            "datastream": "1",
+            "post_url": "http://api.pachube.com/v2/feeds/"
         }
     }, 
     "geolocalisation": {
