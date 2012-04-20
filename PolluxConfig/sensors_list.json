@@ -1,8 +1,8 @@
 [
-{ "name" : "Fan",                         "address" : "0x27", "register" : "0", "activated" : false },
-{ "name" : "Noise Level", "unit" : "dB",  "address" : "0x27", "register" : "1", "activated" : false },
-{ "name" : "Temperature", "unit" : "C",   "address" : "0x27", "register" : "2", "activated" : false },
-{ "name" : "Dust",        "unit" : "ppm", "address" : "0x26", "register" : "0", "activated" : false },
-{ "name" : "NO2",         "unit" : "ppm", "address" : "0x28", "register" : "0", "activated" : false },
-{ "name" : "CO",          "unit" : "ppm", "address" : "0x28", "register" : "1", "activated" : false } 
+{ "name" : "Fan",                         "address" : "0x27", "register" : "0", "type" : "void",  "length" : 0, "activated" : false },
+{ "name" : "Noise Level", "unit" : "dB",  "address" : "0x27", "register" : "2", "type" : "int",   "length" : 2, "activated" : false },
+{ "name" : "Temperature", "unit" : "C",   "address" : "0x27", "register" : "4", "type" : "float", "length" : 4, "activated" : false },
+{ "name" : "Dust",        "unit" : "ppm", "address" : "0x26", "register" : "0", "type" : "float", "length" : 4, "activated" : false },
+{ "name" : "NO2",         "unit" : "ppm", "address" : "0x28", "register" : "0", "type" : "float", "length" : 4, "activated" : false },
+{ "name" : "CO",          "unit" : "ppm", "address" : "0x28", "register" : "1", "type" : "float", "length" : 4, "activated" : false } 
 ]

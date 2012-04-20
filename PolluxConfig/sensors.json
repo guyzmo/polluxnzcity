@@ -21,42 +21,55 @@ at respecting JSON's syntax.
             "activated": true, 
             "address": "0x27", 
             "name": "Fan", 
-            "register": "0"
+            "register": "0",
+            "type": "void",
+            "length": 0
         }, 
         {
             "activated": true, 
             "address": "0x27", 
             "name": "Noise Level", 
             "register": "1", 
-            "unit": "dB"
+            "unit": "dB",
+            "type": "int",
+            "length": 2
         }, 
         {
             "activated": true, 
             "address": "0x27", 
             "name": "Temperature", 
             "register": "2", 
-            "unit": "C"
+            "unit": "C",
+            "type": "float",
+            "length": 4
         }, 
         {
             "activated": true, 
             "address": "0x26", 
             "name": "Dust", 
             "register": "0", 
-            "unit": "ppm"
+            "unit": "ppm",
+            "type": "float",
+            "length": 4
         }, 
         {
             "activated": false, 
             "address": "0x28", 
             "name": "NO2", 
             "register": "0", 
-            "unit": "ppm"
+            "unit": "ppm",
+            "type": "float",
+            "length": 4
         }, 
         {
             "activated": false, 
             "address": "0x28", 
             "name": "CO", 
             "register": "1", 
-            "unit": "ppm"
+            "unit": "ppm",
+            "type": "float",
+            "length": 4
+
         }
     ]
 }

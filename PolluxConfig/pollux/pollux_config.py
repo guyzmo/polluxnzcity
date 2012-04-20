@@ -259,18 +259,22 @@ def get_sensors():
 @route('/sensors/', method='POST')
 @view('sensors')
 def post_sensors():
+    # XXX TODO add support for multiple sensor modules
     if sensors.get_error():
         raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
-    for sensor in sensors.get_sensors()[request.forms.get('sensor_addr_old')]:
-        sensor["activated"] = False
-    for key in request.forms.keys():                       # for each sensor return by form
-        if re.match("^0x[0-9]{1,3}_[0-9]{1,3}$",key):      # check if key is a valid I2C + Register addr
-            for sensor in sensors.get_sensors()[request.forms.get('sensor_addr_old')]: # get all locals sensors
-                if sensor['address'] == key.split('_')[0] and sensor['register'] == key.split('_')[1]: # if posted sensor is the current local sensor
-                    sensor['activated'] = True
+
+    form_keys = [key for key in request.forms.keys() if re.match("^0x[0-9]{1,3}_[0-9]{1,3}$",key)]
+
+    sensors_list = []
+    for sensor in sensors.get_sensors_list():
+        sensor = sensor.copy()
+        if sensor["address"] + "_" + sensor["register"] in form_keys:
+            sensor["activated"] = True
+        sensors_list.append(sensor)
+
     result = sensors.get_sensors()
+    result[request.forms.get('sensor_addr')] = sensors_list
     if request.forms.get('sensor_addr_old') != request.forms.get('sensor_addr'):
-        result[request.forms.get('sensor_addr')] = result[request.forms.get('sensor_addr_old')]
         del(result[request.forms.get('sensor_addr_old')])
 
     sensors.set_sensors(result)
