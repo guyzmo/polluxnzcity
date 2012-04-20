@@ -27,8 +27,9 @@ extern "C" {
 }
 #define I2C_ADDR_SIZE 256
 
+#include <avr/pgmspace.h>
+
 class TinyWire {
-    static uint8_t mem_buffer[I2C_ADDR_SIZE];
 
     static void _on_receive_handler(uint8_t reg, uint8_t value);
     static uint8_t _on_request_handler(uint8_t reg);

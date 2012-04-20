@@ -29,6 +29,8 @@ extern "C" {
 }
 #include "TinyWire.h"
 
+prog_uint8_t mem_buffer[I2C_ADDR_SIZE];
+
 void TinyWire::begin(uint8_t i2c_slave_address) {
     usiTwiSlaveInit(i2c_slave_address, 
                     _on_request_handler, 
