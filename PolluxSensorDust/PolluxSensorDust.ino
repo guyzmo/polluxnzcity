@@ -37,6 +37,16 @@
 
 TinyWire Wire;
 
+float offset=-0.5;
+float coef=0.18;
+
+void sensor_calibrate() {
+    offset = Wire.read(0x20);
+    offset = Wire.read(0x21);
+    offset = Wire.read(0x22);
+    offset = Wire.read(0x23);
+}
+
 void sensor_meas() {
     Statistic stat;
     float result;
@@ -51,16 +61,16 @@ void sensor_meas() {
         delay(DELAY_TIME2);                // way 9ms to reach the 10 ms until new sample
     }
 
-    result = ((stat.average()*0.0049)-0.5)*0.18 ; // convert the result into a humain readable output
+    result = ((stat.average()*0.0049)+offset)*coef ; // convert the result into a humain readable output
     if(result < 0) result = 0;             // avoid eratic datas
     stat.clear();                          // clear statistics to avoid leack and data stacking
 
     float_ptr = (uint8_t*)&result;
-    Wire.set_type(I2C_FLT);
-    Wire.write(*(float_ptr)); // send 1st byte of float
-    Wire.write(*(float_ptr+1)); // send 2nd byte of float
-    Wire.write(*(float_ptr+2)); // send 3rd byte of float
-    Wire.write(*(float_ptr+3)); // send 4th byte of float
+
+    Wire.write(0x11,*(float_ptr)); // send 1st byte of float
+    Wire.write(0x12,*(float_ptr+1)); // send 2nd byte of float
+    Wire.write(0x13,*(float_ptr+2)); // send 3rd byte of float
+    Wire.write(0x14,*(float_ptr+3)); // send 4th byte of float
 }
 
 void setup() {
@@ -68,10 +78,16 @@ void setup() {
     pinMode(DUST_READ,INPUT);
 
     Wire.begin(I2C_SLAVE_ADDR); // slave address
-    Wire.set_request_callback(&sensor_meas);
 }
 
+
 void loop() {
- /* nop */
+    // on I2C bus : (addr=0x26,reg=0x00,val=1)
+    if (Wire.read(0x00) != 0)
+        sensor_meas();
+
+    // on I2C bus : (addr=0x26,reg=0x10)
+    if (Wire.read(0x01) != 0)
+        sensor_calibrate();
 }
 
