@@ -52,10 +52,10 @@ SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
 OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
 INCLUDES=$(patsubst %,-I%,$(HEADERS))
 
-pollux_gateway: $(SRC)/pollux_gateway.C $(OBJECT_FILES)
+pollux_gateway: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
 
-pollux_calibrator: $(SRC)/pollux_calibrator.C $(OBJECT_FILES)
+pollux_calibrator: $(SRC)/pollux_calibrator.C $(patsubst %pollux_prober.o,,$(OBJECT_FILES))
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
 
 
