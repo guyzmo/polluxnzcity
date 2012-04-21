@@ -44,7 +44,7 @@ class Pollux_prober : public Pollux_configurator {
     long_short_sensor_map::iterator current_sensor_it;
 
     public:
-        Pollux_prober(std::string& c, std::string& e) : Pollux_configurator(c,e) {}
+        Pollux_prober(std::string& c, std::string& e);
             
         /// returns the next module to calibrate
         long long unsigned int next_module();

@@ -34,7 +34,7 @@
 #include <xbee/xbee_communicator.h>
 
 #include <pollux/pollux_xbee.h>
-#include <pollux/pollux_prober.h>
+#include <pollux/pollux_calibrator.h>
 
 #include <string>
 #include <iostream>
@@ -42,6 +42,9 @@
 #include <inttypes.h>
 
 int main(int argc, char* argv[]) {
+
+    configure_system();
+
     try {
         Cli_parser cli_args(argc, argv);
 
@@ -104,7 +107,6 @@ int main(int argc, char* argv[]) {
             ::exit(1);
         }
 
-        setup_signal();
         pollux::Pollux_observer s(pconfig);
 
         if (s.begin(B9600) >= 0) {

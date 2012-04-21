@@ -25,6 +25,7 @@
 
 #include <fcntl.h>      // read
 #include <unistd.h>     // open
+#include <sys/stat.h>   // chmod
 #include <stdio.h>
 
 namespace beagle {
@@ -35,6 +36,9 @@ struct UART {
         int fd;
         fd = open("/sys/kernel/debug/omap_mux/spi0_d0",O_WRONLY);write(fd, "1", 1);close(fd);
         fd = open("/sys/kernel/debug/omap_mux/spi0_sclk",O_WRONLY);write(fd, "21", 2);close(fd);
+
+        chmod("/dev/ttyO2", S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+        chmod("/dev/ttyO2", S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
     }
     /// disables the UART2 port on the Beaglebone, check documentation for pinouts
     static void disable_uart2() {
@@ -78,6 +82,12 @@ struct Leds {
             fd = open("/sys/class/gpio/gpio72/direction",O_WRONLY);write(fd, "out", 4);close(fd);
             fd = open("/sys/class/gpio/gpio74/direction",O_WRONLY);write(fd, "out", 4);close(fd);
             fd = open("/sys/class/gpio/gpio76/direction",O_WRONLY);write(fd, "out", 4);close(fd);
+
+            chmod("/sys/class/gpio/gpio70/value", S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+            chmod("/sys/class/gpio/gpio72/value", S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+            chmod("/sys/class/gpio/gpio74/value", S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+            chmod("/sys/class/gpio/gpio76/value", S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+            
             printf("leds enabled\n");
         }
         /// disables GPIOs on PINs 70, 72, 74, 76 on beaglebone for LED support

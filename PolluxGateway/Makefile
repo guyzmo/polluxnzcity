@@ -76,6 +76,8 @@ package:
 
 install:
 	$(INSTALL) -d $(DESTDIR)var/lib/pollux
+	$(INSTALL) -d /usr/lib/pollux/extensions/datastores
+	$(INSTALL) -D extensions/datastores/*.so /usr/lib/pollux/extensions/datastores
 	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
 
 uninstall:

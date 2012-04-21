@@ -40,8 +40,11 @@ class Pollux_calibrator : public Pollux_configurator {
     /// Hashmap of all iterators for every sensor module
     std::unordered_map<unsigned long long, module_iter> module_iterator_map;
 
+    /// hashmap containing iterators for every i2c sensor on each xbee module
+    long_short_sensor_map::iterator current_sensor_it;
+
     public:
-        Pollux_calibrator(std::string& c, std::string& e) : Pollux_configurator(c,e) {}
+        Pollux_calibrator(std::string& c, std::string& e);
             
         /// returns the next module to calibrate
         long long unsigned int next_module();

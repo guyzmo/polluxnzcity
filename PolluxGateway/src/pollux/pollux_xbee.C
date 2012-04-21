@@ -24,13 +24,8 @@ using namespace pollux;
 
 Pollux_observer::Pollux_observer(Pollux_configurator& conf) : Xbee_communicator(conf.get_config_option(std::string("tty_port")), 
                                                                 atoi(conf.get_config_option(std::string("wud_sleep_time")).c_str())), config(conf) { 
-    beagle::UART::enable_uart2();
-    beagle::Leds::enable_leds();
-    beagle::Leds::set_status_led();
 }
 Pollux_observer::~Pollux_observer() {
-    beagle::Leds::disable_leds();
-    beagle::UART::disable_uart2();
 }
 
 void Pollux_observer::get_next_measure(xbee::Xbee_result& frame) {

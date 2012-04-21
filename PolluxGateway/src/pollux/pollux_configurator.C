@@ -36,11 +36,11 @@ Sensor::Sensor(std::string name, std::string unit, uint8_t addr, uint8_t reg, ui
                                                                             name(name), unit(unit), address(addr), reg(reg), length(length), type(type) {
     this->ignored = false;
 }
-uint8_t Sensors::get_length() {
+uint8_t Sensor::get_length() {
     return this->length;
 }
 
-std::string Sensors::get_type() {
+std::string Sensor::get_type() {
     return this->type;
 }
 
@@ -60,7 +60,7 @@ bool Sensor::is_ignored() {
     return this->ignored;
 }
 
-Action::Action(std::string name, uint8_t addr, uint8_t reg) : Sensor(name,"",addr,reg) {
+Action::Action(std::string name, uint8_t addr, uint8_t reg) : Sensor(name,"",addr,reg,0,"") {
     ignored = true;
 }
 bool Action::is_ignored() {
@@ -68,7 +68,6 @@ bool Action::is_ignored() {
 }
 
 Pollux_configurator::Pollux_configurator(std::string& conf, std::string& ext) : path_conf(conf), path_ext(ext) {
-        current_sensor_it = sensors_map.begin();
 }
 const std::string& Pollux_configurator::get_config_option(std::string key) const {
     return configuration_map[key];
@@ -214,7 +213,11 @@ void Pollux_configurator::load_sensors() {
     json_object_object_foreach(json_data,module_name,module) {
         unsigned long long zb_address;
         std::istringstream* ss = new std::istringstream( module_name );
-        (*ss) >> std::hex >> zb_address;
+        try {
+            (*ss) >> std::hex >> zb_address;
+        } catch (std::exception e) {
+            throw Pollux_config_exception("Invalid format for I2C Address");
+        }
         delete(ss);
 
         // if sensor declaration has name, address and register declared
@@ -226,21 +229,39 @@ void Pollux_configurator::load_sensors() {
                     continue;
 
             if (json_object_has_key(sensor_module, "name") && json_object_has_key(sensor_module, "address") && json_object_has_key(sensor_module, "register")) {
-                unsigned short int i2c_address, reg, length;
+                unsigned short int i2c_address, reg, length=0;
                 std::string type = "";
                 ss = new std::istringstream( json_object_get_string(json_object_object_get(sensor_module, "address"))+2 );
-                (*ss) >> std::hex >> i2c_address;
+                try {
+                    (*ss) >> std::hex >> i2c_address;
+                } catch (std::exception e) {
+                    throw Pollux_config_exception("Invalid format for I2C Address");
+                }
                 delete(ss);
                 // check if the address has correctly been casted to int
                 ss = new std::istringstream( json_object_get_string(json_object_object_get(sensor_module, "register")) );
-                (*ss) >> std::hex >> reg;
+                try {
+                    (*ss) >> std::hex >> reg;
+                } catch (std::exception e) {
+                    throw Pollux_config_exception("Invalid format for I2C Register");
+                }
                 delete(ss);
                 if (json_object_has_key(sensor_module, "length")) {
-                    (*ss) >> std::hex >> length;
+                    ss = new std::istringstream( json_object_get_string(json_object_object_get(sensor_module, "length")) );
+                    try {
+                        (*ss) >> length;
+                    } catch (std::exception e) {
+                        throw Pollux_config_exception("Invalid format for length");
+                    }
                     delete(ss);
                 }
                 if (json_object_has_key(sensor_module, "type")) {
-                    (*ss) >> std::hex >> type;
+                    ss = new std::istringstream( json_object_get_string(json_object_object_get(sensor_module, "type")) );
+                    try {
+                        (*ss) >> std::hex >> type;
+                    } catch (std::exception e) {
+                        throw Pollux_config_exception("Invalid format for type");
+                    }
                     delete(ss);
                 }
                 // if it is a Sensor module (i.e. that has a 'unit' key)
@@ -253,7 +274,7 @@ void Pollux_configurator::load_sensors() {
 #endif
                     sensors_map[zb_address][i2c_address].push_back(Sensor(json_object_get_string(json_object_object_get(sensor_module,"name")),
                                 json_object_get_string(json_object_object_get(sensor_module,"unit")),
-                                i2c_address, reg));
+                                i2c_address, reg, length, type));
                     sensors_ordered_map[zb_address].push_back(sensors_map[zb_address][i2c_address].back());
                     // if it is an Action module (i.e. that has *no* 'unit' key)
                 } else  {

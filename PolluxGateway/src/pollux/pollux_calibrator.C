@@ -23,7 +23,7 @@
 
 using namespace pollux;
 
-Pollux_calibrator::Pollux_calibrator(std::string& conf, std::string& ext) {
+Pollux_calibrator::Pollux_calibrator(std::string& conf, std::string& ext) : Pollux_configurator(conf,ext) {
     current_sensor_it = sensors_map.begin();
 }
 
