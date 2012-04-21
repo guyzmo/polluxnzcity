@@ -32,9 +32,18 @@ inline bool json_object_has_key(struct json_object* obj, const std::string& key)
     return false;
 }
 
-Sensor::Sensor(std::string name, std::string unit, uint8_t addr, uint8_t reg) : name(name), unit(unit), address(addr), reg(reg) {
+Sensor::Sensor(std::string name, std::string unit, uint8_t addr, uint8_t reg, uint8_t length, std::string type) : 
+                                                                            name(name), unit(unit), address(addr), reg(reg), length(length), type(type) {
     this->ignored = false;
 }
+uint8_t Sensors::get_length() {
+    return this->length;
+}
+
+std::string Sensors::get_type() {
+    return this->type;
+}
+
 std::string Sensor::get_name() {
     return this->name;
 }
@@ -217,7 +226,8 @@ void Pollux_configurator::load_sensors() {
                     continue;
 
             if (json_object_has_key(sensor_module, "name") && json_object_has_key(sensor_module, "address") && json_object_has_key(sensor_module, "register")) {
-                unsigned short int i2c_address, reg;
+                unsigned short int i2c_address, reg, length;
+                std::string type = "";
                 ss = new std::istringstream( json_object_get_string(json_object_object_get(sensor_module, "address"))+2 );
                 (*ss) >> std::hex >> i2c_address;
                 delete(ss);
@@ -225,6 +235,14 @@ void Pollux_configurator::load_sensors() {
                 ss = new std::istringstream( json_object_get_string(json_object_object_get(sensor_module, "register")) );
                 (*ss) >> std::hex >> reg;
                 delete(ss);
+                if (json_object_has_key(sensor_module, "length")) {
+                    (*ss) >> std::hex >> length;
+                    delete(ss);
+                }
+                if (json_object_has_key(sensor_module, "type")) {
+                    (*ss) >> std::hex >> type;
+                    delete(ss);
+                }
                 // if it is a Sensor module (i.e. that has a 'unit' key)
                 if (json_object_has_key(sensor_module, "unit")) {
 #ifdef VERBOSE

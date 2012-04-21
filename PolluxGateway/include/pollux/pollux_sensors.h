@@ -28,6 +28,20 @@
 
 namespace pollux {
 
+/** Defines a Sensor I2C module
+ *
+ * This is a sensor on the I2C network, defined by what it is expected to measure:
+ *      - name: string defining the exposed name of the Sensor
+ *      - unit: string defining the unit in what the Sensor is giving the values
+ *
+ * by how it is addressed:
+ *      - address: short unsigned int of the sensor's address on the i2c network
+ *      - reg: short unsigned int of the sensor's register to set to 1 for measure
+ *
+ * and by how to treat the data it outputs:
+ *      - length: size of the returned value (starting at register reg+1)
+ *      - type: type to cast the measure to once it is read
+ */
 class Sensor {
     std::string name;
     std::string unit;
@@ -39,23 +53,41 @@ class Sensor {
         bool ignored;
 
     public:
-        Sensor(std::string name, std::string unit, uint8_t addr, uint8_t reg);
+        /// Constructor of the Sensor
+        Sensor(std::string name, std::string unit, uint8_t addr, uint8_t reg, uint8_t length, std::string type);
+        /// Always returns false, for it to quack like a Sensor
+        virtual bool is_ignored();
+        /// Getters
         std::string get_name();
         std::string get_unit();
         uint8_t get_address();
         uint8_t get_reg();
-        virtual bool is_ignored();
+        uint8_t get_length();
+        std::string get_type();
 };
 
+/*** Defines an Action I2C module
+ *
+ * This is an action on the I2C network, which is defined by the same elements as a Sensor,
+ * except we do not expect a value to be returned. If the action has succeeded, it is expected
+ * to set the measure register's value to a non-zero value.
+ *
+ * Using Duck typing, is_ignored() returns always "true", so the value is ignored when processing
+ * the measure data for Datastore action.
+ */
 class Action : public Sensor {
     public:
+        /// Constructor of an Action
         Action(std::string name, uint8_t addr, uint8_t reg);
+        /// Always returns true, for it to quack like an Action
         bool is_ignored();
 };
 
+/// Types to ease hash_map writing in the places it is used.
 typedef std::unordered_map<unsigned long long /* ZigBee Address */, std::unordered_map<uint8_t /* i2c addr */, std::vector<Sensor>/* sensor list */ > > long_short_sensor_map;
 typedef std::unordered_map<unsigned long long, std::vector<Sensor> > long_sensors_map;
 
+/// A Runtime Exception to be raised when an error is triggered at configuration time.
 class Pollux_config_exception : public std::runtime_error {
     public:
         Pollux_config_exception(const std::string& m) : runtime_error(m) {}

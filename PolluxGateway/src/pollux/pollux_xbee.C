@@ -20,33 +20,13 @@
  */
 #include <pollux/pollux_xbee.h>
 
-extern "C" {
-void sigint_handler(int c) {
-    beagle::Leds::disable_leds();
-    beagle::UART::disable_uart2();
-    printf("Exiting...\n");
-    exit(0);
-}
-}
-
 using namespace pollux;
 
-void Pollux_observer::setup_signal() {
-    struct sigaction sigIntHandler;
-
-    sigIntHandler.sa_handler = sigint_handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
-
-    sigaction(SIGINT, &sigIntHandler, NULL);
-}
 Pollux_observer::Pollux_observer(Pollux_configurator& conf) : Xbee_communicator(conf.get_config_option(std::string("tty_port")), 
                                                                 atoi(conf.get_config_option(std::string("wud_sleep_time")).c_str())), config(conf) { 
     beagle::UART::enable_uart2();
     beagle::Leds::enable_leds();
     beagle::Leds::set_status_led();
-    this->setup_signal();
-    meas_idx=0;
 }
 Pollux_observer::~Pollux_observer() {
     beagle::Leds::disable_leds();

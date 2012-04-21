@@ -27,18 +27,17 @@
 
 #include <iostream>
 
-#include <signal.h>
-
-extern "C" {
-void sigint_handler(int c);
-}
-
 namespace pollux {
 
+/** This class configures how the polling algorithm of the gateway works
+ * 
+ * Its responsibility is to handle the whole XBee networking protocol:
+ *
+ * when poll() is called,
+ *
+ */
 class Pollux_observer : public xbee::Xbee_communicator {
     Pollux_configurator& config;
-
-    int meas_idx;
     
     void setup_signal();
 
