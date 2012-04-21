@@ -26,10 +26,10 @@
 
 // --------------------------------------------------------------- Constants
 
-/* API frame fields */
+/** API frame fields */
 #define FRM_DLM	0x7e		//frame delimiter
 
-/* frame types	*/
+/** frame types	*/
 #define API_AT_CMD     0x08    //send at command
 #define API_RM_CMD     0x17    //remote command request
 #define API_XMIT_REQ   0x10    //transmit request	
@@ -47,21 +47,21 @@
 
 #define RX_PACKET_LEN  12      // 12 bytes of frame specific data between header and checksum
 
-/* errors */
+/** errors */
 
 #define ERR_WRONG_FRM_DLM     -1
 #define ERR_NOT_IMPLEMENTED   -2
 #define ERR_UNKWNOWN_FRM_ID   -4
 #define ERR_INVALID_CHECKSUM  -8
 
-/* Timing between each frame event */
+/** Timing between each frame event */
 #ifndef TIMING
 #   define TIMING 10
 #endif
 
 namespace xbee {
 
-/* default addresses */
+/** default addresses */
 const uint8_t COORDINATOR_ADDR[8] = {0,0,0,0,0,0,0,0};
 const uint8_t BROADCAST_ADDR[8] = {0,0,0,0,0,0,0xff,0xff};
 const uint16_t BROADCAST_NET = 0xFFFE;

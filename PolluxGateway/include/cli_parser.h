@@ -24,6 +24,9 @@
 
 #include <algorithm>
 
+/** Command Line arguments parser
+ *
+ */
 class Cli_parser {
     int argc;
     char** argv;
@@ -33,6 +36,10 @@ class Cli_parser {
             this->argc = argc;
             this->argv = argv;
         }
+        /** Gets a parameter
+         * @param option to get
+         * @return on "--foo bar" returns "bar"
+         */
         const char* get(const std::string & option) const
         {   
             char ** begin = argv;
@@ -45,6 +52,10 @@ class Cli_parser {
             return (char*)"";
         }
 
+        /** Tests if a parameter is set
+         * @param option parameter to check
+         * @return true if option exists
+         */
         bool has(const std::string& option) const
         {   
             char ** begin = argv;

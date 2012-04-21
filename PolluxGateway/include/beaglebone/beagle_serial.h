@@ -45,6 +45,7 @@
 
 namespace beagle {
 
+/** Exception raised on Serial communication errors */
 class SerialException {
     int code;
     public:
@@ -53,6 +54,13 @@ class SerialException {
         int get_code();
 };
 
+/** Base class for all Serial communication
+ *
+ * set up the connection using begin(speed) (speed being an epoll flag, and not a full value ! use B9600, B115200...)
+ * handles epoll() in poll() to check for incoming input and send output.
+ * call recv() with i != 0 on timeouts
+ *
+ */
 class Serial {
     const std::string port;
 
@@ -62,14 +70,34 @@ class Serial {
     int poll_wait;
 
     public:
+        /** Constructor of the Serial handler
+         * @param poll_wait: timeout of an epoll() call
+         * @param port: string of the chardev representing the port
+         */
         Serial(const std::string& port, int poll_wait);
 
+        /** sets up the epoll() function
+         * @param speed byte representing the speed, use epoll's macros : B9600, B14400 etc..
+         */
         int begin(int speed);
-        int poll();
+        /** Function to call for each read on the serial port
+         */
+        void poll();
 
+        /** Function called by poll() on each read
+         * @param i true if timeout happened
+         */
         virtual void recv(int i);
 
+        /** read a character on serial line
+         * @return read character
+         */
         virtual char read();
+        /** writes a string of size len on serial line
+         * @param data byte array to be sent
+         * @param len length of the array
+         * @return number of bytes written
+         */
         virtual ssize_t write(char* data, int len);
         virtual ssize_t write(uint8_t data);
 };

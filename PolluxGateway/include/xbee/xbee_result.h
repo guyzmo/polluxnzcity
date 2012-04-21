@@ -45,16 +45,16 @@
 namespace xbee {
 
 class Xbee_result {
-    // CONTENT
+    /// CONTENT
     int type;
     int length;
 
-    // I2C
+    /// I2C
     int command;
     int addr;
     int reg;
 
-    // ZIGBEE
+    /// ZIGBEE
     uint8_t node[8];
     int network;
     union multi_val {
@@ -69,17 +69,17 @@ class Xbee_result {
         void reset();
         Xbee_result();
         Xbee_result(XBeeFrame* frame);
-        // ZIGBEE
+        /// ZIGBEE
         char* fmt_node_address(char* str);
         uint8_t* get_node_address();
         unsigned long long get_node_address_as_long();
         int get_network();
-        // I2C
+        /// I2C
         int get_i2c_address();
         int get_i2c_register();
         const char* fmt_i2c_command();
         int get_i2c_command();
-        // CONTENT
+        /// CONTENT
         int get_type();
         const char* fmt_type();
         int get_length();

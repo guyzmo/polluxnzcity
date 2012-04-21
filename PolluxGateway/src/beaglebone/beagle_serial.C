@@ -84,7 +84,7 @@ int Serial::begin(int speed) {
     return 1;
 }
 
-int Serial::poll() {
+void Serial::poll() {
     int n = epoll_wait(epfd, &events, EPOLL_MAX_CONN, poll_wait*1000);
 
     if(n < 0)
@@ -124,9 +124,9 @@ char Serial::read() {
 }
 
 ssize_t Serial::write(char* data, int len) {
-    ::write(fd, data, len);
+    return ::write(fd, data, len);
 }
 
 ssize_t Serial::write(uint8_t data) {
-    ::write(fd, &data, sizeof(data));
+    return ::write(fd, &data, sizeof(data));
 }

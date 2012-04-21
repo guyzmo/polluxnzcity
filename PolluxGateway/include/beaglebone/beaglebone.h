@@ -30,11 +30,13 @@
 namespace beagle {
 
 struct UART {
+    /// enables the UART2 port on the Beaglebone, check documentation for pinouts
     static void enable_uart2() {
         int fd;
         fd = open("/sys/kernel/debug/omap_mux/spi0_d0",O_WRONLY);write(fd, "1", 1);close(fd);
         fd = open("/sys/kernel/debug/omap_mux/spi0_sclk",O_WRONLY);write(fd, "21", 2);close(fd);
     }
+    /// disables the UART2 port on the Beaglebone, check documentation for pinouts
     static void disable_uart2() {
         int fd;
         fd = open("/sys/kernel/debug/omap_mux/spi0_d0",O_WRONLY);write(fd, "0", 1);close(fd);
@@ -47,6 +49,7 @@ struct Leds {
         static const int GREEN = 1;
         static const int BLUE = 2;
 
+        /// enables GPIOs on PINs 70, 72, 74, 76 on beaglebone for LED support
         static void enable_leds () {
             int fd;
             fd = open("/sys/kernel/debug/omap_mux/lcd_data0",O_WRONLY);write(fd, "7", 1);close(fd);
@@ -77,6 +80,7 @@ struct Leds {
             fd = open("/sys/class/gpio/gpio76/direction",O_WRONLY);write(fd, "out", 4);close(fd);
             printf("leds enabled\n");
         }
+        /// disables GPIOs on PINs 70, 72, 74, 76 on beaglebone for LED support
         static void disable_leds () {
             int fd;
             reset_status_led();
@@ -91,12 +95,17 @@ struct Leds {
             printf("leds disabled\n");
         }
 
+        /// turns on LED on PIN 70 (green LED, known as Status LED)
         static void set_status_led() {
             int fd = open("/sys/class/gpio/gpio70/value",O_WRONLY);write(fd, "1", 1);close(fd);
         }
+        /// turns off LED on PIN 70 (green LED, known as Status LED)
         static void reset_status_led() {
             int fd = open("/sys/class/gpio/gpio70/value",O_WRONLY);write(fd, "0", 1);close(fd);
         }
+        /** sets RGB LED on PINs 72/74/76 to a given color
+         * @param color beagle::Leds::RED ; beagle::Leds::GREEN ; beagle::Leds::BLUE
+         */
         static void set_rgb_led(int color) {
             int fd;
             switch (color) {
@@ -111,6 +120,9 @@ struct Leds {
                     break;
             }
         }
+        /** resets RGB LED on PINs 72/74/76 of a given color
+         * @param color beagle::Leds::RED ; beagle::Leds::GREEN ; beagle::Leds::BLUE
+         */
         static void reset_rgb_led(int color) {
             int fd;
             switch (color) {

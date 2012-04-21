@@ -30,6 +30,7 @@ Pollux_observer::Pollux_observer(Pollux_configurator& conf) : Xbee_communicator(
 }
 Pollux_observer::~Pollux_observer() {
     beagle::Leds::disable_leds();
+    beagle::UART::disable_uart2();
 }
 
 void Pollux_observer::get_next_measure(xbee::Xbee_result& frame) {
@@ -104,6 +105,7 @@ void Pollux_observer::run (xbee::XBeeFrame* frame) {
             break;
         case TX_STATUS:
             if (frame->content.tx.delivery_status != 0x00) {
+                beagle::Leds::set_rgb_led(beagle::Leds::RED);
                 std::cerr<<"Error sending frame: "<<std::endl;
                 switch (frame->content.tx.delivery_status) {
                     case 0x00: std::cerr<<"Success"<<std::endl; break;
@@ -115,6 +117,8 @@ void Pollux_observer::run (xbee::XBeeFrame* frame) {
                     case 0x24: std::cerr<<"Address Not Found"<<std::endl; break;
                     case 0x25: std::cerr<<"Route Not Found"<<std::endl; break;
                 }
+                msleep(10);
+                beagle::Leds::reset_rgb_led(beagle::Leds::RED);
             }
         default:
             beagle::Leds::set_rgb_led(beagle::Leds::RED);

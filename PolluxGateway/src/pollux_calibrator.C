@@ -41,7 +41,6 @@
 
 #include <inttypes.h>
 
-
 int main(int argc, char* argv[]) {
     try {
         Cli_parser cli_args(argc, argv);
@@ -92,7 +91,7 @@ int main(int argc, char* argv[]) {
                 path_ext.erase(it);
         }
 
-        pollux::Pollux_prober pconfig(path_conf, path_ext);
+        pollux::Pollux_calibrator pconfig(path_conf, path_ext);
 
         try {
             pconfig.load_configuration();

@@ -38,17 +38,33 @@
 // --------------------------------------------------------------- XBEE Lib
 namespace xbee {
 
+/*** Class that handles low level XBee communication
+ * 
+ * This class exposes different ways to communicate on the XBee network:
+ *      - send a frame : send()
+ *      - send an AT command : send_atcmd()
+ *      - send a remote AT command : send_remote_atcmd()
+ *
+ * It also exposes ways to display frames' data, mostly for debugging purposes
+ *      - print_data() and print_frame()
+ *
+ * And finally, it exposes run() and wake_up() functions to be overloaded so
+ * wake_up is called on timeout and run() is executed on received frame.
+ *
+ */
 class Xbee_communicator : public beagle::Serial {
 
     int frm_id;
 
     void xmit_req(uint8_t* addr64, uint16_t network, uint8_t nbytes, uint8_t* data, uint8_t frameid, uint8_t bradius, uint8_t options);
-    void send_atcmd(const char* at_command, const char* param_value);
     int rcpt_frame(XBeeFrame* frame);
+    void recv(int i);
 
     protected:
         void print_data(uint8_t* data, uint16_t len, int type) const;
         void print_frame(XBeeFrame* frame) const;
+
+        void send_atcmd(const char* at_command, const char* param_value);
         void send_remote_atcmd(uint8_t* addr64, uint16_t network, const char* at_command, const char* param_value);
         void send_remote_atcmd(uint64_t addr64, uint16_t network, const char* at_command, const char* param_value);
         
@@ -63,7 +79,6 @@ class Xbee_communicator : public beagle::Serial {
         void send(char* payload);
         void send(char* payload, uint8_t* node, uint16_t net);
         void send(char* payload, uint64_t node, uint16_t net);
-        void recv(int i);
 
         virtual void run (XBeeFrame* frame);
         virtual void wake_up();

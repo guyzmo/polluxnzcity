@@ -32,23 +32,43 @@ namespace pollux {
 /** This class configures how the polling algorithm of the gateway works
  * 
  * Its responsibility is to handle the whole XBee networking protocol:
+ *  at construction:
+ *      * it enables the Beaglebone's UART
+ *      * it enables the Beaglebone's Leds
+ *      * it puts the status LED to on
  *
- * when poll() is called,
+ *  at destruction:
+ *      * it disables the Beaglebone's UART
+ *      * it disables the Beaglebone's Leds
+ *
+ *  on poll() call:
+ *      * if timeout happens, wake_up() is called:
+ *          * configure config to take the "next module" to work with
+ *          * which sends a PIN change on XBee's D0 to trigger the arduino's wake up interruption
+ *      * if a frame is received, run() is called:
+ *          * on packet receive:
+ *              - if a wake up response is received, ask for the next measure from config to be sent to XBee
+ *              - if a measure response is received, from config store it and ask the next one to be sent to XBee
+ *              - if a halt response is received, trigger config's push_data so stored values are sent where it belongs
  *
  */
 class Pollux_observer : public xbee::Xbee_communicator {
     Pollux_configurator& config;
-    
-    void setup_signal();
 
     public:
         Pollux_observer(Pollux_configurator& conf);
         ~Pollux_observer();
 
+        /** get next measure from config and ask for it on XBee network
+         * @param frame: a frame reference, which will be set with the XBee frame's values
+         */
         void get_next_measure(xbee::Xbee_result& frame);
 
+        /// defines what to do on timeouts of polling
         void wake_up();
 
+        /// defines the main behaviours of the application
+        /// on received packets
         void run (xbee::XBeeFrame* frame);
 };
 
