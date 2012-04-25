@@ -2,11 +2,11 @@ install -d /etc/pollux
 install -d /var/lib/pollux
 install -d /usr/lib/pollux/extensions/datastores/
 install -d /usr/lib/pollux/extensions/probers/
-install config.json /etc/pollux
-install sensors.json /etc/pollux
-install sensors_list.json /etc/pollux
-install pollux_webserv.conf /etc/pollux
-install pollux_config.service /lib/systemd/system/
+install conf/config.json /etc/pollux
+install conf/sensors.json /etc/pollux
+install conf/sensors_list.json /etc/pollux
+install conf/pollux_webserv.conf /etc/pollux
+install conf/pollux_config.service /lib/systemd/system/
 
 echo "pollux ALL=NOPASSWD: /bin/systemctl restart pollux_gateway.service" > /etc/sudoers.d/pollux
 chmod 0440 /etc/sudoers.d/pollux

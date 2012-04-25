@@ -54,6 +54,7 @@ setup(name='pollux',
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
-      pollux_serv = pollux.pollux_config:start
+      pollux_config_paster = pollux.pollux_config:run_app
+      pollux_config_lighttpdconf = pollux.pollux_config:get_lighttpd_configuration
       """,
       )

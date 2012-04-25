@@ -11,6 +11,7 @@ from argparse import ArgumentParser
 import inspect
 import json
 import sys
+import os
 import re
 import gc
 
@@ -533,7 +534,7 @@ def start():
     parser.add_argument("-p",
                         "--path",
                         dest="path",
-                        default=".",
+                        default="/etc/pollux",
                         help='path to configuration directory. e.g. /etc/pollux/')
     parser.add_argument("-d",
                         "--data",
@@ -570,13 +571,40 @@ def start():
     config.VARLIB_PATH=args.data_path
     config.USRLIB_PATH=args.lib_path
 
-    TEMPLATE_PATH
-
     install(config)
     install(sensors)
+
+    return args
     
+def run_app():
+    args = start()
     debug(args.debug)
     run(host=args.host, port=args.port, reloader=args.debug)
 
-if __name__ == "__main__":
-    start()
+def get_lighttpd_configuration():
+    print """
+server.modules += ("mod_fastcgi", "mod_rewrite")
+
+fastcgi.server = (
+    ".py" =>
+       (
+            "python-fcgi" =>
+                (
+                    "socket" => "/tmp/fastcgi.python.socket",
+                    "bin-path" => "/usr/bin/python %(POLLUX_CONFIG_MODULE_FULLPATH)s -p /etc/pollux -d /var/lib/pollux -l /usr/lib/pollux",
+                    "check-local" => "disable",
+                    "max-procs" => 1,
+                )
+        )
+)
+
+url.rewrite-once = (
+    "^/(.*)$" => "/%(POLLUX_CONFIG_MODULE)s/$1"
+)
+""" % {"POLLUX_CONFIG_MODULE_FULLPATH" : os.path.abspath(__file__),
+       "POLLUX_CONFIG_MODULE" : os.path.split(__file__)[-1] }
+
+def make_app():
+    from flup.server.fcgi import WSGIServer
+    WSGIServer(bottle.default_app()).run()
+
