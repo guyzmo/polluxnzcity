@@ -1,8 +1,8 @@
 #!/bin/env python
 
 
-from bottle import install, route, run, PluginError, HTTPError, debug, response, static_file, request, TEMPLATE_PATH
-from bottle import mako_view as view, mako_template as template
+from pollux.bottle import install, route, run, PluginError, HTTPError, debug, response, static_file, request, TEMPLATE_PATH
+from pollux.bottle import mako_view as view, mako_template as template
 
 import pollux.static
 import pollux.views
@@ -586,7 +586,7 @@ def get_lighttpd_configuration():
 server.modules += ("mod_fastcgi", "mod_rewrite")
 
 fastcgi.server = (
-    ".py" =>
+    "/index.py" =>
        (
             "python-fcgi" =>
                 (
@@ -599,12 +599,15 @@ fastcgi.server = (
 )
 
 url.rewrite-once = (
-    "^/(.*)$" => "/%(POLLUX_CONFIG_MODULE)s/$1"
+    "^/(.*)$" => "/index.py/$1"
 )
-""" % {"POLLUX_CONFIG_MODULE_FULLPATH" : os.path.abspath(__file__),
-       "POLLUX_CONFIG_MODULE" : os.path.split(__file__)[-1] }
+""" % {"POLLUX_CONFIG_MODULE_FULLPATH" : os.path.abspath(__file__) }
 
 def make_app():
+    start()
     from flup.server.fcgi import WSGIServer
-    WSGIServer(bottle.default_app()).run()
+    WSGIServer(pollux.bottle.default_app()).run()
+
+if __name__ == "__main__":
+    make_app()
 
