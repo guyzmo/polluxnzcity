@@ -1,0 +1,15 @@
+Package: pollux-config
+Version: 0.1.0
+Description: Pollux'NZ City, Configurator for Gateway module
+This software package provides a stand alone or wsgi application
+that enables configuration of the pollux-gateway application.
+Depends on the pollux-gateway application of the same version.
+Section: hackabledevices/applications
+Priority: optional
+Maintainer: Bernard Pratz <guyzmo@hackable-devices.org>
+License: GPLv3
+Architecture: armv7a
+OE: pollux-config
+Homepage: http://www.polluxnzcity.org/
+Source: 
+Depends: pollux-gateway >=0.1.0, python-flup >=1.0.1, lighttpd >=1.4.29, lighttpd-module-fastcgi >=1.4.29, lighttpd-module-rewrite >=1.4.29
