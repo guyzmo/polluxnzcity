@@ -37,8 +37,8 @@
 
 TinyWire Wire;
 
-float offset=-0.5;
-float coef=0.18;
+prog_uint32_t offset=(float)-0.5;
+prog_uint32_t coef=(float)0.18;
 
 void sensor_calibrate() {
     offset = Wire.read(0x20);
