@@ -28,6 +28,7 @@
 
 #include <json/json.h>
 
+#include <malloc.h>
 #include <dlfcn.h>
 
 #include <functional>

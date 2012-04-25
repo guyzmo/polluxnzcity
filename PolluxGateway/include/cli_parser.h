@@ -22,6 +22,7 @@
 #ifndef __CLI_PARSER_H__
 #define __CLI_PARSER_H__
 
+#include <string>
 #include <algorithm>
 
 /** Command Line arguments parser

@@ -22,17 +22,27 @@ VERBOSE?=0
 
 # destination directories for install
 DESTDIR?=/
-DEST_INSTALL=$(DESTDIR)usr/bin/
-DEST_SYSTEMD=/lib/systemd/system/
+BASEDIR?=/
+DEST_INSTALL=$(DESTDIR)/usr/bin/
+DEST_SYSTEMD=$(DESTDIR)/lib/systemd/system/
+
+# versions
+VER=0.1.0
+REV=r0
+ARCH=armv7a
 
 ########################################################################################
 
-CXX=/usr/bin/g++
+CXX=arm-angstrom-linux-gnueabi-g++
+DOXYGEN=/usr/bin/doxygen
+AR=/usr/bin/ar
+MV=/bin/mv
 RM=/bin/rm -rf
+TAR=/bin/tar
 INSTALL=/usr/bin/install
 SYSD=/bin/systemctl
 
-HEADERS=include /opt/local/arm-none-linux-gnueabi/usr/include /opt/local/include/
+HEADERS=include $(BASEDIR)/include/
 SRC=src
 
 SOURCES=$(SRC)/xbee $(SRC)/pollux $(SRC)/beaglebone
@@ -42,7 +52,21 @@ ifeq "$(VERBOSE)" "1"
 DEFINES+=-DVERBOSE 
 endif
 
-CFLAGS=-ldl -ljson -g3 -rdynamic -std=c++0x -Wno-write-strings $(DEFINES)
+CFLAGS = -ldl -ljson -g3 -rdynamic -std=c++0x -Wno-write-strings $(DEFINES)
+#CFLAGS += -pedantic
+#CFLAGS += -Wall
+#CFLAGS += -Wpointer-arith
+#CFLAGS += -Wcast-qual
+#CFLAGS += -Wcast-align
+#CFLAGS += -Wwrite-strings
+#CFLAGS += -Wconversion
+
+
+CHDIR_SHELL := $(SHELL)
+define chdir
+   $(eval _D=$(firstword $(1) $(@D)))
+   $(info $(MAKE): cd $(_D)) $(eval SHELL = cd $(_D); $(CHDIR_SHELL))
+endef
 
 .PHONY: all
 
@@ -69,33 +93,50 @@ $(SRC)/%.o: $(SOURCE_FILES)
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $(SRC)/$*.o -c $(SRC)/$*.C
 
 clean:
-	$(RM) $(OBJECT_FILES) extensions/datastores/citypulse.so extensions/datastores/local.so pollux_gateway
+	$(RM) $(OBJECT_FILES) extensions/datastores/citypulse.so extensions/datastores/local.so pollux_gateway pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
 
-package:
-	@echo "TODO"
+doc:
+	$(DOXYGEN) -g
+	$(DOXYGEN) pollux_gateway.doxyfile
 
-install:
-	$(INSTALL) -d $(DESTDIR)var/lib/pollux
-	$(INSTALL) -d /usr/lib/pollux/extensions/datastores
-	$(INSTALL) -D extensions/datastores/*.so /usr/lib/pollux/extensions/datastores
+install-doc: doc
+	$(INSTALL) -d $(DESTDIR)/usr/share/doc/pollux/
+	$(RM) $(DESTDIR)/usr/share/doc/pollux/gateway/
+	$(MV) -f doc/ $(DESTDIR)/usr/share/doc/pollux/gateway/
+
+package: install-systemd install-doc
+	$(call chdir,$(DESTDIR))
+	$(TAR) -cvzf data.tar.gz etc/ usr/ lib/ var/
+	cp ../debian/* ./
+	$(TAR) -cvzf control.tar.gz control postinst postrm prerm
+	$(AR) ru ../pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk debian-binary data.tar.gz control.tar.gz
+
+install: all
+	$(INSTALL) -d $(DESTDIR)
+	$(INSTALL) -d $(DESTDIR)/usr/bin
+	$(INSTALL) -d $(DESTDIR)/etc/pollux
+	$(INSTALL) -d $(DESTDIR)/var/lib/pollux
+	$(INSTALL) -d $(DESTDIR)/usr/lib/pollux/extensions/datastores
+	$(INSTALL) -D extensions/datastores/*.so $(DESTDIR)/usr/lib/pollux/extensions/datastores
 	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
+
+install-systemd: install
+	$(INSTALL) -d $(DEST_SYSTEMD)
+	$(INSTALL) pollux_gateway.service $(DEST_SYSTEMD)
 
 uninstall:
-	$(RM) $(DEST_INSTALL)/pollux_gateway /usr/lib/pollux/extensions/datastores/*.so
+	$(RM) $(DEST_INSTALL)/pollux_gateway $(DESTDIR)/usr/lib/pollux/extensions/datastores/*.so
 
-manual-install:
-	$(INSTALL) -d /var/lib/pollux
-	$(INSTALL) -d /usr/lib/pollux/extensions/datastores
-	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
-	$(INSTALL) -D extensions/datastores/*.so /usr/lib/pollux/extensions/datastores
-	$(INSTALL) pollux_gateway.service $(DEST_SYSTEMD)
+manual-uninstall: uninstall
+	$(RM) $(DEST_SYSTEMD)/pollux_gateway.service
+
+enable: install-systemd
 	$(SYSD) daemon-reload
 	$(SYSD) enable pollux_gateway.service
 	@echo "to launch me just do : systemctl start pollux_gateway.service or reboot"
 
-manual-uninstall:
+disable:
 	$(SYSD) stop pollux_gateway.service
 	$(SYSD) disable pollux_gateway.service
 	$(SYSD) --system daemon-reload
-	$(RM) $(DEST_SYSTEMD)/pollux_gateway.service
-	$(RM) $(DEST_INSTALL)/pollux_gateway 
+
