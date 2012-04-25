@@ -4,9 +4,12 @@ After=syslog.target network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/sbin/lighttpd -f /etc/lighttpd.conf
+ExecStartPre=/usr/sbin/lighttpd -t -f /etc/lighttpd.conf
+ExecStart=/usr/sbin/lighttpd -D -f /etc/lighttpd.conf
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-abort
 
 [Install]
 WantedBy=multi-user.target
+
 
