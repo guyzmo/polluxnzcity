@@ -1,0 +1,13 @@
+Package: lighttpd-systemd
+Version: 1.4.29-r2
+Description: lighttpd version 1.4.29-r2
+ Lightweight high-performance web server, systemd support service
+Section: net
+Priority: optional
+Maintainer: Bernard Pratz <guyzmo@hackable-devices.org>
+License: BSD
+Architecture: armv7a
+OE: lighttpd
+Homepage: http://www.lighttpd.net/
+Depends: lighttpd >=1.4.29
+Source: 

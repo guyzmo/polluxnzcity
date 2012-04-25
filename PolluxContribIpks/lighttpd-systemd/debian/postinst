@@ -1,0 +1,13 @@
+#!/bin/sh
+OPTS=""
+
+if [ -n "$D" ]; then
+    OPTS="--root=$D"
+fi
+
+systemctl $OPTS enable lighttpd.service
+
+if [ -z "$D" ]; then
+    systemctl start lighttpd.service
+fi
+
