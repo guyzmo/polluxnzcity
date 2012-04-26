@@ -38,6 +38,24 @@ tar -cvzf control.tar.gz control
 rm -rf $DIST/pollux-full_$VER-${REV}_$ARCH.ipk
 ar ru $DIST/pollux-full_$VER-${REV}_$ARCH.ipk debian-binary control.tar.gz
 
+##### HACKABLEDEVICES-FEED
+
+REV="r0"
+VER=1.0.0
+
+rm -rf $TARGET
+mkdir -p $TARGET
+
+cd $TARGET
+install -d $TARGET/etc/opkg/
+install -D $DIST/hackabledevices-feed/etc/opkg/hackabledevices
+
+cp $DIST/hackabledevices-feed/debian/* ./
+tar -cvzf control.tar.gz control 
+
+rm -rf $DIST/hackabledevices-feed_$VER-${REV}_$ARCH.ipk
+ar ru $DIST/hackabledevices-feed_$VER-${REV}_$ARCH.ipk debian-binary control.tar.gz
+
 #####
 
 cd $DIST
