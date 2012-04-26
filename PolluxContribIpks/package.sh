@@ -14,7 +14,7 @@ install -d $TARGET/lib/systemd/system/
 install -D $DIST/lighttpd-systemd/lighttpd.service $TARGET/lib/systemd/system/
 
 cd $TARGET
-tar -cvzf data.tar.gz lib 
+tar -cvzf data.tar.gz ./lib 
 
 cp $DIST/lighttpd-systemd/debian/* ./
 tar -cvzf control.tar.gz control postinst postrm prerm
@@ -39,4 +39,7 @@ rm -rf $DIST/pollux-full_$VER-${REV}_$ARCH.ipk
 ar ru $DIST/pollux-full_$VER-${REV}_$ARCH.ipk debian-binary control.tar.gz
 
 #####
+
+cd $DIST
+cp *.ipk ../feed
 

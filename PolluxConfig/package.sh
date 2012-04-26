@@ -12,10 +12,13 @@ install -d etc/pollux
 install -d etc/defaults
 cp $DIST/conf/*.json etc/pollux/
 cp $DIST/conf/pollux_webserv.conf etc/defaults
-tar -cvzf data.tar.gz etc/ usr/
+tar -cvzf data.tar.gz ./etc/ ./usr/
 cp $DIST/debian/* ./
 sed -i "s/^Version: .*$/Version: $VER/g" control
 tar -cvzf control.tar.gz control postinst postrm prerm
 rm -rf $DIST/pollux-config_$VER-$REV_$ARCH.ipk
 ar ru $DIST/pollux-config_$VER-$REV_$ARCH.ipk debian-binary data.tar.gz control.tar.gz
+
+install -d $DIST/../feed/
+cp -f $DIST/pollux-config_$VER-$REV_$ARCH.ipk $DIST/../feed/
 

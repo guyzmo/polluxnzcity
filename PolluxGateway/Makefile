@@ -105,11 +105,15 @@ install-doc: doc
 	$(MV) -f doc/ $(DESTDIR)/usr/share/doc/pollux/gateway/
 
 package: install-systemd install-doc
+	$(INSTALL) -d ../feed/
+	$(eval FEED := ../feed/)
 	$(call chdir,$(DESTDIR))
 	$(TAR) -cvzf data.tar.gz etc/ usr/ lib/ var/
 	cp ../debian/* ./
 	$(TAR) -cvzf control.tar.gz control postinst postrm prerm
 	$(AR) ru ../pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk debian-binary data.tar.gz control.tar.gz
+	cp -f ../pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk ../$(FEED)
+
 
 install: all
 	$(INSTALL) -d $(DESTDIR)
