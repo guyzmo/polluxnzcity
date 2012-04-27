@@ -15,4 +15,4 @@ Architecture: armv7a
 OE: pollux-config
 Homepage: http://www.polluxnzcity.org/
 Source: 
-Depends: pollux-gateway >=0.1.0, python-flup >=1.0.1, lighttpd >=1.4.29, lighttpd-module-fastcgi >=1.4.29, lighttpd-module-rewrite >=1.4.29
+Depends: pollux-gateway >=0.1.0, python-flup >=1.0.1, lighttpd >=1.4.29, lighttpd-module-fastcgi >=1.4.29, lighttpd-module-rewrite >=1.4.29, lighttpd-systemd >=1.4.29

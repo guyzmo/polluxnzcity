@@ -11,3 +11,4 @@ OE: pollux-full
 Homepage: http://www.polluxnzcity.org/
 Source: 
 Depends: pollux-gateway >=0.0.0, pollux-config >=0.0.0
+Conflicts: cloud9 >=0.6r0, bonescript >=1.0-r12

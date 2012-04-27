@@ -1,0 +1,13 @@
+Package: polluxnzcity-feed
+Version: 1.0.0
+Description: polluxnzcity feed files
+  Package that installs the hackabledevices feed and adds auto-upgrade features
+Section: hackabledevices/scripts
+Priority: optional
+Maintainer: Bernard Pratz <guyzmo@hackable-devices.org>
+License: GPLv3
+Architecture: armv7a
+OE: polluxnzcity-feed
+Homepage: http://www.polluxnzcity.net
+Source: 
+Depends: 

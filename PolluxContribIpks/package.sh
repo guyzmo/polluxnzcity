@@ -59,13 +59,14 @@ mkdir -p $TARGET
 
 cd $TARGET
 install -d $TARGET/etc/opkg/
-install -D $DIST/hackabledevices-feed/etc/opkg/hackabledevices $TARGET/etc/opkg/hackabledevices
+install -D $DIST/polluxnzcity-feed/etc/opkg/polluxnzcity-feed.conf $TARGET/etc/opkg/
+tar -cvzf data.tar.gz ./etc
 
-cp $DIST/hackabledevices-feed/debian/* ./
+cp $DIST/polluxnzcity-feed/debian/* ./
 tar -cvzf control.tar.gz control
 
-rm -rf $DIST/hackabledevices-feed_$VER-${REV}_$ARCH.ipk
-ar ru $DIST/hackabledevices-feed_$VER-${REV}_$ARCH.ipk debian-binary control.tar.gz
+rm -rf $DIST/polluxnzcity-feed_$VER-${REV}_$ARCH.ipk
+ar ru $DIST/polluxnzcity-feed_$VER-${REV}_$ARCH.ipk debian-binary control.tar.gz data.tar.gz
 
 #####
 
