@@ -34,9 +34,10 @@ cd $TARGET
 
 cp $DIST/pollux-full/debian/* ./
 tar -cvzf control.tar.gz control 
+cp $DIST/pollux-full/data.tar.gz ./
 
 rm -rf $DIST/pollux-full_$VER-${REV}_$ARCH.ipk
-ar ru $DIST/pollux-full_$VER-${REV}_$ARCH.ipk debian-binary control.tar.gz
+ar ru $DIST/pollux-full_$VER-${REV}_$ARCH.ipk debian-binary control.tar.gz data.tar.gz
 
 ##### HACKABLEDEVICES-FEED
 
