@@ -1,7 +1,7 @@
 Package: pollux-full
-Version: 0.1.0
+Version: 0.0.0
 Description: Pollux'NZ City meta package
-This package installs pollux-config and pollux-gateway packages
+  This package installs pollux-config and pollux-gateway packages
 Section: hackabledevices/applications
 Priority: optional
 Maintainer: Bernard Pratz <guyzmo@hackable-devices.org>
@@ -10,4 +10,4 @@ Architecture: armv7a
 OE: pollux-full
 Homepage: http://www.polluxnzcity.org/
 Source: 
-Depends: pollux-gateway =0.1.0, pollux-config =0.1.0
+Depends: pollux-gateway >=0.0.0, pollux-config >=0.0.0

@@ -27,9 +27,9 @@ DEST_INSTALL=$(DESTDIR)/usr/bin/
 DEST_SYSTEMD=$(DESTDIR)/lib/systemd/system/
 
 # versions
-VER=0.1.0
-REV=r0
-ARCH=armv7a
+VER:=$(shell grep 'VERSION' include/version.h | awk '{print $$3}')
+REV:=r0
+ARCH:=armv7a
 
 ########################################################################################
 
@@ -110,6 +110,7 @@ package: install-systemd install-doc
 	$(call chdir,$(DESTDIR))
 	$(TAR) -cvzf data.tar.gz etc/ usr/ lib/ var/
 	cp ../debian/* ./
+	sed -i "s/^Version: .*$$/Version: $(VER)/g" control
 	$(TAR) -cvzf control.tar.gz control postinst postrm prerm
 	$(AR) ru ../pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk debian-binary data.tar.gz control.tar.gz
 	cp -f ../pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk ../$(FEED)

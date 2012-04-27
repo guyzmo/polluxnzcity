@@ -1,4 +1,8 @@
 #!/bin/sh
-#systemctl disable pollux_config.service
 
 [ -f "$D/etc/lighttpd.conf" ] && sed -i '/^\(.*pollux_config.*\)$/d' $D/etc/lighttpd.conf
+
+if [ -z "$D" ]; then
+    systemctl restart lighttpd.service
+fi
+

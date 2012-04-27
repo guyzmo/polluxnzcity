@@ -48,6 +48,8 @@ for pkg in `find $pkg_dir -maxdepth 1 -name '*.ipk' | sort`; do
 Size: $file_size\\
 MD5Sum: $md5sum\\
 Description:/" >> $pkg_dir/Packages
+    echo "" >>  $pkg_dir/Packages
+    echo "" >>  $pkg_dir/Packages
     gzip -f Packages
     zcat Packages.gz > Packages
     rm control.tar.gz

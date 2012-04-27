@@ -1,0 +1,10 @@
+#!/bin/sh
+
+POLLUX_PACKAGES="pollux-full|pollux-gateway|pollux-config|python-flup|lighttpd-systemd|hackabledevices-feed"
+
+opkg update
+
+for pkg in `opkg-cl list-upgradable | grep -E $POLLUX_PACKAGES | awk '{print $1}'`; do 
+    opkg upgrade $pkg && echo "package $pkg upgrade succeeded" || echo "package $pkg upgrade failed"
+done
+
