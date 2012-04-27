@@ -356,7 +356,7 @@ import urllib2
 @route('/sensors/reload')
 @view('advanced')
 def sensors_reload():
-    response = urllib2.urlopen("http://files.ckab.net/b61af528/sensors_list.json")
+    response = urllib2.urlopen("http://www.polluxnzcity.net/beta/sensors_list.json")
     try:
         sensors_list_str = response.read()
 
