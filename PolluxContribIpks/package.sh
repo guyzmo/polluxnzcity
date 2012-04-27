@@ -32,7 +32,7 @@ mkdir -p $TARGET
 
 cd $TARGET
 
-cp $DIST/lighttpd-systemd/debian/* ./
+cp $DIST/pollux-full/debian/* ./
 tar -cvzf control.tar.gz control 
 
 rm -rf $DIST/pollux-full_$VER-${REV}_$ARCH.ipk
