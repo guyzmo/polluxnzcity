@@ -70,21 +70,21 @@ INCLUDES=$(patsubst %,-I%,$(HEADERS))
 pollux_gateway: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
 
-pollux_gateway_verbose: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
-	$(CXX) $(CFLAGS) $(INCLUDES) -DVERBOSE -o $@ $^
-
 pollux_calibrator: $(SRC)/pollux_calibrator.C $(patsubst %pollux_prober.o,,$(OBJECT_FILES))
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
 
+pollux_gateway_verbose: DEFINES += -DVERBOSE
+pollux_gateway_verbose: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
+	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
 
 extensions/datastores/citypulse.so: extensions/datastores/citypulse.C
-	$(CXX) -shared -lgcrypt -lgpg-error -lcurl -g3 -std=c++0x -Wno-write-strings $(INCLUDES) $(DEFINES) -o $@ $^
+	$(CXX) -shared -lgcrypt -lgpg-error -lcurl -g3 -std=c++0x -Wno-write-strings $(INCLUDES) -o $@ $^
 
 extensions/datastores/local.so: extensions/datastores/local.C
-	$(CXX) -shared -std=c++0x -Wno-write-strings $(INCLUDES) $(DEFINES) -o $@ $^
+	$(CXX) -shared -g3 -std=c++0x -Wno-write-strings $(INCLUDES) -o $@ $^
 
 $(SRC)/%.o: $(SOURCE_FILES)
-	$(CXX) $(CFLAGS) $(INCLUDES) -o $(SRC)/$*.o -c $(SRC)/$*.C
+	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*.o -c $(SRC)/$*.C
 
 clean:
 	$(RM) $(OBJECT_FILES) extensions/datastores/citypulse.so extensions/datastores/local.so pollux_gateway pollux_calibrator pollux_gateway_verbose pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
@@ -119,7 +119,7 @@ install: all
 	$(INSTALL) -D extensions/datastores/*.so $(DESTDIR)/usr/lib/pollux/extensions/datastores
 	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
 	$(INSTALL) -D pollux_calibrator $(DEST_INSTALL)
-	$(INSTALL) -D pollux_gateway_verbose $(DEST_INSTALL)
+#	$(INSTALL) -D pollux_gateway_verbose $(DEST_INSTALL)
 
 install-systemd: install
 	$(INSTALL) -d $(DEST_SYSTEMD)
