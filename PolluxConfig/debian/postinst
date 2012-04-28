@@ -1,19 +1,15 @@
 #!/bin/sh
 OPTS=""
 
-if [ -n "$D" ]; then
-    OPTS="--root=$D"
-fi
+chown root:root /etc/sudoers.d/pollux
 
 if [ -f "$D/etc/lighttpd.conf" ]; then
     echo "" >> "$D/etc/lighttpd.conf"
     echo "### Following added by pollux_config package on" `date` >> "$D/etc/lighttpd.conf"
     echo 'include_shell "/usr/bin/pollux_config_lighttpdconf"' >> "$D/etc/lighttpd.conf"
+
+    if [ -z "$D" ] && [ -f "$D/lib/systemd/system/lighttpd.service" ]; then
+        systemctl restart lighttpd.service
+    fi
 fi
-
-#systemctl $OPTS enable pollux_config.service
-
-#if [ -z "$D" ]; then
-#    systemctl start pollux_config.service
-#fi
 
