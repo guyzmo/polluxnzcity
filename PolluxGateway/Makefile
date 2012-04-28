@@ -16,10 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# general configuration items
-# set to 1 to have verbose output
-VERBOSE?=0
-
 # destination directories for install
 DESTDIR?=/
 BASEDIR?=/
@@ -47,12 +43,7 @@ SRC=src
 
 SOURCES=$(SRC)/xbee $(SRC)/pollux $(SRC)/beaglebone
 
-DEFINES=
-ifeq "$(VERBOSE)" "1"
-DEFINES+=-DVERBOSE 
-endif
-
-CFLAGS = -ldl -ljson -g3 -rdynamic -std=c++0x -Wno-write-strings $(DEFINES)
+CFLAGS = -ldl -ljson -g3 -rdynamic -std=c++0x -Wno-write-strings
 #CFLAGS += -pedantic
 #CFLAGS += -Wall
 #CFLAGS += -Wpointer-arith
@@ -79,6 +70,9 @@ INCLUDES=$(patsubst %,-I%,$(HEADERS))
 pollux_gateway: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
 
+pollux_gateway_verbose: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
+	$(CXX) $(CFLAGS) $(INCLUDES) -DVERBOSE -o $@ $^
+
 pollux_calibrator: $(SRC)/pollux_calibrator.C $(patsubst %pollux_prober.o,,$(OBJECT_FILES))
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
 
@@ -93,7 +87,7 @@ $(SRC)/%.o: $(SOURCE_FILES)
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $(SRC)/$*.o -c $(SRC)/$*.C
 
 clean:
-	$(RM) $(OBJECT_FILES) extensions/datastores/citypulse.so extensions/datastores/local.so pollux_gateway pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
+	$(RM) $(OBJECT_FILES) extensions/datastores/citypulse.so extensions/datastores/local.so pollux_gateway pollux_calibrator pollux_gateway_verbose pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
 
 doc:
 	$(DOXYGEN) -g
@@ -124,6 +118,8 @@ install: all
 	$(INSTALL) -d $(DESTDIR)/usr/lib/pollux/extensions/datastores
 	$(INSTALL) -D extensions/datastores/*.so $(DESTDIR)/usr/lib/pollux/extensions/datastores
 	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
+	$(INSTALL) -D pollux_calibrator $(DEST_INSTALL)
+	$(INSTALL) -D pollux_gateway_verbose $(DEST_INSTALL)
 
 install-systemd: install
 	$(INSTALL) -d $(DEST_SYSTEMD)
