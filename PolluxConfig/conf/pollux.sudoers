@@ -1,0 +1,2 @@
+pollux ALL=NOPASSWD: /bin/systemctl restart pollux_gateway.service
+
