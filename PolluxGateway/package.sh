@@ -1,4 +1,4 @@
 #!/bin/sh
 
-DESTDIR=target/ make package 
+DESTDIR=target/ make package
 

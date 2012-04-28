@@ -192,11 +192,11 @@ void Pollux_prober::push_data(long long unsigned int module) {
             } else {
                 std::cerr<<"can't find add-on for module: "<<store_it->first<<std::endl;
             }
-            
-            for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it)
-                delete(*val_it);
-            values_list.clear();
         }
     }
+    
+    for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it)
+        delete(*val_it);
+    values_list.clear();
 
 }

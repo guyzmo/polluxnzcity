@@ -24,6 +24,8 @@
 #include <pollux/types.h>
 
 #include <sstream>
+#include <iomanip>
+#include <limits>
 #include <vector>
 
 extern "C" {
@@ -42,17 +44,23 @@ int push_to_datastore(std::vector<pollux::string_string_map*>& values_list, poll
     timeinfo = localtime ( &rawtime );
 
     strftime (buffer,80,"%Y/%m/%d %H:%M:%S",timeinfo);
-    csv_string << buffer <<",";
+    csv_string << buffer ;
     /// date format
 
+#ifdef VERBOSE
+    printf("parsing values\n");
+#endif
     for (std::vector<pollux::string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it) {
+#ifdef VERBOSE
+        printf("parsing val of %s\n", (**val_it)["k"].c_str());
+#endif
         if ((**val_it)["k"] == "longitude" or (**val_it)["k"] == "latitude" or (**val_it)["k"] == "altitude")
             continue;
-        csv_string<<(**val_it)["v"];
-        if (val_it+1 != values_list.end())
-            csv_string<<",";
-        csv_string<<std::endl;
+        csv_string << std::setprecision(std::numeric_limits<float>::digits10+1);
+
+        csv_string<<","<<(**val_it)["v"];
     }
+    csv_string<<std::endl;
 
     FILE* fd = fopen(config["post_url"].c_str(),"a");
     if (fd < 0)
@@ -61,6 +69,9 @@ int push_to_datastore(std::vector<pollux::string_string_map*>& values_list, poll
 
     fclose(fd);
     
+#ifdef VERBOSE
+    printf("success\n");
+#endif
     return 0;
 }
 }
