@@ -1,2 +1,1 @@
 #!/bin/sh
-systemctl disable lighttpd.service

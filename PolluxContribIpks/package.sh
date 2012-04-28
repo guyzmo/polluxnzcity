@@ -4,7 +4,7 @@ TARGET=$DIST/target
 ARCH=armv7a
 
 ##### LIGHTTPD-SYSTEMD
-REV="r2"
+REV="r3"
 VER=1.4.29
 
 rm -rf $TARGET
@@ -17,7 +17,7 @@ cd $TARGET
 tar -cvzf data.tar.gz ./lib 
 
 cp $DIST/lighttpd-systemd/debian/* ./
-tar -cvzf control.tar.gz control postrm prerm
+tar -cvzf control.tar.gz control postrm prerm postinst
 
 rm -rf $DIST/lighttpd-systemd_$VER-${REV}_$ARCH.ipk
 ar ru $DIST/lighttpd-systemd_$VER-${REV}_$ARCH.ipk debian-binary data.tar.gz control.tar.gz
