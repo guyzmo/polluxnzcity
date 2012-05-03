@@ -63,7 +63,10 @@ class Pollux_configurator {
         /// Type alias to ease function callback definition
         typedef int(*datastore_functor_type)(std::vector<std::unordered_map<std::basic_string<char>, std::basic_string<char> >*>&, string_string_map&);
         /// Hashmap containing all the datastores plugin callbacks
+        mutable string_string_map datastores_addon_map;
+        /* XXX old code for so datastores
         mutable std::unordered_map<std::string, datastore_functor_type> datastores_addon_map;
+        */
 
     public:
         Pollux_configurator(std::string& conf, std::string& ext);

@@ -24,7 +24,7 @@
 
 #include <Python.h>
 
-namespace "pollux" {
+using namespace "pollux";
 /** Initializes the python environment to load the extensions 
     *
     * @param path: string containing the path to the extension directory
@@ -143,4 +143,3 @@ int PolluxExtension::push_to_datastore(std::string& module,
     return ret;
 }
 
-}
