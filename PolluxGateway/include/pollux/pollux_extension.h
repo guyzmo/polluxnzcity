@@ -18,10 +18,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#ifndef __POLLUX_EXTENSION_H__
+#define __POLLUX_EXTENSION_H__
 
-#include <pollux/pollux_extension.h>
+#include <pollux/types.h>
 
-namespace "pollux" {
+#include <sstream>
+#include <vector>
+
+#include <Python.h>
+
+namespace pollux {
 
 /** This class is a facility for the Pollux application to
  * load and run python modules */
@@ -34,7 +41,7 @@ class PolluxExtension {
      * @param path: string containing the path to the extension directory
      *
      * */
-    PolluxExtension(std::string& path);
+    PolluxExtension(const std::string& path);
     /** stops the python environment */
     ~PolluxExtension();
 
@@ -54,10 +61,15 @@ class PolluxExtension {
      * "u" : "unit of the measure" [string]
      * "v" : "value of the measure" [string containing float]
      * "p" : "precision of the measure" [string containing float]
+     *
+     * it looks for a function named "push_to_datastore" in the given
+     * python module that lays in the extension directory path, and
+     * executes it with the given parameters converted to python.
      */
-    int push_to_datastore(std::string& module, 
-                            string_string_map configuration_map,
-                            std::vector<string_string_map*> values_list);
+    int push_to_datastore(const std::string& module, 
+                            string_string_map& configuration_map,
+                            std::vector<string_string_map*>& values_list);
 
+};
 }
-}
+#endif

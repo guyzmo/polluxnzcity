@@ -44,6 +44,7 @@ SRC=src
 SOURCES=$(SRC)/xbee $(SRC)/pollux $(SRC)/beaglebone
 
 CFLAGS = -ldl -ljson -g3 -rdynamic -std=c++0x -Wno-write-strings
+CFLAGS += $(shell python2.7-config --cflags)
 #CFLAGS += -pedantic
 #CFLAGS += -Wall
 #CFLAGS += -Wpointer-arith

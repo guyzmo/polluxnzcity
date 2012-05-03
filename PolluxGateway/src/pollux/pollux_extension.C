@@ -19,18 +19,15 @@
  *
  */
 
-#include <pollux/types.h>
-#include <sstream>
+#include <pollux/pollux_extension.h>
 
-#include <Python.h>
-
-using namespace "pollux";
+using namespace pollux;
 /** Initializes the python environment to load the extensions 
     *
     * @param path: string containing the path to the extension directory
     *
     * */
-PolluxExtension::PolluxExtension(std::string& path) {
+PolluxExtension::PolluxExtension(const std::string& path) {
     std::ostringstream python_path;
     python_path << "sys.path.append(\"" << path << "\")";
     append_python_path = python_path.str();
@@ -64,16 +61,16 @@ PolluxExtension::~PolluxExtension() {
     * "v" : "value of the measure" [string containing float]
     * "p" : "precision of the measure" [string containing float]
     */
-int PolluxExtension::push_to_datastore(std::string& module, 
-                        string_string_map configuration_map,
-                        std::vector<string_string_map*> values_list) {
+int PolluxExtension::push_to_datastore(const std::string& module, 
+                        string_string_map& configuration_map,
+                        std::vector<string_string_map*>& values_list) {
 
     PyObject *pName, *pModule, *pDict, *pFunc, *pValue, *pArgs, *pValues, *pConfig, *k, *v;
     
     int ret = 0;
 
     // Build the name object
-    pName = PyString_FromString(module);
+    pName = PyString_FromString(module.c_str());
 
     // Load the module object
     pModule = PyImport_Import(pName);
@@ -90,17 +87,18 @@ int PolluxExtension::push_to_datastore(std::string& module,
         // values
         pValues = PyList_New(0);
         for (std::vector<string_string_map*>::iterator it=values_list.begin(); it != values_list.end(); ++it) {
-            val = PyDict_New();
+            pValue = PyDict_New();
             for (string_string_map::iterator val_it=(*it)->begin(); val_it != (*it)->end(); ++val_it) {
                 k = PyString_FromString(val_it->first.c_str());
                 v = PyString_FromString(val_it->second.c_str());
-                PyDict_SetItem(val, k, v);
+                PyDict_SetItem(pValue, k, v);
 #ifdef VERBOSE
-                printf("pValues: %04X, val: %04X ; k: %s [%04X] ; v: %s [%04X]\n", (unsigned int)pValues, (unsigned int) val, val_it->first.c_str(), (unsigned int)k, val_it->second.c_str(), (unsigned int)v);
+                printf("pValues: %04X, pValue: %04X ; k: %s [%04X] ; v: %s [%04X]\n", (unsigned int)pValues, (unsigned int) pValue, val_it->first.c_str(), (unsigned int)k, val_it->second.c_str(), (unsigned int)v);
 #endif
             }
-            PyList_Append(pValues, val);
+            PyList_Append(pValues, pValue);
         }
+        pValue = NULL;
         PyTuple_SetItem(pArgs, 0, pValues);
 
         // config
@@ -142,4 +140,3 @@ int PolluxExtension::push_to_datastore(std::string& module,
 
     return ret;
 }
-
