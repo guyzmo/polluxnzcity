@@ -72,7 +72,7 @@ endif
 TARGET = $(shell basename $(PWD))
 
 # Where do you keep the official Arduino software package?
-ARDUINO_DIR = /Applications/Arduino10.app/Contents/Resources/Java
+ARDUINO_DIR = /Applications/Arduino.app/Contents/Resources/Java
 HOME_LIB = $(HOME)/Documents/Arduino/libraries
 # path to ATTiny files look at http://code.google.com/p/arduino-tiny/
 ATTINY_DIR=$(ARDUINO_DIR)/hardware/tiny
