@@ -49,25 +49,28 @@ void Pollux_observer::wake_up() {
     std::cout<<"waking up module: "<<std::hex<<module<<std::endl;
 
     this->send_remote_atcmd(module, 0xFFFF, "D0", high);
-    msleep(50);
-    this->send_remote_atcmd(module, 0xFFFF, "D0", low);
 }
 
 void Pollux_observer::run (xbee::XBeeFrame* frame) {
 
+    const char low[] = { 0x4, 0x0 };
 #ifdef VERBOSE
     Xbee_communicator::run(frame); // print frame details
 #endif
     xbee::Xbee_result payload(frame);
 
+
     switch (frame->api_id) {
         case AT_CMD_RESP:
             //beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
-
             printf("[AT] Command: '%s' ; Values: '%X'\n", frame->content.at.command, frame->content.at.values);
-
-            msleep(50);
             //beagle::Leds::reset_rgb_led(beagle::Leds::GREEN);
+            break;
+        case RM_CMD_RESP:
+            if (frame->content.at.status == 0x00)
+                printf("Successfully applied remote AT command: %c%c(%X)\n", frame->content.at.command[0], frame->content.at.command[1], frame->content.at.values);
+            else
+                printf("Failure applying remote AT command: %c%c(%X)\n", frame->content.at.command[0], frame->content.at.command[1], frame->content.at.values);
             break;
         case RX_PACKET:
             beagle::Leds::set_rgb_led(beagle::Leds::BLUE);
@@ -86,6 +89,9 @@ void Pollux_observer::run (xbee::XBeeFrame* frame) {
                     break;
                 case CMD_HALT:
                     std::cout<<"   <- recv sleep down"<<std::endl;
+                    
+                    this->send_remote_atcmd(payload.get_node_address_as_long(), 0xFFFF, "D0", low);
+                    
                     config.push_data(payload.get_node_address_as_long());
                     break;
                 case '*':
