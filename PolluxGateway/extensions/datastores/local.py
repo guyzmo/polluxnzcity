@@ -37,7 +37,10 @@ def push_to_datastore(values_list, config):
     try:
         sensors_data = open(config["post_url"], 'a')
         sensors_data.write(values_str)
-    except:
+
+        return 1
+    except Exception, e:
+        print "Error in local.py plugin: ", e
         return -1
     finally:
         sensors_data.close()

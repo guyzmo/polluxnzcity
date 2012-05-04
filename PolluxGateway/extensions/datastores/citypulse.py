@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import hashlib
-import pycurl
+import urllib2 
 import json
 
 DEFAULT_CONFIG = \
@@ -35,24 +35,28 @@ def calculate_sha1(ostr, key):
     return hashlib.sha1(ostr+key).hexdigest()
 
 def push_to_citypulse(content_string, url, proxy=None):
-    curl = pycurl.Curl()
-    curl.setopt(pycurl.URL, url)
-    if proxy:
-        curl.setopt(pycurl.PROXY, proxy)
-    curl.setopt(pycurl.POST, 1)
-    curl.setopt(pycurl.POSTFIELDS, content_string)
-    curl.setopt(pycurl.HTTPHEADER, ["Content-Type: text/form-data; charset=utf-8"])
-    curl.perform()
-    if curl.getinfo(pycurl.HTTP_CODE) == 200:
+    req = urllib2.Request(url,
+                          headers = {
+                              "Content-Type": "text/form-data; charset=utf-8",
+                              "Accept": "*/*",   
+                              "User-Agent": "polluxnzcity v0.1-beta", 
+                              },
+                          data = content_string)
+
+    try:
+        urllib2.urlopen(req)
         return 1
-    else:
+
+    except urllib2.URLError,e:
+        print "error in citypulse.py", e.reason
         return -1
 
 def push_to_datastore(values_list, config):
 
     for val in values_list:
         val['v'] = float(val['v'])
-        val['p'] = float(val['p'])
+        if 'p' in val.keys():
+            val['p'] = float(val['p'])
 
     values_str = json.dumps(values_list)
 
@@ -60,10 +64,10 @@ def push_to_datastore(values_list, config):
                                  config["api_key"],
                                  calculate_sha1(values_str, config["api_key"]))
 
-    if "proxy" in config:
-        return push_to_citypulse(values_str, post_url)
-    else:
+    if "proxy" in config.keys() and not config["proxy"] == "":
         return push_to_citypulse(values_str, post_url, config["proxy"])
+    else:
+        return push_to_citypulse(values_str, post_url)
 
 
 if __name__ == "__main__":
