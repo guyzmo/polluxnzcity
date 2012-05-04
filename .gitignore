@@ -2,3 +2,11 @@
 .gitignore
 applet
 *.*#*
+*.o
+*.pyo
+*~
+*.swo
+*.ipk
+pollux_calibrator
+pollux_gateway
+pollux_gateway_verbose
