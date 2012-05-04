@@ -38,13 +38,13 @@ TAR=/bin/tar
 INSTALL=/usr/bin/install
 SYSD=/bin/systemctl
 
+DEFINES?=
 HEADERS=include $(BASEDIR)/include/
 SRC=src
 
 SOURCES=$(SRC)/xbee $(SRC)/pollux $(SRC)/beaglebone
 
-CFLAGS = -ldl -ljson -g3 -rdynamic -std=c++0x -Wno-write-strings
-CFLAGS += $(shell python2.7-config --cflags)
+CFLAGS = -g3 -std=c++0x -Wno-write-strings
 #CFLAGS += -pedantic
 #CFLAGS += -Wall
 #CFLAGS += -Wpointer-arith
@@ -53,6 +53,9 @@ CFLAGS += $(shell python2.7-config --cflags)
 #CFLAGS += -Wwrite-strings
 #CFLAGS += -Wconversion
 
+LDFLAGS = -lpthread -ldl -lpthread -lutil -lm -lpython2.7 -Xlinker -export-dynamic
+#LDFLAGS += $(shell python2.7-config --ldflags)
+LDFLAGS += -ljson
 
 CHDIR_SHELL := $(SHELL)
 define chdir
@@ -62,30 +65,28 @@ endef
 
 .PHONY: all
 
-all: pollux_gateway pollux_calibrator extensions/datastores/citypulse.so extensions/datastores/local.so
+all: pollux_gateway pollux_calibrator # extensions/datastores/citypulse.so extensions/datastores/local.so
 
 SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
 OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
 INCLUDES=$(patsubst %,-I%,$(HEADERS))
 
 pollux_gateway: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
-	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
+	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
+	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -DVERBOSE -o $@_verbose $(patsubst %.o,%_debug.o,$^)
 
 pollux_calibrator: $(SRC)/pollux_calibrator.C $(patsubst %pollux_prober.o,,$(OBJECT_FILES))
-	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^
+	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
 
-pollux_gateway_verbose: DEFINES += -DVERBOSE
-pollux_gateway_verbose: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
-	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
+src/pollux/pollux_extension.o: src/pollux/pollux_extension.C
+	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) $(patsubst -O2,,$(shell python2.7-config --cflags)) -o $@ -c $^
 
-extensions/datastores/citypulse.so: extensions/datastores/citypulse.C
-	$(CXX) -shared -lgcrypt -lgpg-error -lcurl -g3 -std=c++0x -Wno-write-strings $(INCLUDES) -o $@ $^
-
-extensions/datastores/local.so: extensions/datastores/local.C
-	$(CXX) -shared -g3 -std=c++0x -Wno-write-strings $(INCLUDES) -o $@ $^
+src/pollux/pollux_extension_debug.o: src/pollux/pollux_extension.C
+	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) $(patsubst -O2,,$(shell python2.7-config --cflags)) -o $@ -c $^ -DVERBOSE
 
 $(SRC)/%.o: $(SOURCE_FILES)
 	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*.o -c $(SRC)/$*.C
+	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*_debug.o -c $(SRC)/$*.C -DVERBOSE 
 
 clean:
 	$(RM) $(OBJECT_FILES) extensions/datastores/citypulse.so extensions/datastores/local.so pollux_gateway pollux_calibrator pollux_gateway_verbose pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
