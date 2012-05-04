@@ -153,6 +153,7 @@ void Pollux_calibrator::store_measure(xbee::Xbee_result& payload) {
 
 void Pollux_calibrator::push_data(long long unsigned int module) {
     std::ostringstream val_string;
+    PolluxExtension plugin(get_path_to_extensions());
 
     if (geoloc_map.find("latitude") != geoloc_map.end() and geoloc_map.find("longitude") != geoloc_map.end() ) {
         string_string_map* values = new string_string_map();
@@ -176,9 +177,8 @@ void Pollux_calibrator::push_data(long long unsigned int module) {
 
     for (string_string_string_map::iterator store_it = datastores_map.begin();store_it!=datastores_map.end();++store_it) {
         if (store_it->second["activated"] != "false") {
-            if (datastores_addon_map.find(store_it->first) != datastores_addon_map.end()) {
                 std::cout<<store_it->first;
-                if ((*datastores_addon_map[store_it->first])(values_list, store_it->second) == 0) {
+                if (plugin.push_to_datastore(store_it->first, store_it->second, values_list) == 0) {
                     std::cout<<"    -> success"<<std::endl;
                     beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
                     msleep(100);
@@ -189,9 +189,6 @@ void Pollux_calibrator::push_data(long long unsigned int module) {
                     msleep(100);
                     beagle::Leds::reset_rgb_led(beagle::Leds::RED);
                 }
-            } else {
-                std::cerr<<"can't find add-on for module: "<<store_it->first<<std::endl;
-            }
             
             for (std::vector<string_string_map*>::iterator val_it = values_list.begin(); val_it != values_list.end();++val_it)
                 delete(*val_it);

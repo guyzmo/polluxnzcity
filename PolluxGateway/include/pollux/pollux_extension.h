@@ -26,8 +26,6 @@
 #include <sstream>
 #include <vector>
 
-#include <Python.h>
-
 namespace pollux {
 
 /** This class is a facility for the Pollux application to

@@ -143,17 +143,17 @@ void Pollux_prober::store_measure(xbee::Xbee_result& payload) {
             (*values)["p"] = "0";
             break;
         default:
-            printf("    <- measure from i2c(%02X,%02X) of type %d unsupported\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
+            printf("   <- measure from i2c(%02X,%02X) of type %d unsupported\n", payload.get_i2c_address(), payload.get_i2c_register(), payload.get_type());
             return;
     }
     values_list.push_back(values);
-    printf("    <- measure from i2c(%02X,%02X) ", payload.get_i2c_address(), payload.get_i2c_register());//, json_string.str().c_str());
+    printf("   <- measure from i2c(%02X,%02X) ", payload.get_i2c_address(), payload.get_i2c_register());//, json_string.str().c_str());
     return;
 }
 
 void Pollux_prober::push_data(long long unsigned int module) {
     std::ostringstream val_string;
-    PolluxExtension plugin;
+    PolluxExtension plugin(get_path_to_extensions());
 
     if (geoloc_map.find("latitude") != geoloc_map.end() and geoloc_map.find("longitude") != geoloc_map.end() ) {
         string_string_map* values = new string_string_map();
@@ -177,12 +177,8 @@ void Pollux_prober::push_data(long long unsigned int module) {
 
     for (string_string_string_map::iterator store_it = datastores_map.begin();store_it!=datastores_map.end();++store_it) {
         if (store_it->second["activated"] != "false") {
-            if (datastores_addon_map.find(store_it->first) != datastores_addon_map.end()) { // XXX WTF ? check if useful ?
                 std::cout<<store_it->first;
-                /* XXX old code for .so extensions
-                if ((*datastores_addon_map[store_it->first])(values_list, store_it->second) == 0) {
-                */
-                if (plugin.push_to_datastore(store_it->first, values_list, store_it->second) == 0) {
+                if (plugin.push_to_datastore(store_it->first, store_it->second, values_list) > 0) {
                     std::cout<<"    -> success"<<std::endl;
                     beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
                     msleep(100);
@@ -193,9 +189,6 @@ void Pollux_prober::push_data(long long unsigned int module) {
                     msleep(100);
                     beagle::Leds::reset_rgb_led(beagle::Leds::RED);
                 }
-            } else {
-                std::cerr<<"can't find add-on for module: "<<store_it->first<<std::endl;
-            }
         }
     }
     

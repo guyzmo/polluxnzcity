@@ -22,6 +22,7 @@
 #define __POLLUX_PROBER_H__
 
 #include <pollux/pollux_configurator.h>
+#include <pollux/pollux_extension.h>
 
 namespace pollux {
 

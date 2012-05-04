@@ -75,6 +75,8 @@ class Pollux_configurator {
         const std::string& get_config_option(std::string key) const;
         const std::string& get_datastore_value(std::string& ds, std::string& value) const;
 
+        const std::string& get_path_to_extensions() const;
+
         /// Parses and store configuration
         void load_configuration();
         /// Parses and store geolocalization

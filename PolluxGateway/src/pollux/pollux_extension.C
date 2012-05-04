@@ -20,6 +20,8 @@
  */
 
 #include <pollux/pollux_extension.h>
+#include <Python.h>
+#include <iostream>
 
 using namespace pollux;
 /** Initializes the python environment to load the extensions 
@@ -29,7 +31,7 @@ using namespace pollux;
     * */
 PolluxExtension::PolluxExtension(const std::string& path) {
     std::ostringstream python_path;
-    python_path << "sys.path.append(\"" << path << "\")";
+    python_path << "sys.path.append(\"" << path << "/extensions/datastores/\")";
     append_python_path = python_path.str();
 
     // Initialize the Python Interpreter
@@ -65,7 +67,7 @@ int PolluxExtension::push_to_datastore(const std::string& module,
                         string_string_map& configuration_map,
                         std::vector<string_string_map*>& values_list) {
 
-    PyObject *pName, *pModule, *pDict, *pFunc, *pValue, *pArgs, *pValues, *pConfig, *k, *v;
+    PyObject *pName, *pModule, *pDict, *pFunc, *pValue, *pArgs, *pValues=NULL, *pConfig=NULL, *k, *v;
     
     int ret = 0;
 
@@ -127,16 +129,9 @@ int PolluxExtension::push_to_datastore(const std::string& module,
             Py_DECREF(pValue);
         } else {
             PyErr_Print();
+            ret = 0;
         }
     }
-
-    // Clean up
-    Py_DECREF(pConfig);
-    Py_DECREF(pValues);
-    Py_DECREF(pArgs);
-    Py_DECREF(pDict);
-    Py_DECREF(pModule);
-    Py_DECREF(pName);
 
     return ret;
 }

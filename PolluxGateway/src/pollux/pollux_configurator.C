@@ -76,6 +76,10 @@ const std::string& Pollux_configurator::get_datastore_value(std::string& ds, std
     return datastores_map[ds][value];
 }
 
+const std::string& Pollux_configurator::get_path_to_extensions() const {
+    return this->path_ext;
+}
+
 void Pollux_configurator::load_configuration() {
     std::ostringstream fname;
 
@@ -162,42 +166,12 @@ void Pollux_configurator::load_datastores() {
     struct json_object* datastores = json_object_object_get(json_data, "datastores");
 
     json_object_object_foreach(datastores,name,datastore) {
-        std::ostringstream addon_name;
-        // find name of the addon
-        addon_name<<path_ext<<"/extensions/datastores/"<<name<<".py";
-        datastores_addon_map[name] = addon_name.str();
-
-        /* XXX old code for so addons
-        addon_name<<path_ext<<"/extensions/datastores/"<<name<<".so";
-
-        // open the addon
-        handle = dlopen (addon_name.str().c_str(), RTLD_LAZY);
-        if (!handle) {
-            std::cerr<<"WARNING: can't find add-on for "<<name<<std::endl;
-            std::cerr<<"         reason: "<<dlerror()<<std::endl;
-            continue;
-        }
-
-        dlerror();	// Clear any existing error 
-
-        // get the functor
-        push_to_datastore = (datastore_functor_type)dlsym(handle, "push_to_datastore");
-        if ((error = dlerror()) != NULL)  {
-            std::cerr<<"WARNING: can't load add-on for "<<name<<std::endl;
-            std::cerr<<"         reason: "<<error<<std::endl;
-            continue;
-        }
-
-        // store the functor
-        datastores_addon_map[name] = push_to_datastore;
-
         json_object_object_foreach(datastore,key,value) {
 #ifdef VERBOSE
             printf("datastore(%s).%s: '%s'\n", name, key, json_object_get_string(json_object_object_get(datastore,key)));
 #endif //VERBOSE
             datastores_map[name][key] = json_object_get_string(value);
         }
-        */
     }
 
     free(json_data);
