@@ -27,6 +27,8 @@ VER:=$(shell grep 'VERSION' include/version.h | awk '{print $$3}')
 REV:=r0
 ARCH:=armv7a
 
+VERBOSE?=0
+
 ########################################################################################
 
 CXX=arm-angstrom-linux-gnueabi-g++
@@ -65,7 +67,7 @@ endef
 
 .PHONY: all
 
-all: pollux_gateway pollux_calibrator # extensions/datastores/citypulse.so extensions/datastores/local.so
+all: pollux_gateway pollux_calibrator
 
 SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
 OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
@@ -73,7 +75,9 @@ INCLUDES=$(patsubst %,-I%,$(HEADERS))
 
 pollux_gateway: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
 	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
+ifeq ($(VERBOSE),1)
 	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -DVERBOSE -o $@_verbose $(patsubst %.o,%_debug.o,$^)
+endif
 
 pollux_calibrator: $(SRC)/pollux_calibrator.C $(patsubst %pollux_prober.o,,$(OBJECT_FILES))
 	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
@@ -86,10 +90,12 @@ src/pollux/pollux_extension_debug.o: src/pollux/pollux_extension.C
 
 $(SRC)/%.o: $(SOURCE_FILES)
 	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*.o -c $(SRC)/$*.C
+ifeq ($(VERBOSE),1)
 	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*_debug.o -c $(SRC)/$*.C -DVERBOSE 
+endif
 
 clean:
-	$(RM) $(OBJECT_FILES) extensions/datastores/citypulse.so extensions/datastores/local.so pollux_gateway pollux_calibrator pollux_gateway_verbose pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
+	$(RM) $(OBJECT_FILES) pollux_gateway pollux_calibrator pollux_gateway_verbose pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
 
 doc:
 	$(DOXYGEN) -g
@@ -118,10 +124,12 @@ install: all
 	$(INSTALL) -d $(DESTDIR)/etc/pollux
 	$(INSTALL) -d $(DESTDIR)/var/lib/pollux
 	$(INSTALL) -d $(DESTDIR)/usr/lib/pollux/extensions/datastores
-	$(INSTALL) -D extensions/datastores/*.so $(DESTDIR)/usr/lib/pollux/extensions/datastores
+	$(INSTALL) -D extensions/datastores/*.py $(DESTDIR)/usr/lib/pollux/extensions/datastores
 	$(INSTALL) -D pollux_gateway $(DEST_INSTALL)
 	$(INSTALL) -D pollux_calibrator $(DEST_INSTALL)
-#	$(INSTALL) -D pollux_gateway_verbose $(DEST_INSTALL)
+ifeq ($(VERBOSE),1)
+	$(INSTALL) -D pollux_gateway_verbose $(DEST_INSTALL)
+endif
 
 install-systemd: install
 	$(INSTALL) -d $(DEST_SYSTEMD)
