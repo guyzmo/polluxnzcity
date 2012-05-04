@@ -43,10 +43,13 @@
 
 int main(int argc, char* argv[]) {
 
-    configure_system();
-
     try {
         Cli_parser cli_args(argc, argv);
+
+        if (cli_args.has("-s") || cli_args.has("--superuser"))
+            configure_system_nofork();
+        else
+            configure_system();
 
         if (cli_args.has("-h") || cli_args.has("--help")) {
             std::cout<<"usage: "<<argv[0]<<"[-h] [-p PATH]"<<std::endl\
@@ -56,6 +59,7 @@ int main(int argc, char* argv[]) {
                 <<"optional arguments:"<<std::endl\
                 <<"	-c, --conf PATH		Path to the configuration directory (default: /etc/pollux)"<<std::endl\
                 <<"	-e, --ext PATH		Path to the plugin base directory (default: /usr/lib/pollux)"<<std::endl\
+                <<"	-s, --superuser 	Does not fork, and escalates down privileges"<<std::endl\
                 <<"	-h, --help		This help screen"<<std::endl\
                 <<std::endl;
             ::exit(0);
@@ -94,20 +98,20 @@ int main(int argc, char* argv[]) {
                 path_ext.erase(it);
         }
 
-        pollux::Pollux_prober pconfig(path_conf, path_ext);
+        pollux::Pollux_prober prober(path_conf, path_ext);
 
         try {
-            pconfig.load_configuration();
-            pconfig.load_datastores();
-            pconfig.load_sensors();
-            pconfig.load_geoloc();
+            prober.load_configuration();
+            prober.load_datastores();
+            prober.load_sensors();
+            prober.load_geoloc();
         } catch (pollux::Pollux_config_exception pce) {
             std::cerr<<pce.what()<<std::endl;
             std::cerr<<"Can't load configuration, exiting..."<<std::endl;
             ::exit(1);
         }
 
-        pollux::Pollux_observer s(pconfig);
+        pollux::Pollux_observer s(prober);
 
         if (s.begin(B9600) >= 0) {
             for (;;)

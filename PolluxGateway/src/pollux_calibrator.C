@@ -43,10 +43,13 @@
 
 int main(int argc, char* argv[]) {
 
-    configure_system();
-
     try {
         Cli_parser cli_args(argc, argv);
+
+        if (cli_args.has("-s") || cli_args.has("--superuser"))
+            configure_system_nofork();
+        else
+            configure_system();
 
         if (cli_args.has("-h") || cli_args.has("--help")) {
             std::cout<<"usage: "<<argv[0]<<"[-h] [-p PATH]"<<std::endl\
@@ -56,6 +59,7 @@ int main(int argc, char* argv[]) {
                 <<"optional arguments:"<<std::endl\
                 <<"	-c, --conf PATH		Path to the configuration directory (default: /etc/pollux)"<<std::endl\
                 <<"	-e, --ext PATH		Path to the plugin base directory (default: /usr/lib/pollux)"<<std::endl\
+                <<"	-s, --superuser 	Does not fork, and escalates down privileges"<<std::endl\
                 <<"	-h, --help		This help screen"<<std::endl\
                 <<std::endl;
             ::exit(0);

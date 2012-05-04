@@ -21,6 +21,23 @@ void sig_root_handler(int c) {
     exit(0);
 }
 
+void configure_system_nofork() {
+        beagle::UART::enable_uart2();
+        beagle::Leds::enable_leds();
+        beagle::Leds::set_status_led();
+
+        // set up signal
+        struct sigaction sigIntHandler;
+
+        sigIntHandler.sa_handler = sig_root_handler;
+        sigemptyset(&sigIntHandler.sa_mask);
+        sigIntHandler.sa_flags = 0;
+
+        sigaction(SIGINT, &sigIntHandler, NULL);
+        sigaction(SIGTERM, &sigIntHandler, NULL);
+        sigaction(SIGHUP, &sigIntHandler, NULL);
+}
+
 void configure_system() {
     if ((pid = fork()) != 0) {
         // sets up the signal in Parent process
