@@ -26,10 +26,12 @@
             <label class="control-label" for="geo_longitude">Longitude</label>
             <div class="controls">
                 <input type="text" class="input-large" id="geo_longitude" name="geo_longitude" value="${geoloc["longitude"]}" /><br />
+                <p class="help-block">Reset the address field to enable read/write of coordinates</p>
             </div>
             <label class="control-label" for="geo_latitude">Latitude</label>
             <div class="controls">
                 <input type="text" class="input-large" id="geo_latitude" name="geo_latitude" value="${geoloc["latitude"]}" />
+                <p class="help-block">Reset the address field to enable read/write of coordinates</p>
             </div>
         </div>
     </fieldset>
