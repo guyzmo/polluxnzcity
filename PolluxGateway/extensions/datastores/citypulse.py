@@ -44,11 +44,11 @@ def push_to_citypulse(content_string, url, proxy=None):
                           data = content_string)
 
     try:
-        urllib2.urlopen(req)
+        urllib2.urlopen(req,timeout=5)
         return 1
 
     except urllib2.URLError,e:
-        print "error in citypulse.py", e.reason
+        print "[Error pushing data in citypulse.py: ", e.reason, "]",
         return -1
 
 def push_to_datastore(values_list, config):
