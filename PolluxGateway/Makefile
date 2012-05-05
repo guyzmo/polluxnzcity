@@ -32,6 +32,7 @@ VERBOSE?=0
 ########################################################################################
 
 CXX=arm-angstrom-linux-gnueabi-g++
+PYCFG=$(BASEDIR)/usr/bin/python2.7-config
 DOXYGEN=/usr/bin/doxygen
 AR=/usr/bin/ar
 MV=/bin/mv
@@ -54,7 +55,7 @@ CFLAGS += -Wcast-align
 CFLAGS += -Wwrite-strings
 
 LDFLAGS = -lpthread -ldl -lpthread -lutil -lm -lpython2.7 -Xlinker -export-dynamic
-#LDFLAGS += $(shell python2.7-config --ldflags)
+PY_LDFLAGS=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --ldflags)))
 LDFLAGS += -ljson
 
 CHDIR_SHELL := $(SHELL)
@@ -83,11 +84,13 @@ endif
 pollux_calibrator: $(SRC)/pollux_calibrator.C $(patsubst %pollux_prober.o,,$(OBJECT_FILES))
 	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
 
+src/pollux/pollux_extension.o: CFLAGS+=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --cflags)))
 src/pollux/pollux_extension.o: src/pollux/pollux_extension.C
-	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) $(patsubst -O2,,$(shell python2.7-config --cflags)) -o $@ -c $^
+	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ -c $^
 
+src/pollux/pollux_extension_debug.o: CFLAGS+=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --cflags)))
 src/pollux/pollux_extension_debug.o: src/pollux/pollux_extension.C
-	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) $(patsubst -O2,,$(shell python2.7-config --cflags)) -o $@ -c $^ -DVERBOSE
+	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ -c $^ -DVERBOSE
 
 $(SRC)/%.o: $(SOURCE_FILES)
 	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*.o -c $(SRC)/$*.C
