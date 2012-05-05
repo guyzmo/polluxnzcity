@@ -2,7 +2,7 @@
 <div class="row">
   <div class="span4">
     <h2>My data</h2>
-     <p>Panel to configure sensor modules, and each sensor inside each module</p>
+     <p>View data measured by current sensor</p>
     <p><a class="btn" href="/datas/">View details &raquo;</a></p>
   </div>
   <div class="span4">
