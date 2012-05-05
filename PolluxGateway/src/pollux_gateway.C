@@ -24,6 +24,7 @@
 //#define VERBOSE 
 //#define API_ESCAPED_MODE // if API MODE is 2, useful for use with software flow control
 
+#include <version.h>
 #include <cli_parser.h>
 #include <signal_handler.h>
 
@@ -33,7 +34,7 @@
 #include <xbee/xbee_result.h>
 #include <xbee/xbee_communicator.h>
 
-#include <pollux/pollux_xbee.h>
+#include <pollux/pollux_observer.h>
 #include <pollux/pollux_prober.h>
 
 #include <string>
@@ -46,11 +47,16 @@ int main(int argc, char* argv[]) {
     try {
         Cli_parser cli_args(argc, argv);
 
-        if (cli_args.has("-s") || cli_args.has("--superuser"))
-            configure_system_nofork();
-        else
-            configure_system();
+        // get -v
+        if (cli_args.has("-v") || cli_args.has("--version")) {
+#ifdef VERBOSE
+            std::cout<<"Pollux'NZ City Gateway module -- "<<POLLUX_VERSION<<" -- +verbose"<<std::endl;
+#else
+            std::cout<<"Pollux'NZ City Gateway module -- "<<POLLUX_VERSION<<std::endl;
+#endif
+        }
 
+        // get -h
         if (cli_args.has("-h") || cli_args.has("--help")) {
             std::cout<<"usage: "<<argv[0]<<"[-h] [-p PATH]"<<std::endl\
                 <<std::endl\
@@ -65,9 +71,16 @@ int main(int argc, char* argv[]) {
             ::exit(0);
         }
 
+        // get -s
+        if (cli_args.has("-s") || cli_args.has("--superuser"))
+            configure_system_nofork();
+        else
+            configure_system();
+
         std::string path_conf= "/etc/pollux";
         std::string path_ext= "/usr/lib/pollux";
 
+        // get -c
         if (cli_args.has("-c") && !cli_args.has("--conf"))
             path_conf = cli_args.get("-c");
         else if (!cli_args.has("-c") && cli_args.has("--conf"))
@@ -77,12 +90,14 @@ int main(int argc, char* argv[]) {
             ::exit(1);
         }
 
+        // strip trailing '/' at end of path
         if (path_conf.length() > 0) {
             std::string::iterator it = path_conf.end() - 1;
             if (*it == '/')
                 path_conf.erase(it);
         }
         
+        // get -e
         if (cli_args.has("-e") && !cli_args.has("--ext"))
             path_ext = cli_args.get("-e");
         else if (!cli_args.has("-e") && cli_args.has("--ext"))
@@ -92,6 +107,7 @@ int main(int argc, char* argv[]) {
             ::exit(1);
         }
         
+        // strip trailing '/' at end of path
         if (path_ext.length() > 0) {
             std::string::iterator it = path_ext.end() - 1;
             if (*it == '/')

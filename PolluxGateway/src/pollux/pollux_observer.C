@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#include <pollux/pollux_xbee.h>
+#include <pollux/pollux_observer.h>
 
 using namespace pollux;
 
@@ -42,18 +42,15 @@ void Pollux_observer::get_next_measure(xbee::Xbee_result& frame) {
 }
 
 void Pollux_observer::wake_up() {
-    const char high[] = { 0x5, 0x0 };
-    const char low[] = { 0x4, 0x0 };
     long long unsigned int module = config.next_module();
 
     std::cout<<"waking up module: "<<std::hex<<module<<std::endl;
 
-    this->send_remote_atcmd(module, 0xFFFF, "D0", high);
+    this->send_remote_atcmd(module, 0xFFFF, "D0", pollux::HIGH);
 }
 
 void Pollux_observer::run (xbee::XBeeFrame* frame) {
 
-    const char low[] = { 0x4, 0x0 };
 #ifdef VERBOSE
     Xbee_communicator::run(frame); // print frame details
 #endif
@@ -90,7 +87,7 @@ void Pollux_observer::run (xbee::XBeeFrame* frame) {
                 case CMD_HALT:
                     std::cout<<"   <- recv sleep down"<<std::endl;
                     
-                    this->send_remote_atcmd(payload.get_node_address_as_long(), 0xFFFF, "D0", low);
+                    this->send_remote_atcmd(payload.get_node_address_as_long(), 0xFFFF, "D0", pollux::LOW);
                     
                     config.push_data(payload.get_node_address_as_long());
                     break;
