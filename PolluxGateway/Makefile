@@ -47,13 +47,11 @@ SRC=src
 SOURCES=$(SRC)/xbee $(SRC)/pollux $(SRC)/beaglebone
 
 CFLAGS = -g3 -std=c++0x -Wno-write-strings
-#CFLAGS += -pedantic
-#CFLAGS += -Wall
-#CFLAGS += -Wpointer-arith
-#CFLAGS += -Wcast-qual
-#CFLAGS += -Wcast-align
-#CFLAGS += -Wwrite-strings
-#CFLAGS += -Wconversion
+CFLAGS += -pedantic
+CFLAGS += -Wall
+CFLAGS += -Wpointer-arith
+CFLAGS += -Wcast-align
+CFLAGS += -Wwrite-strings
 
 LDFLAGS = -lpthread -ldl -lpthread -lutil -lm -lpython2.7 -Xlinker -export-dynamic
 #LDFLAGS += $(shell python2.7-config --ldflags)

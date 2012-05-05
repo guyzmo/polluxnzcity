@@ -114,7 +114,7 @@ int PolluxExtension::push_to_datastore(const std::string& module,
                 v = PyString_FromString(val_it->second.c_str());
                 PyDict_SetItem(pValue, k, v);
 #ifdef VERBOSE
-                printf("pValues: %04X, pValue: %04X ; k: %s [%04X] ; v: %s [%04X]\n", (unsigned int)pValues, (unsigned int) pValue, val_it->first.c_str(), (unsigned int)k, val_it->second.c_str(), (unsigned int)v);
+                printf("pValues: %p, pValue: %p ; k: %s [%p] ; v: %s [%p]\n", (unsigned int)pValues, (unsigned int) pValue, val_it->first.c_str(), (unsigned int)k, val_it->second.c_str(), (unsigned int)v);
 #endif
             }
             PyList_Append(pValues, pValue);
@@ -129,7 +129,7 @@ int PolluxExtension::push_to_datastore(const std::string& module,
             v = PyString_FromString(it->second.c_str());
             PyDict_SetItem(pConfig, k, v);
 #ifdef VERBOSE
-            printf("pConfig: %04X ; k: %04X/%s ; v: %04X/%s\n", (unsigned int)pFunc, (unsigned int)k, it->first.c_str(), (unsigned int)v, it->second.c_str());
+            printf("pConfig: %p ; k: %p/%s ; v: %p/%s\n", (unsigned int)pFunc, (unsigned int)k, it->first.c_str(), (unsigned int)v, it->second.c_str());
 #endif
         }
         PyTuple_SetItem(pArgs, 1, pConfig);

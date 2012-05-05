@@ -63,7 +63,7 @@ char* Pollux_calibrator::next_measure(unsigned long long int module, bool inner)
         buf[2] = 0x0;
         debug_printf("************** SENDING HALT COMMAND\n");
         return buf;
-    } else if (sensors_map[module][sensor_it->get_address()].size() > 1 and !inner)
+    } else if (sensors_map[module][sensor_it->get_address()].size() > 1 and !inner) {
         if (module_iterator_map[module].stop == 0) {
             module_iterator_map[module].stop = sensors_map[module][sensor_it->get_address()].size()-1;
             module_iterator_map[module].meas_idx = 0;
@@ -82,13 +82,14 @@ char* Pollux_calibrator::next_measure(unsigned long long int module, bool inner)
             free(buf);
             return next_measure(module, true);
         }
+    }
 
     buf[0] = CMD_MEAS;
     buf[1] = sensor_it->get_address();
     buf[2] = sensors_map[module][sensor_it->get_address()].size();
 
     /*debug_*/printf("    -> measure(s) to send: ");
-    for (int i=0;i<sensors_map[module][sensor_it->get_address()].size();++i)
+    for (unsigned int i=0;i<sensors_map[module][sensor_it->get_address()].size();++i)
         /*debug_*/printf("%s, ", sensors_map[module][sensor_it->get_address()][i].get_name().c_str());
 
     if (sensors_map[module][sensor_it->get_address()].size() == 1) 
@@ -104,7 +105,7 @@ void Pollux_calibrator::store_measure(xbee::Xbee_result& payload) {
         debug_printf("i2c address %02X is unknown.", payload.get_i2c_address());
         return;
     }
-    if (sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].size() <= payload.get_i2c_register()) {
+    if (((unsigned int)sensors_map[payload.get_node_address_as_long()][payload.get_i2c_address()].size()) <= payload.get_i2c_register()) {
         debug_printf("measure #%d at i2c address %02X is invalid.", payload.get_i2c_register(), payload.get_i2c_address());
         return;
     }

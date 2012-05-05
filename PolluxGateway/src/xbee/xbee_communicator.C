@@ -317,7 +317,7 @@ void Xbee_communicator::print_frame(XBeeFrame* frame) const {
             printf(" ; NODE IDENTIFICATION INDICATOR\n");
             printf("src_ad: "); print_data(frame->content.rx.source_addr,8,HEX);
             printf("net_ad: "); printf("%02X\n", frame->content.rx.network_addr.i16);
-            printf("recvopt: "); printf("%02X\n", frame->content.rx.options,HEX);
+            printf("recvopt: "); printf("%02X\n", frame->content.rx.options);
             printf("nodname: "); printf("%s\n", (char*)frame->content.rx.payload);
             break;
         case MODEM_STATUS:
@@ -344,7 +344,7 @@ void Xbee_communicator::print_frame(XBeeFrame* frame) const {
                 case 2: printf("Invalid command\n"); break;
                 case 3: printf("Invalid Parameter\n");  break;
             }
-            printf("values: "); printf("%02X\n", frame->content.at.values);
+            printf("values: "); printf("%02X\n", (unsigned int)frame->content.at.values);
             break;
 
         case RM_CMD_RESP:
@@ -360,7 +360,7 @@ void Xbee_communicator::print_frame(XBeeFrame* frame) const {
                 case 2: printf("Invalid command\n"); break;
                 case 3: printf("Invalid Parameter\n");  break;
             }
-            printf("values: "); printf("%02X\n", frame->content.at.values);
+            printf("values: "); printf("%02X\n", (unsigned int)frame->content.at.values);
 
             break;
 
@@ -435,13 +435,14 @@ int Xbee_communicator::read(bool no_esc) {
         msleep(TIMING);
         debug_print_hex(c);
         debug_print(" ");
-#ifdef API_ESCAPED_MODE
+#ifdef API_ESCAPED_MODE // TODO Test API_ESCAPED_MODE and Enable it as runtime configuration
         if (no_esc == false && c == 0x7D)
             return Serial::read()^0x20;
 #endif
         return c;
     } catch (SerialException e) {
         e.print_msg();
+        return 0xFF;
     }
 }
 
@@ -451,7 +452,7 @@ ssize_t Xbee_communicator::write(uint8_t i) {
     msleep(TIMING);
     debug_print(" ");
     switch (i) {
-#ifdef API_ESCAPED_MODE
+#ifdef API_ESCAPED_MODE // TODO Test API_ESCAPED_MODE and Enable it as runtime configuration
         case 0x7E:
         case 0x7D:
         case 0x11:
@@ -474,7 +475,7 @@ void Xbee_communicator::send(char* data) {
                 /* frame id      */ (uint8_t)frm_id++, 
                 /* bcast radius  */ (uint8_t)8, 
                 /* options       */ (uint8_t)8);
-    if (frm_id = 0xFF)
+    if (frm_id == 0xFF)
         frm_id = 1;
 }
 void Xbee_communicator::send(char* data, uint8_t* addr, uint16_t network) {
@@ -485,7 +486,7 @@ void Xbee_communicator::send(char* data, uint8_t* addr, uint16_t network) {
                 /* frame id      */ (uint8_t)frm_id++, 
                 /* bcast radius  */ (uint8_t)8, 
                 /* options       */ (uint8_t)0);
-    if (frm_id = 0xFF)
+    if (frm_id == 0xFF)
         frm_id = 1;
 }
 void Xbee_communicator::send(char* data, uint64_t addr64, uint16_t network) {

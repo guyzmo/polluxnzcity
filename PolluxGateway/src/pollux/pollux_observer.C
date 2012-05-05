@@ -60,14 +60,14 @@ void Pollux_observer::run (xbee::XBeeFrame* frame) {
     switch (frame->api_id) {
         case AT_CMD_RESP:
             //beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
-            printf("[AT] Command: '%s' ; Values: '%X'\n", frame->content.at.command, frame->content.at.values);
+            printf("[AT] Command: '%s' ; Values: '%X'\n", frame->content.at.command, (unsigned int)frame->content.at.values);
             //beagle::Leds::reset_rgb_led(beagle::Leds::GREEN);
             break;
         case RM_CMD_RESP:
             if (frame->content.at.status == 0x00)
-                printf("Successfully applied remote AT command: %c%c(%X)\n", frame->content.at.command[0], frame->content.at.command[1], frame->content.at.values);
+                printf("Successfully applied remote AT command: %c%c(%X)\n", frame->content.at.command[0], frame->content.at.command[1], (unsigned int)frame->content.at.values);
             else
-                printf("Failure applying remote AT command: %c%c(%X)\n", frame->content.at.command[0], frame->content.at.command[1], frame->content.at.values);
+                printf("Failure applying remote AT command: %c%c(%X)\n", frame->content.at.command[0], frame->content.at.command[1], (unsigned int)frame->content.at.values);
             break;
         case RX_PACKET:
             beagle::Leds::set_rgb_led(beagle::Leds::BLUE);
@@ -95,7 +95,7 @@ void Pollux_observer::run (xbee::XBeeFrame* frame) {
                     // just a comment ;)
                     break;
                 default:
-                    printf("Unknown Command: %d\n", payload.fmt_i2c_command());
+                    printf("Unknown Command: %02X\n", (unsigned int)payload.fmt_i2c_command());
             }
 
             msleep(10);

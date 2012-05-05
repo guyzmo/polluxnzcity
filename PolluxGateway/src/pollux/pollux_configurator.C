@@ -145,10 +145,6 @@ void Pollux_configurator::load_geoloc() {
     free(json_data);
 }
 void Pollux_configurator::load_datastores() {
-    void *handle;
-    int (*push_to_datastore)(std::vector<string_string_map*>& values_list, string_string_map& config);
-    char *error;
-
     struct json_object *json_data;
     std::ostringstream fname;
 

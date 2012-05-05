@@ -79,7 +79,7 @@ Xbee_result::Xbee_result(XBeeFrame* frame) {
             }
             break;
         case AT_CMD_RESP:
-            for (int i=0;i<strlen((char*)frame->content.rx.payload+4);++i) 
+            for (unsigned int i=0;i<strlen((char*)frame->content.rx.payload+4);++i) 
                 v.buffer[i] = ((char*)frame->content.rx.payload+4)[i];
             break;
     }
@@ -158,6 +158,8 @@ const char* Xbee_result::fmt_type() {
             return "str";
         case 42:
             return "comment";
+        default:
+            return "ERR";
     }
 }
 
