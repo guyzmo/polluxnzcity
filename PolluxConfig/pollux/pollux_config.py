@@ -337,9 +337,11 @@ def get_geoloc(query):
     v = urllib2.urlopen('http://nominatim.openstreetmap.org/search/?format=json&q=%s' % (query,)).read()
     return v
 
-@route('/data/<filename>')
-def get_data(filename):
-    return static_file(filename, root=config.VARLIB_PATH)
+@route('/data/csv')
+def get_data():
+    path = os.path.split(config.get_datastores()["local"]["path"])[0]
+    filename = os.path.split(config.get_datastores()["local"]["path"])[-1]
+    return static_file(filename, root=path)
 
 @route('/css/<filename>')
 def get_css(filename):
@@ -517,11 +519,6 @@ def start():
                         dest="path",
                         default="/etc/pollux",
                         help='path to configuration directory. e.g. /etc/pollux/')
-    parser.add_argument("-d",
-                        "--data",
-                        dest="data_path",
-                        default="/var/lib/pollux",
-                        help='Directory where sensor_values.csv lays')
     parser.add_argument("-l",
                         "--lib",
                         dest="lib_path",
@@ -549,7 +546,6 @@ def start():
     sensors = Sensors(args.path+"/")
 
     TEMPLATE_PATH.insert(0,pollux.views.__path__[0])
-    config.VARLIB_PATH=args.data_path
     config.USRLIB_PATH=args.lib_path
 
     install(config)
