@@ -27,13 +27,7 @@
     <form class="form-horizontal" method="post" action="/system/module/upload">
         <fieldset>
             <legend>Datastore plugin uploader</legend>
-            <p>To be uploaded, where "my_module" is the module's name to be filled below:<br />
-            my_module.tar.gz
-            <ul>
-                <li> my_module.so : a module file containing the compiled module,</li>
-                <li> my_module.json : the JSON descriptor </li>
-            </ul>
-            </p>
+            <p> If you have a python plugin ready to upload, please enter the module's name below, and look for it.</p>
             <div class="control-group">
                 <label class="control-label" for="name">Module's name</label>
                 <div class="controls">
@@ -41,7 +35,7 @@
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="name">Module's source</label>
+                <label class="control-label" for="name">Module's source (python2.7 compatible file)</label>
                 <div class="controls">
                     <input type="file" class="input-xlarge" name="module">
                 </div>
