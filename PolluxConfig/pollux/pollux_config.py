@@ -466,20 +466,20 @@ def upload_module():
     try:
         if name and module and module.file:
             filename = module.filename
-            code = f.read()
+            code = module.file.read()
 
-            module = imp.new_module(name)
-            exec(code,module.__dict__)
+            pymodule = imp.new_module(name)
+            exec(code,pymodule.__dict__)
 
-            if not "DEFAULT_CONFIG" in module.__dict__:
+            if not "DEFAULT_CONFIG" in pymodule.__dict__:
                 raise Exception("Missing DEFAULT_CONFIG dictionary in global of "+filename)
-            elif not "push_to_datastore" in module.__dict__:
+            elif not "push_to_datastore" in pymodule.__dict__:
                 raise Exception("Missing push_to_datastore() function in "+filename)
             else:
                 try:
                     fout = open(config.USRLIB_PATH+"/extensions/datastores/"+name+".py","w")
                     fout.write(code)
-                    config.get_datastore()[name] = module.DEFAULT_CONFIG
+                    config.get_datastore()[name] = pymodule.DEFAULT_CONFIG
                     config.save()
                 finally:
                     fout.close()
