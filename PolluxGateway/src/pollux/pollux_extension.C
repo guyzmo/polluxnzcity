@@ -31,8 +31,9 @@ using namespace pollux;
     * */
 PolluxExtension::PolluxExtension(const std::string& path) {
     std::ostringstream python_path;
-    python_path << "sys.path.append(\"" << path << "/extensions/datastores/\")";
     append_python_path = python_path.str();
+
+    std::cout<<"sys.path: "<<append_python_path<<std::endl;
 
     // Initialize the Python Interpreter
     Py_Initialize();
@@ -77,11 +78,30 @@ int PolluxExtension::push_to_datastore(const std::string& module,
     // Load the module object
     pModule = PyImport_Import(pName);
 
+    if (pModule == NULL) {
+        Py_DECREF(pName);
+        return 0;
+    }
+
     // pDict is a borrowed reference 
     pDict = PyModule_GetDict(pModule);
 
+    if (pDict == NULL) {
+        Py_DECREF(pName);
+        Py_DECREF(pModule);
+        return 0;
+    }
+
     // pFunc is also a borrowed reference 
     pFunc = PyDict_GetItemString(pDict, "push_to_datastore");
+
+    if (pFunc == NULL) {
+        Py_DECREF(pName);
+        Py_DECREF(pModule);
+        Py_DECREF(pDict);
+        return 0;
+    }
+
 
     if (PyCallable_Check(pFunc)) {
         pArgs = PyTuple_New(2);

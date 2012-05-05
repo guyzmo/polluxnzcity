@@ -152,6 +152,7 @@ void Pollux_prober::store_measure(xbee::Xbee_result& payload) {
 }
 
 void Pollux_prober::push_data(long long unsigned int module) {
+    int ret;
     std::ostringstream val_string;
     PolluxExtension plugin(get_path_to_extensions());
 
@@ -178,11 +179,16 @@ void Pollux_prober::push_data(long long unsigned int module) {
     for (string_string_string_map::iterator store_it = datastores_map.begin();store_it!=datastores_map.end();++store_it) {
         if (store_it->second["activated"] != "false") {
                 std::cout<<store_it->first;
-                if (plugin.push_to_datastore(store_it->first, store_it->second, values_list) > 0) {
+                if ((ret = plugin.push_to_datastore(store_it->first, store_it->second, values_list)) > 0) {
                     std::cout<<"    -> success"<<std::endl;
                     beagle::Leds::set_rgb_led(beagle::Leds::GREEN);
                     msleep(100);
                     beagle::Leds::reset_rgb_led(beagle::Leds::GREEN);
+                } else if (ret == 0) {
+                    std::cout<<"    -> plugin's missing or can't be loaded\n"<<std::endl;
+                    beagle::Leds::set_rgb_led(beagle::Leds::RED);
+                    msleep(100);
+                    beagle::Leds::reset_rgb_led(beagle::Leds::RED);
                 } else {
                     std::cout<<"    -> failure\n"<<std::endl;
                     beagle::Leds::set_rgb_led(beagle::Leds::RED);
