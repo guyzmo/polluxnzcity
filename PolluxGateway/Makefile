@@ -111,7 +111,7 @@ package: install-systemd install-doc
 	$(INSTALL) -d ../feed/
 	$(eval FEED := ../feed/)
 	$(call chdir,$(DESTDIR))
-	$(TAR) -cvzf data.tar.gz etc/ usr/ lib/ var/
+	$(TAR) -cvzf data.tar.gz ./etc/ ./usr/ ./lib/ ./var/
 	cp ../debian/* ./
 	sed -i "s/^Version: .*$$/Version: $(VER)/g" control
 	$(TAR) -cvzf control.tar.gz control postinst postrm prerm
