@@ -21,10 +21,8 @@ from datetime import datetime
 
 DEFAULT_CONFIG = \
 {
-    "local": {
-        "activated": False, 
-        "post_url": "./sensors_data.csv",
-    }
+    "activated": False, 
+    "post_url": "./sensors_data.csv",
 }
 
 def push_to_datastore(values_list, config):

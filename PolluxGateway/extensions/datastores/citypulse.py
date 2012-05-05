@@ -23,12 +23,10 @@ import json
 
 DEFAULT_CONFIG = \
 {
-    "citypulse": {
-        "activated": False, 
-        "api_key": "", 
-        "post_url": "http://www2.star-apic.com/citypulse/data/SetArduinoData",
-        "proxy": ""
-    }
+    "activated": False, 
+    "api_key": "", 
+    "post_url": "http://www2.star-apic.com/citypulse/data/SetArduinoData",
+    "proxy": ""
 }
 
 def calculate_sha1(ostr, key):

@@ -41,7 +41,7 @@
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label" for="name">Module's archive</label>
+                <label class="control-label" for="name">Module's source</label>
                 <div class="controls">
                     <input type="file" class="input-xlarge" name="module">
                 </div>

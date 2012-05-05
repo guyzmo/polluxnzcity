@@ -11,6 +11,7 @@ from argparse import ArgumentParser
 import inspect
 import json
 import sys
+import imp
 import os
 import re
 import gc
@@ -455,54 +456,33 @@ def restart_service():
     except:
         return dict(title="Service restart failure.",message="Couldn't restart service. Check logs.",config=config.get_configuration(),failed=True)
     
-import tarfile    
 @route('/system/module/upload', method="POST")
 @view('advanced')
 def upload_module():
     name = request.forms.name
     module = request.files.module
     try:
-        json_viewed=False
-        so_viewed=False
         if name and module and module.file:
             filename = module.filename
+            code = f.read()
 
-            # Open tarfile
-            tar = tarfile.open(mode="r:gz", fileobj = module.file)
+            module = imp.new_module(name)
+            exec(code,module.__dict__)
 
-            if len(tar.getnames()) == 0:
-                raise Exception("No file was found in uploaded file")
-
-
-            # Iterate over every member
-            for member in tar.getnames():
-                if member.endswith("json"):
-                    if not name in member:
-                        raise Exception("JSON filename shall be: "+name+".json")
-                    try:
-                        f = open(tar.extractfile(member), "r")
-                        s = remove_comments("".join(f.readlines()))
-                        datastore = json.loads(s)
-                        config.get_datastore()[name] = datastore[name]
-                    finally:
-                        json_viewed=True
-                        f.close()
-                elif member.endswith("so"):
-                    if not name in member:
-                        raise Exception("SO library shall be: "+name+".json")
-                    try:
-                        f = open(tar.extractfile(member), "r")
-                        fout = open(config.USRLIB_PATH+"/extensions/datastores/"+name+".so","w")
-                        fout.write(f.read())
-                        fout.close()
-                    finally:
-                        so_viewed=True
-                        f.close()
-                        fout.close()
+            if not "DEFAULT_CONFIG" in module.__dict__:
+                raise Exception("Missing DEFAULT_CONFIG dictionary in global of "+filename)
+            elif not "push_to_datastore" in module.__dict__:
+                raise Exception("Missing push_to_datastore() function in "+filename)
+            else:
+                try:
+                    fout = open(config.USRLIB_PATH+"/extensions/datastores/"+name+".py","w")
+                    fout.write(code)
+                    config.get_datastore()[name] = module.DEFAULT_CONFIG
+                    config.save()
+                finally:
+                    fout.close()
         else:
             raise Exception("Form has not been correctly filled in. Try again !")
-        if json_viewed is False and so_viewed is False:
-            raise Exception("No valid file has been found in the package.")
         return dict(title="Module loaded.", message="Module loaded, you can now <a href='/datastores/'>configure it</a>",config=config.get_configuration(),welldone=True)
     except Exception, err:
         return dict(title="Failure to load module.", message="Failed to load module: "+str(err),config=config.get_configuration(),failed=True)
@@ -513,11 +493,12 @@ def view_logs():
     try:
         f = open('/var/log/messages','r')
         return dict(title="Log Viewer",logs=f.readlines()[-100:])
+    except Exception:
+        raise HTTPError(500, "Feature not yet implemented. Really sorry.")
     finally:
         logs = None
         gc.collect()
         f.close()
-    raise HTTPError(500, "Feature not yet implemented. Really sorry.")
 
 def start():
     parser = ArgumentParser(prog=sys.argv[0],
