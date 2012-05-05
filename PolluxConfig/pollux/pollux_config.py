@@ -568,7 +568,7 @@ fastcgi.server = (
             "python-fcgi" =>
                 (
                     "socket" => "/tmp/fastcgi.python.socket",
-                    "bin-path" => "/usr/bin/python %(POLLUX_CONFIG_MODULE_FULLPATH)s -p /etc/pollux -d /var/lib/pollux -l /usr/lib/pollux",
+                    "bin-path" => "/usr/bin/python %(POLLUX_CONFIG_MODULE_FULLPATH)s -p /etc/pollux -l /usr/lib/pollux",
                     "check-local" => "disable",
                     "max-procs" => 1,
                 )
