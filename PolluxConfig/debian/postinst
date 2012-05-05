@@ -4,6 +4,7 @@ OPTS=""
 chown root:root /etc/sudoers.d/pollux
 
 if [ -f "$D/etc/lighttpd.conf" ]; then
+    sed -i '/^\(.*pollux_config.*\)$/d' $D/etc/lighttpd.conf
     echo "" >> "$D/etc/lighttpd.conf"
     echo "### Following added by pollux_config package on" `date` >> "$D/etc/lighttpd.conf"
     echo 'include_shell "/usr/bin/pollux_config_lighttpdconf"' >> "$D/etc/lighttpd.conf"
