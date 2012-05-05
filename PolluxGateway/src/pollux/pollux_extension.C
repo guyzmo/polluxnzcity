@@ -31,9 +31,8 @@ using namespace pollux;
     * */
 PolluxExtension::PolluxExtension(const std::string& path) {
     std::ostringstream python_path;
+    python_path<<path<<"/extensions/datastores/";
     append_python_path = python_path.str();
-
-    std::cout<<"sys.path: "<<append_python_path<<std::endl;
 
     // Initialize the Python Interpreter
     Py_Initialize();
