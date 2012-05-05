@@ -25,6 +25,8 @@
 
 #include <unistd.h> // msleep
 
+/// TODO replace all those functions and all the 
+/// #ifdef VERBOSE by a *real* logging facility.
 #ifdef VERBOSE
 #   define debug_print(STR) printf("%s", STR);
 #   define debug_printf(...) printf(__VA_ARGS__);
@@ -45,5 +47,10 @@
 #define DEC 0
 #define HEX 1
 inline int min(int a, int b) { return (a < b) ? a : b; }
+
+namespace pollux {
+    const char HIGH[] = { 0x5, 0x0 };
+    const char LOW[] = { 0x4, 0x0 };
+}
 
 #endif
