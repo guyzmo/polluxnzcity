@@ -25,7 +25,7 @@ ar ru $DIST/lighttpd-systemd_$VER-${REV}_$ARCH.ipk debian-binary data.tar.gz con
 ##### POLLUX-FULL
 
 REV="r0"
-VER=0.1.5
+VER=0.2.0
 
 rm -rf $TARGET
 mkdir -p $TARGET
