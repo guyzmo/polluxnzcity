@@ -17,13 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # destination directories for install
-DESTDIR?=/
-BASEDIR?=/
+DESTDIR?=
+BASEDIR?=
 DEST_INSTALL=$(DESTDIR)/usr/bin/
 DEST_SYSTEMD=$(DESTDIR)/lib/systemd/system/
 
 # versions
-VER:=$(shell grep 'VERSION' include/version.h | awk '{print $$3}')
+VER:=$(shell grep 'VERSION' include/version.h | sed 's/"//g' | awk '{print $$3}')
 REV:=r0
 ARCH:=armv7a
 
@@ -69,6 +69,9 @@ endef
 
 all: pollux_gateway pollux_calibrator
 
+verbose: VERBOSE=1
+verbose: all
+
 SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
 OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
 INCLUDES=$(patsubst %,-I%,$(HEADERS))
@@ -95,7 +98,7 @@ ifeq ($(VERBOSE),1)
 endif
 
 clean:
-	$(RM) $(OBJECT_FILES) pollux_gateway pollux_calibrator pollux_gateway_verbose pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
+	$(RM) $(OBJECT_FILES) $(patsubst %.o,%_debug.o,$(OBJECT_FILES)) pollux_gateway pollux_calibrator pollux_gateway_verbose pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
 
 doc:
 	$(DOXYGEN) -g
@@ -119,7 +122,7 @@ package: install-systemd install-doc
 
 
 install: all
-	$(INSTALL) -d $(DESTDIR)
+	$(INSTALL) -d $(DESTDIR)/
 	$(INSTALL) -d $(DESTDIR)/usr/bin
 	$(INSTALL) -d $(DESTDIR)/etc/pollux
 	$(INSTALL) -d $(DESTDIR)/var/lib/pollux
