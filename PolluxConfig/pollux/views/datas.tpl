@@ -9,7 +9,7 @@ function change(el) {
   $(document).ready(function () {
   	chart = new Dygraph(
 	  document.getElementById("graphdiv"),
-		"/data/sensors_data.csv",{
+		"/data/csv",{
 			legend: "always",
 			labelsDivStyles: {textAlign: "right"},
 			showRangeSelector: true,
