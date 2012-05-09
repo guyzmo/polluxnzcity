@@ -113,7 +113,7 @@ int PolluxExtension::push_to_datastore(const std::string& module,
                 v = PyString_FromString(val_it->second.c_str());
                 PyDict_SetItem(pValue, k, v);
 #ifdef VERBOSE
-                printf("pValues: %p, pValue: %p ; k: %s [%p] ; v: %s [%p]\n", pValues,  pValue, val_it->first.c_str(), k, val_it->second.c_str(), v);
+                printf("pValues: %p, pValue: %p ; k: %s [%p] ; v: %s [%p]\n", (void*)pValues,  (void*)pValue, val_it->first.c_str(), (void*)k, (void*)val_it->second.c_str(), v);
 #endif
             }
             PyList_Append(pValues, pValue);
@@ -128,7 +128,7 @@ int PolluxExtension::push_to_datastore(const std::string& module,
             v = PyString_FromString(it->second.c_str());
             PyDict_SetItem(pConfig, k, v);
 #ifdef VERBOSE
-            printf("pConfig: %p ; k: %p/%s ; v: %p/%s\n", pFunc, k, it->first.c_str(), v, it->second.c_str());
+            printf("pConfig: %p ; k: %p/%s ; v: %p/%s\n", (void*)pFunc, (void*)k, it->first.c_str(), v, it->second.c_str());
 #endif
         }
         PyTuple_SetItem(pArgs, 1, pConfig);
