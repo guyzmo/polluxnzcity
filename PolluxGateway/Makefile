@@ -68,18 +68,18 @@ endef
 
 all: pollux_gateway pollux_calibrator
 
-verbose: VERBOSE=1
-verbose: all
+verbose: all pollux_gateway_verbose
 
 SOURCE_FILES=$(wildcard $(patsubst %,%/*.C,$(SOURCES)))
 OBJECT_FILES=$(patsubst %.C,%.o,$(SOURCE_FILES))
+OBJECT_DEBUG_FILES=$(patsubst %.C,%_debug.o,$(SOURCE_FILES))
 INCLUDES=$(patsubst %,-I%,$(HEADERS))
 
 pollux_gateway: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
 	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
-ifeq ($(VERBOSE),1)
-	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -DVERBOSE -o $@_verbose $(patsubst %.o,%_debug.o,$^)
-endif
+
+pollux_gateway_verbose: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator_debug.o,,$(OBJECT_DEBUG_FILES)) 
+	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -DVERBOSE -o $@ $^
 
 pollux_calibrator: $(SRC)/pollux_calibrator.C $(patsubst %pollux_prober.o,,$(OBJECT_FILES))
 	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
@@ -94,9 +94,9 @@ src/pollux/pollux_extension_debug.o: src/pollux/pollux_extension.C
 
 $(SRC)/%.o: $(SOURCE_FILES)
 	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*.o -c $(SRC)/$*.C
-ifeq ($(VERBOSE),1)
+
+$(SRC)/%_debug.o: $(SOURCE_FILES)
 	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*_debug.o -c $(SRC)/$*.C -DVERBOSE 
-endif
 
 clean:
 	$(RM) $(OBJECT_FILES) $(patsubst %.o,%_debug.o,$(OBJECT_FILES)) pollux_gateway pollux_calibrator pollux_gateway_verbose pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
