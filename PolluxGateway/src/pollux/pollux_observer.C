@@ -47,6 +47,10 @@ void Pollux_observer::wake_up() {
     std::cout<<"waking up module: "<<std::hex<<module<<std::endl;
 
     this->send_remote_atcmd(module, 0xFFFF, "D0", pollux::HIGH);
+    msleep(100);
+    this->send_remote_atcmd(module, 0xFFFF, "D0", pollux::LOW);
+    msleep(100);
+    this->send_remote_atcmd(module, 0xFFFF, "D0", pollux::HIGH);
 }
 
 void Pollux_observer::run (xbee::XBeeFrame* frame) {
