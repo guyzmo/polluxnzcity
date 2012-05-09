@@ -33,18 +33,6 @@
 void wakeUp();
 void sleepDown();
 
-void sleepDown() {
-
-    nss_println("**** SLEEP OUT ****\n");
-
-    digitalWrite(LED_STA, LOW);
-    digitalWrite(LED_ERR, LOW);
-    digitalWrite(LED_XFR, LOW);
-}
-
-void wakeUp() {
-}
-
 void setup() {
     pinMode(LED_STA, OUTPUT);
     pinMode(LED_ERR, OUTPUT);
@@ -62,14 +50,9 @@ void setup() {
 }
 
 void loop() {
-    wakeUp();
     Pollux pollux;
 
     pollux.send_wake_up();
     while (pollux.wait_for_command()==1);
     pollux.halt();
-
-    sleepDown();
-    return;
 }
-

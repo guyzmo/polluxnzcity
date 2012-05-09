@@ -58,7 +58,7 @@ LOCALLIBS = $(patsubst applet/,,$(wildcard */))
 # You can set this to be a string, such as uno, atmega328, diecimila and mega,
 MODEL ?= uno
 
-USERDEF='VERBOSE'
+USERDEF=
 # 'BUFFER_SIZE=64' #  'NO_ZIGBEE'
 
 ############################################################################

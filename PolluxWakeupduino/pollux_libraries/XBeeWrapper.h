@@ -48,7 +48,7 @@
 
 #ifdef VERBOSE
 #include <SoftwareSerial.h>
-SoftwareSerial nss(2,3);
+SoftwareSerial nss(3,4);
 #endif 
 
 #include <XBee.h>
@@ -117,9 +117,9 @@ class PolluxXbee {
         send((uint8_t*)payload, strlen(payload));
     }
 
-    static void send_atcmd(char* cmd) {
-        AtCommandRequest at_cmd_rq((uint8_t*)cmd);
-        AtCommandResponse at_cmd_resp;
+    static void send_atcmd(uint8_t* cmd, uint8_t* value, uint8_t length) {
+        AtCommandRequest at_cmd_rq = AtCommandRequest(cmd, value, length);
+        AtCommandResponse at_cmd_resp = AtCommandResponse();
 
         xbee.send(at_cmd_rq);
 
@@ -132,41 +132,43 @@ class PolluxXbee {
                 xbee.getResponse().getAtCommandResponse(at_cmd_resp);
 
                 if (at_cmd_resp.isOk()) {
-                    nss.print("Command [");
-                    nss.print(at_cmd_resp.getCommand()[0]);
-                    nss.print(at_cmd_resp.getCommand()[1]);
-                    nss.println("] was successful!");
+                    nss_print("Command [");
+                    nss_print(at_cmd_resp.getCommand()[0]);
+                    nss_print(at_cmd_resp.getCommand()[1]);
+                    nss_println("] was successful!");
 
                     if (at_cmd_resp.getValueLength() > 0) {
-                        nss.print("Command value length is ");
-                        nss.println(at_cmd_resp.getValueLength(), DEC);
+                        nss_print("Command value length is ");
+                        nss_print(at_cmd_resp.getValueLength(), DEC);
+                        nss_println("");
 
-                        nss.print("Command value: ");
+                        nss_print("Command value: ");
 
                         for (int i = 0; i < at_cmd_resp.getValueLength(); i++) {
-                            nss.print(at_cmd_resp.getValue()[i], HEX);
-                            nss.print(" ");
+                            nss_print(at_cmd_resp.getValue()[i], HEX);
+                            nss_print(" ");
                         }
 
-                        nss.println("");
+                        nss_println("");
                     }
                 } 
                 else {
-                    nss.print("Command return error code: ");
-                    nss.println(at_cmd_resp.getStatus(), HEX);
+                    nss_print("Command return error code: ");
+                    nss_print(at_cmd_resp.getStatus(), HEX);
+                    nss_println("");
                 }
             } else {
-                nss.print("Expected AT response but got ");
-                nss.print(xbee.getResponse().getApiId(), HEX);
+                nss_print("Expected AT response but got ");
+                nss_print(xbee.getResponse().getApiId(), HEX);
             }   
         } else {
             // at command failed
             if (xbee.getResponse().isError()) {
-                nss.print("Error reading packet.  Error code: ");  
-                nss.println(xbee.getResponse().getErrorCode());
+                nss_print("Error reading packet.  Error code: ");  
+                nss_println(xbee.getResponse().getErrorCode());
             } 
             else {
-                nss.print("No response from radio");  
+                nss_print("No response from radio");  
             }
         }
     }
@@ -184,7 +186,9 @@ class PolluxXbee {
 #else
     static uint8_t recv_data_timeout(char* buffer, int timeout) {
         xbee.getResponse().reset();
-        xbee.readPacket(timeout);
+        if (!xbee.readPacket(timeout))
+            return 0xFF;
+
         return recv_data(buffer);
     }
     static uint8_t recv_data_blocking(char* buffer) { 

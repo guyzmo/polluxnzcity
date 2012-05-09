@@ -32,6 +32,7 @@
 class Pollux {
     i2c_result res;
     bool _halt;
+    bool _self_halt;
     uint8_t devlist[30];
     uint8_t devlist_idx;
 
@@ -115,6 +116,7 @@ class Pollux {
              */
             nss_println("**** WAKE MODE ****\n");
             this->_halt=false;
+            this->_self_halt=false;
 
             flashLed(LED_STA, 3, 100);
 
@@ -146,6 +148,10 @@ class Pollux {
         nss_println("### wait for command");
         char buf[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         int n = PolluxXbee::recv_data_timeout(buf, 5000);
+        if (n == 0xFF) {
+            _self_halt = true;
+            return 0;
+        }
         nss_print("### received ");
         nss_print(n);
         nss_print("### bytes : ");
@@ -170,20 +176,29 @@ class Pollux {
                 return 0;
             default:
                 nss_println("### unknown command");
+                return 1;
         }
     }
 
     void halt() {
         nss_println("**** SLEEP MODE ****\n");
         // commit halting
+        nss_println("sending halt command");
         if (this->_halt) {
-            nss_println("sending halt command");
             char buf[] = {CMD_HALT,0,0,0,0,0};
             PolluxXbee::send((uint8_t*)buf,1);
         }
+        if (this->_self_halt) {
+            digitalWrite(LED_ERR, HIGH); // XXX
+            digitalWrite(LED_XFR, HIGH); // XXX
+            uint8_t low[] = {0x0,0x4};
+            PolluxXbee::send_atcmd((uint8_t*)"D0",low,2);
+            delay(1000); // XXX
+            digitalWrite(LED_ERR, LOW); // XXX
+        }
         digitalWrite(LED_STA,LOW);
-        // store watchdog sleep time
-        // tell arduino to shuts itself down
+        digitalWrite(LED_ERR, LOW);
+        digitalWrite(LED_XFR, LOW);
     }
 };
 
