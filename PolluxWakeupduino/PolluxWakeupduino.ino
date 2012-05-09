@@ -25,15 +25,10 @@
 #  define BUFFER_SIZE 32
 #endif
 
-#include <avr/sleep.h>
-
 #include <LedWrapper.h>
 #include <XBeeWrapper.h>
 #include <WireWrapper.h>
 #include <PolluxCommunicator.h>
-
-#define PIN_WUP 2
-#define INT_WUP 0
 
 void wakeUp();
 void sleepDown();
@@ -45,13 +40,6 @@ void sleepDown() {
     digitalWrite(LED_STA, LOW);
     digitalWrite(LED_ERR, LOW);
     digitalWrite(LED_XFR, LOW);
-
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    sleep_enable();
-    attachInterrupt(INT_WUP, wakeUp, HIGH);
-    sleep_mode();
-    detachInterrupt(0);
-    nss_println("**** WAKE UP INT ****\n");
 }
 
 void wakeUp() {
@@ -61,7 +49,6 @@ void setup() {
     pinMode(LED_STA, OUTPUT);
     pinMode(LED_ERR, OUTPUT);
     pinMode(LED_XFR, OUTPUT);
-    pinMode(PIN_WUP, INPUT);
 
 #ifdef VERBOSE
     nss.begin(9600);
@@ -75,12 +62,14 @@ void setup() {
 }
 
 void loop() {
-    sleepDown();
-
+    wakeUp();
     Pollux pollux;
 
     pollux.send_wake_up();
     while (pollux.wait_for_command()==1);
     pollux.halt();
+
+    sleepDown();
+    return;
 }
 
