@@ -33,7 +33,7 @@ def push_to_datastore(values_list, config):
     values_str += "\n"
 
     try:
-        sensors_data = open(config["post_url"], 'a')
+        sensors_data = open(config["path"], 'a')
         sensors_data.write(values_str)
 
         return 1
