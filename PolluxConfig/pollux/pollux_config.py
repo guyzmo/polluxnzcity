@@ -461,10 +461,10 @@ def restart_service():
 @route('/system/module/upload', method="POST")
 @view('advanced')
 def upload_module():
-    name = request.forms.name
-    module = request.files.module
     try:
-        if name and module and module.file:
+        if "name" in request.forms.keys() and "module" in request.files.keys():
+            name = request.forms.name
+            module = request.files.module
             filename = module.filename
             code = module.file.read()
 
@@ -479,7 +479,7 @@ def upload_module():
                 try:
                     fout = open(config.USRLIB_PATH+"/extensions/datastores/"+name+".py","w")
                     fout.write(code)
-                    config.get_datastore()[name] = pymodule.DEFAULT_CONFIG
+                    config.get_datastores()[name] = pymodule.DEFAULT_CONFIG
                     config.save()
                 finally:
                     fout.close()

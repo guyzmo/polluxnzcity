@@ -24,7 +24,7 @@
 		<center><input type="submit" class="btn btn-primary btn-large"/></center>
 	</form>
 
-    <form class="form-horizontal" method="post" action="/system/module/upload">
+    <form class="form-horizontal" method="post" action="/system/module/upload" enctype='multipart/form-data'>
         <fieldset>
             <legend>Datastore plugin uploader</legend>
             <p> If you have a python plugin ready to upload, please enter the module's name below, and look for it.</p>
