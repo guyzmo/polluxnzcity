@@ -55,11 +55,11 @@ checked = "checked" if s["name"] in sensorsl_names and sensorsd_activ[s["name"]]
                     </table>
                 </div>
             </div>
-            <input type="button" class="btn btn-medium" value="Delete sensor" disabled /><br />
+            <!-- <input type="button" class="btn btn-medium" value="Delete sensor" disabled /><br /> -->
         </div>
     </div>
 %endfor
-    <input type="button" class="btn btn-medium" value="Add a sensor" disabled /><br />
+    <!-- <input type="button" class="btn btn-medium" value="Add a sensor" disabled /><br />-->
 
 	<center><input type="submit" class="btn btn-primary btn-large"/></center>
 </fieldset>
