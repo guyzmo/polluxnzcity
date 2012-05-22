@@ -2,6 +2,9 @@
 
 <%block name="extra_js">
     <script src="/js/geoloc_osm.js"></script>
+	<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+	
+    <style type="text/css">#basicMap { width: 450px; height: 170px; margin: 0; }</style>
 </%block>
 
 <h1>Pollux nz city configuration utility</h1>
@@ -16,17 +19,17 @@
 <fieldset>
     <legend>Geolocalisation</legend>
     <fieldset>
-        <div class="control-group">
+	  <div class="row">
+        <div class="control-group span6">
             <label class="control-label" for="longitude">Address</label>
             <div class="controls">
                 <input type="text" class="input-xlarge" id="geo_address" name="geo_address" value="${geoloc["address"]}" />
                 <input type="button" class="btn btn-medium" onClick="getCoordinates($('#geo_address').val())" id="geoaddr_btn" value="Get coordinates" />
-                <input type="button" class="btn btn-medium" id="osm_view" value="Lookup on OSM" readonly=true /><br />
+                <!--<input type="button" class="btn btn-medium" id="osm_view" value="Lookup on OSM" readonly=true /><br />-->
             </div>
             <label class="control-label" for="geo_longitude">Longitude</label>
             <div class="controls">
                 <input type="text" class="input-large" id="geo_longitude" name="geo_longitude" value="${geoloc["longitude"]}" /><br />
-                <p class="help-block">Reset the address field to enable read/write of coordinates</p>
             </div>
             <label class="control-label" for="geo_latitude">Latitude</label>
             <div class="controls">
@@ -34,6 +37,8 @@
                 <p class="help-block">Reset the address field to enable read/write of coordinates</p>
             </div>
         </div>
+		<div class="span6"><div id="basicMap"></div></div>
+	  </div>
     </fieldset>
 
    <legend>Datastores configuration</legend>

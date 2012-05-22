@@ -1,5 +1,25 @@
 //http://nominatim.openstreetmap.org/search/?q=19%20galerie%20feydeau,%2075002,%20Paris,%20France&format=json
 
+var map ;
+var position;
+var mapnik;
+var fromProjection;
+var toProjection ;
+
+var zoom = 18; 
+
+$(document).ready(function() {
+	map            = new OpenLayers.Map("basicMap");
+    mapnik         = new OpenLayers.Layer.OSM();
+    fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+    toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+	position       = new OpenLayers.LonLat($('#geo_longitude').val(),$('#geo_latitude').val()).transform( fromProjection, toProjection);
+ 
+    map.addLayer(mapnik);
+    map.setCenter(position, zoom );
+});
+
+
 var showError = function(t) {
     $('#osm_err_t').html(t);
     $('#osm_err').show();
@@ -28,7 +48,8 @@ var getCoordinates = function(address) {
                         $('#geo_longitude').attr('readonly', true);
                         $('#geoaddr_btn').val("Change/Reset");
                         $('#osm_view').attr('readonly', false);
-                        $('#osm_view').click(function() {window.open('http://www.openstreetmap.org/?lat='+data[0].lat+'&lon='+data[0].lon+'&zoom=16&layers=M')})
+						position = new OpenLayers.LonLat($('#geo_longitude').val(),$('#geo_latitude').val()).transform( fromProjection, toProjection);
+						map.setCenter(position,zoom);
                     } else if (data.length == 0) {
                         showError("Address not found on Open Street Map.");
                     } else {
@@ -49,6 +70,6 @@ $(document).ready(function() {
         $('#geo_longitude').attr('readonly', true);
         $('#geoaddr_btn').val("Change/Reset");
         $('#osm_view').attr('readonly', false);
-        $('#osm_view').click(function() {window.open('http://www.openstreetmap.org/?lat='+latitude+'&lon='+longitude+'&zoom=16&layers=M')})
+		/*$('#osm_view').click(function() {window.open('http://www.openstreetmap.org/?lat='+$('#geo_latitude').val()+'&lon='+$('#geo_longitude').val()+'&zoom=16&layers=M')})*/
 }
 });
