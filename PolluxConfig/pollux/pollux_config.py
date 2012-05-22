@@ -465,6 +465,12 @@ def upload_module():
         if "name" in request.forms.keys() and "module" in request.files.keys():
             name = request.forms.name
             module = request.files.module
+
+            if name[0] in range(0,9):
+                raise Exception("module name shall only begin with an alphabetic character.")
+            if reduce(lambda x, y: y.isalnum() and x, name, True)
+                raise Exception("module name shall only contain alphanumerical character.")
+
             filename = module.filename
             code = module.file.read()
 
