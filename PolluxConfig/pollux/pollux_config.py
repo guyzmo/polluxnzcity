@@ -1,5 +1,6 @@
 #!/bin/env python
 
+from pollux.deansy import styleSheet, deansi
 
 from pollux.bottle import install, route, run, PluginError, HTTPError, debug, response, static_file, request, TEMPLATE_PATH
 from pollux.bottle import mako_view as view, mako_template as template
@@ -467,9 +468,11 @@ def upload_module():
             module = request.files.module
 
             if name[0] in range(0,9):
-                raise Exception("module name shall only begin with an alphabetic character.")
-            if reduce(lambda x, y: y.isalnum() and x, name, True)
-                raise Exception("module name shall only contain alphanumerical character.")
+                raise Exception("Module name shall only begin with an alphabetic character.")
+            if reduce(lambda x, y: y.isalnum() and x, name, True):
+                raise Exception("Module name shall only contain alphanumerical character.")
+            if name in config.get_datastores().keys():
+                raise Exception("Module with this name already exists on the platform.")
 
             filename = module.filename
             code = module.file.read()
@@ -498,15 +501,34 @@ def upload_module():
 @route('/system/logs')
 @view('logs')
 def view_logs():
-    try:
-        f = open('/var/log/messages','r')
-        return dict(title="Log Viewer",logs=f.readlines()[-100:])
-    except Exception:
-        raise HTTPError(500, "Feature not yet implemented. Really sorry.")
-    finally:
-        logs = None
-        gc.collect()
-        f.close()
+    if os.path.exists('/var/log/messages'):
+        try:
+            f = open('/var/log/messages','r')
+            return dict(title="Log Viewer",logs=f.readlines()[-100:])
+        except Exception:
+            raise HTTPError(500, "Feature not yet implemented. Really sorry.")
+        finally:
+            logs = None
+            gc.collect()
+            f.close()
+    else:
+        try:
+            gw_out = subprocess.Popen(['/bin/systemctl','status','pollux_gateway.service'],stdout=subprocess.PIPE).communicate()[0]
+            cf_out = subprocess.Popen(['/bin/systemctl','status','lighttpd.service'],stdout=subprocess.PIPE).communicate()[0]
+            str_out = """\
+<style>
+    .ansi_terminal { background-color: #222; color: #cfc; }
+    %s
+</style>
+<h3>Status of Pollux Gateway Service</h3>
+<div class='ansi_terminal'>%s</div>
+<h3>Status of Pollux Config's HTTP Service</h3>
+<div class='ansi_terminal'>%s</div>\
+""" % (styleSheet(), deansi(gw_out), deansi(cf_out))
+        return dict(title="Log Viewer",logs=str_out)
+        except Exception:
+            raise HTTPError(500, "Feature not yet implemented. Really sorry.")
+
 
 def start():
     parser = ArgumentParser(prog=sys.argv[0],
