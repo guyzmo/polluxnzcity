@@ -19,6 +19,9 @@
 
 from datetime import datetime
 
+NAME = "local"
+DESC = "store measures locally for display in the 'my datas' panel"
+
 DEFAULT_CONFIG = \
 {
     "activated": False, 
@@ -43,10 +46,12 @@ def push_to_datastore(values_list, config):
     finally:
         sensors_data.close()
 
-
-if __name__ == "__main__":
-    
+def test():
     c = DEFAULT_CONFIG[DEFAULT_CONFIG.keys()[0]]
     l = [{'p': '0.1', 'k': 'temp', 'u': 'degre celcius', 'v': '42'},
          {'p': '0.0001', 'k': 'dust', 'u': 'ppm', 'v': '0.001'}]
-    exit(push_to_datastore(l,c))
+    return push_to_datastore(l,c)
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(test)

@@ -21,6 +21,9 @@ import hashlib
 import urllib2 
 import json
 
+NAME="citypulse"
+DESC="upload to citypulse datastore ; http://www.citypulse.org/"
+
 DEFAULT_CONFIG = \
 {
     "activated": False, 
@@ -67,9 +70,11 @@ def push_to_datastore(values_list, config):
     else:
         return push_to_citypulse(values_str, post_url)
 
-
-if __name__ == "__main__":
-    c = DEFAULT_CONFIG[DEFAULT_CONFIG.keys()[0]]
+def test():
     l = [{'p': '0.1', 'k': 'temp', 'u': 'degre celcius', 'v': '42'},
          {'p': '0.0001', 'k': 'dust', 'u': 'ppm', 'v': '0.001'}]
-    exit(push_to_datastore(l,c))
+    return push_to_datastore(l,DEFAULT_CONFIG)
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(test())
