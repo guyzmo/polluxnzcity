@@ -49,6 +49,8 @@ setup(name='pollux',
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
+          'mako',
+          'bottle'
       ],
       entry_points="""
       # -*- Entry points: -*-
