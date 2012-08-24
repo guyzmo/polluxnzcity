@@ -1,14 +1,17 @@
 #!/bin/env python
 
-from pollux.deansy import styleSheet, deansi
+from pollux.deansi import styleSheet, deansi
 
-from pollux.bottle import install, route, run, PluginError, HTTPError, debug, response, static_file, request, TEMPLATE_PATH
-from pollux.bottle import mako_view as view, mako_template as template
+from bottle import install, route, run, PluginError, HTTPError, debug, response, static_file, request, TEMPLATE_PATH
+from bottle import mako_view as view#, mako_template as template
 
 import pollux.static
 import pollux.views
 
+import urllib2
+
 from argparse import ArgumentParser
+import subprocess
 import inspect
 import json
 import sys
@@ -83,14 +86,12 @@ class BottlePluginBase(object):
                         "conflicting settings (non-unique keyword: "+self.keyword+").")
 
     def apply(self, callback, context):
-        # Test if the original callback accepts a 'config' keyword.
-        # Ignore it if it does not need a database handle.
         args = inspect.getargspec(context.callback)[0]
-        if self.keyword not in args:
+        # check whether keyword is already in args
+        if self.keyword in args:
             return callback
         
         def wrapper(*args, **kwargs):
-            print "call wrapper"
             kwargs[self.keyword] = self
             try:
                 rv = callback(*args, **kwargs)
@@ -121,20 +122,14 @@ class PolluxPluginBase(BottlePluginBase):
         """
         load a json file from %path%/%name%+".json" and store it into self._%name% in current object
         """
-        try:
-            f = open(path+name+".json", "r")
+        with open(path+name+".json", "r") as f:
             s = remove_comments("".join(f.readlines()))
             setattr(self, "_"+name+"_map", json.loads(s))
-        finally:
-            f.close()
 
     def store_json(self, name):
-        try:
-            f = open(self._path+name+".json","w")
+        with open(self._path+name+".json","w") as f:
             f.write(self.COMMENT)
             f.write(json.dumps(getattr(self, "_"+name+"_map"), sort_keys=True, indent=4))
-        finally:
-            f.close()
 
     def get_error(self):
         return self._parse_error
@@ -168,10 +163,13 @@ tools given with the pollux'nz city software. Or be very careful
 at respecting JSON's syntax.
 *********************************************************************/
 """
-    def __init__(self, path):
+    def __init__(self, path, libpath):
         PolluxPluginBase.__init__(self,"config")
         self._path = path
+        self._library_path = libpath
         self.reload_config()
+        if self.get_error():
+            raise self.get_error()
 
     def reload_config(self):
         self.reload_maps(self._path, ["config"])
@@ -197,6 +195,20 @@ at respecting JSON's syntax.
 
     def get_datastores(self):
         return self._config_map["datastores"]
+
+    def get_library_path(self):
+        return self._library_path
+
+    def get_plugin_path(self):
+        return self._library_path+"/extensions/datastores/"
+
+    def list_plugins(self):
+        plugins =  os.listdir(self.get_plugin_path())
+        for filename in plugins:
+            if filename.endswith(".py"):
+                plugin = imp.load_source('plugin',os.path.join(self.get_plugin_path(),filename))
+                yield plugin.NAME, filename, plugin.DESC
+
 
     def get_geoloc(self):
         return self._config_map["geolocalisation"]
@@ -224,6 +236,8 @@ at respecting JSON's syntax.
         BottlePluginBase.__init__(self,"sensors")
         self._path = path
         self.reload_config()
+        if self.get_error():
+            raise self.get_error()
 
     def reload_config(self):
         self.reload_maps(self._path, ["sensors", "sensors_list"])
@@ -244,24 +258,24 @@ at respecting JSON's syntax.
 
 @route('/')
 @view('accueil')
-def index():
+def index(config,sensors):
     return dict(title="Homepage")
 
 @route('/datas/')
 @view('datas')
-def datas():
+def datas(config,sensors):
     return dict(title="My Datas")
 
 @route('/sensors/')
 @view('sensors')
-def get_sensors():
+def get_sensors(config,sensors):
     if sensors.get_error():
         raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     return dict(title="Sensors",sensors=sensors)
 
 @route('/sensors/', method='POST')
 @view('sensors')
-def post_sensors():
+def post_sensors(config,sensors):
     # XXX TODO add support for multiple sensor modules
     if sensors.get_error():
         raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
@@ -286,14 +300,14 @@ def post_sensors():
 
 @route('/datastores/')
 @view('datastores')
-def get_datastores():
+def get_datastores(config,sensors):
     if config.get_error():
         raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     return dict(title="Datastores",datastores=config.get_datastores(),geoloc=config.get_geoloc())
 
 @route('/datastores/', method='POST')
 @view('datastores')
-def post_datastores():
+def post_datastores(config,sensors):
     if config.get_error():
         raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     result = config.get_datastores()
@@ -317,12 +331,12 @@ def post_datastores():
         
 @route('/advanced/')
 @view('advanced')
-def get_advanced():
-    return dict(title="Advanced",config=config.get_configuration())
+def get_advanced(config,sensors):
+    return dict(title="Advanced",config=config)
 
 @route('/advanced/', method='POST')
 @view('advanced')
-def post_advanced():
+def post_advanced(config,sensors):
     if config.get_error():
         raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     result = config.get_configuration()
@@ -330,39 +344,40 @@ def post_advanced():
         result[key] = request.forms.get(key)
     config.set_configuration(result)
     config.save()
-    return dict(title="Advanced configuration Saved", message="Configuration successfully saved.",config=config.get_configuration(),welldone=True)
+    return dict(title="Advanced configuration Saved", 
+                message="Configuration successfully saved.",
+                config=config,
+                welldone=True)
 
-import urllib2
 @route('/geoloc/<query>')
-def get_geoloc(query):
+def get_geoloc(query,config,sensors):
     v = urllib2.urlopen('http://nominatim.openstreetmap.org/search/?format=json&q=%s' % (query,)).read()
     return v
 
 @route('/data/csv')
-def get_data():
+def get_data(config,sensors):
     path = os.path.split(config.get_datastores()["local"]["path"])[0]
     filename = os.path.split(config.get_datastores()["local"]["path"])[-1]
     return static_file(filename, root=path)
 
 @route('/css/<filename>')
-def get_css(filename):
+def get_css(filename,config=None,sensors=None):
     return static_file(filename, root=pollux.static.__path__[0]+'/css/')
 	
 @route('/img/<filename>')
-def get_image(filename):
+def get_image(filename,config=None,sensors=None):
     return static_file(filename, root=pollux.static.__path__[0]+'/img/')
 
 @route('/js/<filename>')
-def get_javascript(filename):
+def get_javascript(filename,config=None,sensors=None):
     return static_file(filename, root=pollux.static.__path__[0]+'/js/')
 
-import urllib2
 @route('/sensors/reload')
 @view('advanced')
-def sensors_reload():
-    response = urllib2.urlopen("http://www.polluxnzcity.net/beta/sensors_list.json")
+def sensors_reload(config,sensors):
+    resp = urllib2.urlopen("http://www.polluxnzcity.net/beta/sensors_list.json")
     try:
-        sensors_list_str = response.read()
+        sensors_list_str = resp.read()
 
         try:
             f = open(sensors._path+"sensors_list.json","w")
@@ -372,19 +387,24 @@ def sensors_reload():
         sensors.reload_config()
         if sensors.get_error():
             raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
-        return dict(title="Configuration reloaded", message="Sensor's list successfully upgraded",config=config.get_configuration(),welldone=True)
+        return dict(title="Configuration reloaded", 
+                    message="Sensor's list successfully upgraded",config=config,
+                    welldone=True)
 
     except Exception, err:
-        return dict(title="Configuration reloaded", message="Sensor's list failed to upgrade: "+err,config=config.get_configuration(),failed=True)
+        return dict(title="Configuration reloaded",
+                    message="Sensor's list failed to upgrade: "+err,
+                    config=config.get_configuration(),
+                    failed=True)
 
 @route('/sensor/list')
-def sensor_list():
+def sensor_list(config,sensors):
     if sensors.get_error():
         raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     return json.dumps(sensors.get_modules())
 
 @route('/sensor/<addr>')
-def sensor_get(addr):
+def sensor_get(addr,config,sensors):
     if sensors.get_error():
         raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     response.content_type = 'application/json; charset=UTF-8'
@@ -393,7 +413,7 @@ def sensor_get(addr):
     return json.dumps(l)
 
 @route('/sensor/<addr>/<i2c>')
-def sensor_get_sensors(addr,i2c):
+def sensor_get_sensors(addr,i2c,config,sensors):
     if sensors.get_error():
         raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     response.content_type = 'application/json; charset=UTF-8'
@@ -401,7 +421,7 @@ def sensor_get_sensors(addr,i2c):
     return json.dumps(l)
         
 @route('/sensor/<addr>/<i2c>/<reg>')
-def sensor_get_register(addr,i2c,reg):
+def sensor_get_register(addr,i2c,reg,config,sensors):
     if sensors.get_error():
         raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     response.content_type = 'application/json; charset=UTF-8'
@@ -413,55 +433,83 @@ def sensor_get_register(addr,i2c,reg):
     return json.dumps(l[0])
 
 @route('/datastore/list')
-def datastore_list():
+def datastore_list(config,sensors):
     if config.get_error():
         raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     response.content_type = 'application/json; charset=UTF-8'
     return json.dumps(config.get_datastores())
 
 @route('/datastore/<name>')
-def datastore_get(name):
+def datastore_get(name,config,sensors):
     if config.get_error():
         raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     response.content_type = 'application/json; charset=UTF-8'
     return json.dumps(config.get_datastore_config(name))
 
 @route('/config/list')
-def config_list():
+def config_list(config,sensors):
     if config.get_error():
         raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     return config.get_configuration()
 
 @route('/config/<key>')
-def config_get(key):
+def config_get(key,config,sensors):
     if config.get_error():
         raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
     return config.get_configuration()[key]
 
 @route('/config/reload')
 @view('advanced')
-def config_reload():
+def config_reload(config,sensors):
     sensors.reload_config()
     if sensors.get_error():
         raise HTTPError(500, "Configuration error, sensors JSON file is corrupted<br /> "+sensors.get_error())
     config.reload_config()
     if config.get_error():
         raise HTTPError(500, "Configuration error, configuration JSON file is corrupted<br /> "+config.get_error())
-    return dict(title="Configuration reloaded", message="Configuration successfully reloaded",config=config.get_configuration(),welldone=True)
+    return dict(title="Configuration reloaded", 
+                message="Configuration successfully reloaded",
+                config=config,
+                welldone=True)
 
 @route('/system/restart')
 @view('advanced')
-def restart_service():
+def restart_service(config,sensors):
     try:
-        import subprocess
         subprocess.check_call(['/usr/bin/sudo', '/bin/systemctl', 'restart', 'pollux_gateway.service'])
-        return dict(title="Service restarted",config=config.get_configuration(),message="Service successfully restarted.",welldone=True)
+        return dict(title="Service restarted",
+                    config=config,
+                    message="Service successfully restarted.",
+                    welldone=True)
     except:
-        return dict(title="Service restart failure.",message="Couldn't restart service. Check logs.",config=config.get_configuration(),failed=True)
+        return dict(title="Service restart failure.",
+                    message="Couldn't restart service. Check logs.",
+                    config=config.get_configuration(),
+                    failed=True)
     
+
+@route('/system/module/delete', method="POST")
+@view('advanced')
+def delete_module(config,sensors):
+    modules = request.forms.keys()
+    try:
+        for module in modules:
+            os.unlink(os.path.join(config.get_plugin_path(), module))
+
+        return dict(title="Modules removed",
+                    message="Modules %s removed." % (", ".join(modules)), 
+                    config=config,
+                    welldone=True)
+    except Exception, err:
+        return dict(title="Failure to remove modules.", 
+                    message="Failed to remove module: "+str(err),
+                    config=config,
+                    failed=True)
+    
+
 @route('/system/module/upload', method="POST")
 @view('advanced')
-def upload_module():
+def upload_module(config,sensors):
     try:
         if "name" in request.forms.keys() and "module" in request.files.keys():
             name = request.forms.name
@@ -482,35 +530,40 @@ def upload_module():
 
             if not "DEFAULT_CONFIG" in pymodule.__dict__:
                 raise Exception("Missing DEFAULT_CONFIG dictionary in global of "+filename)
+            elif not "NAME" in pymodule.__dict__:
+                raise Exception("Missing NAME string in global of "+filename)
+            elif not "DESC" in pymodule.__dict__:
+                raise Exception("Missing DESC string in global of "+filename)
             elif not "push_to_datastore" in pymodule.__dict__:
                 raise Exception("Missing push_to_datastore() function in "+filename)
             else:
-                try:
-                    fout = open(config.USRLIB_PATH+"/extensions/datastores/"+name+".py","w")
+                with open(config.get_plugin_path()+name+".py","w") as fout:
                     fout.write(code)
                     config.get_datastores()[name] = pymodule.DEFAULT_CONFIG
                     config.save()
-                finally:
-                    fout.close()
         else:
             raise Exception("Form has not been correctly filled in. Try again !")
-        return dict(title="Module loaded.", message="Module loaded, you can now <a href='/datastores/'>configure it</a>",config=config.get_configuration(),welldone=True)
+        return dict(title="Module loaded.", 
+                    message="Module loaded, you can now <a href='/datastores/'>configure it</a>",
+                    config=config,
+                    welldone=True)
     except Exception, err:
-        return dict(title="Failure to load module.", message="Failed to load module: "+str(err),config=config.get_configuration(),failed=True)
+        return dict(title="Failure to load module.", 
+                    message="Failed to load module: "+str(err),
+                    config=config,
+                    failed=True)
 
 @route('/system/logs')
 @view('logs')
-def view_logs():
+def view_logs(config,sensors):
     if os.path.exists('/var/log/messages'):
-        try:
-            f = open('/var/log/messages','r')
-            return dict(title="Log Viewer",logs=f.readlines()[-100:])
-        except Exception:
-            raise HTTPError(500, "Feature not yet implemented. Really sorry.")
-        finally:
-            logs = None
-            gc.collect()
-            f.close()
+        with open('/var/log/messages','r') as f:
+            try:
+                return dict(title="Log Viewer",logs=f.readlines()[-100:])
+            except Exception:
+                raise HTTPError(500, "Feature not yet implemented. Really sorry.")
+            finally:
+                gc.collect()
     else:
         try:
             gw_out = subprocess.Popen(['/bin/systemctl','status','pollux_gateway.service'],stdout=subprocess.PIPE).communicate()[0]
@@ -525,7 +578,7 @@ def view_logs():
 <h3>Status of Pollux Config's HTTP Service</h3>
 <div class='ansi_terminal'>%s</div>\
 """ % (styleSheet(), deansi(gw_out), deansi(cf_out))
-        return dict(title="Log Viewer",logs=str_out)
+            return dict(title="Log Viewer",logs=str_out)
         except Exception:
             raise HTTPError(500, "Feature not yet implemented. Really sorry.")
 
@@ -567,14 +620,10 @@ def start():
     
     args = parser.parse_args(sys.argv[1:])
 
-    global config
-    global sensors
-
-    config = Configuration(args.path+"/")
-    sensors = Sensors(args.path+"/")
-
     TEMPLATE_PATH.insert(0,pollux.views.__path__[0])
-    config.USRLIB_PATH=args.lib_path
+
+    config = Configuration(args.path+"/",args.lib_path)
+    sensors = Sensors(args.path+"/")
 
     install(config)
     install(sensors)
