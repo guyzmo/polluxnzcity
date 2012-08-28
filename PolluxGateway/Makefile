@@ -42,21 +42,28 @@ INSTALL=/usr/bin/install
 SYSD=/bin/systemctl
 
 DEFINES?=
-HEADERS=include $(BASEDIR)/include/
+HEADERS=include $(BASEDIR)/usr/include/
 SRC=src
 
 SOURCES=$(SRC)/xbee $(SRC)/pollux $(SRC)/beaglebone
 
-CFLAGS = -g3 -std=c++0x -Wno-write-strings
-CFLAGS += -pedantic
-CFLAGS += -Wall
-CFLAGS += -Wpointer-arith
-CFLAGS += -Wcast-align
-CFLAGS += -Wwrite-strings
+CFLAGS ?= ""
+CCFLAGS = -g3 --std=c++0x -Wno-write-strings
+CCFLAGS += -pedantic
+CCFLAGS += -Wall
+CCFLAGS += -Wpointer-arith
+CCFLAGS += -Wcast-align
+CCFLAGS += -Wwrite-strings
+CCFLAGS += $(CFLAGS)
 
-LDFLAGS = -lpthread -ldl -lpthread -lutil -lm -lpython2.7 -Xlinker -export-dynamic
-PY_LDFLAGS=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --ldflags)))
-LDFLAGS += -ljson
+LDFLAGS ?= ""
+LDDFLAGS = -lpthread -ldl -lpthread -lutil -lm -lpython2.7 -Xlinker -export-dynamic -ljson
+LDDFLAGS += $(LDFLAGS)
+$(warning "1" $(shell $(PYCFG) --ldflags))
+$(warning "2" $(patsubst -O2,,$(shell $(PYCFG) --ldflags)))
+$(warning "3" $(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --ldflags))))
+PY_LDDFLAGS=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --ldflags)))
+PY_INCFLAGS=$(shell $(PYCFG) --includes)
 
 CHDIR_SHELL := $(SHELL)
 define chdir
@@ -76,27 +83,28 @@ OBJECT_DEBUG_FILES=$(patsubst %.C,%_debug.o,$(SOURCE_FILES))
 INCLUDES=$(patsubst %,-I%,$(HEADERS))
 
 pollux_gateway: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator.o,,$(OBJECT_FILES))
-	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
+	$(CXX) $(LDDFLAGS) $(CCFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
 
 pollux_gateway_verbose: $(SRC)/pollux_gateway.C $(patsubst %pollux_calibrator_debug.o,,$(OBJECT_DEBUG_FILES)) 
-	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -DVERBOSE -o $@ $^
+	$(CXX) $(LDDFLAGS) $(CCFLAGS) $(INCLUDES) $(DEFINES) -DVERBOSE -o $@ $^
 
 pollux_calibrator: $(SRC)/pollux_calibrator.C $(patsubst %pollux_prober.o,,$(OBJECT_FILES))
-	$(CXX) $(LDFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
+	$(CXX) $(LDDFLAGS) $(CCFLAGS) $(INCLUDES) $(DEFINES) -o $@ $^
 
-src/pollux/pollux_extension.o: CFLAGS+=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --cflags)))
+src/pollux/pollux_extension.o: CCFLAGS+=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --cflags)))
 src/pollux/pollux_extension.o: src/pollux/pollux_extension.C
-	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ -c $^
+	$(warning $(PY_INCFLAGS))
+	$(CXX) $(CCFLAGS) $(INCLUDES) $(PY_INCFLAGS) $(DEFINES) -o $@ -c $^
 
-src/pollux/pollux_extension_debug.o: CFLAGS+=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --cflags)))
+src/pollux/pollux_extension_debug.o: CCFLAGS+=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --cflags)))
 src/pollux/pollux_extension_debug.o: src/pollux/pollux_extension.C
-	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ -c $^ -DVERBOSE
+	$(CXX) $(CCFLAGS) $(INCLUDES) $(PY_INCFLAGS) $(DEFINES) -o $@ -c $^ -DVERBOSE
 
 $(SRC)/%.o: $(SOURCE_FILES)
-	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*.o -c $(SRC)/$*.C
+	$(CXX) $(CCFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*.o -c $(SRC)/$*.C
 
 $(SRC)/%_debug.o: $(SOURCE_FILES)
-	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*_debug.o -c $(SRC)/$*.C -DVERBOSE 
+	$(CXX) $(CCFLAGS) $(INCLUDES) $(DEFINES) -o $(SRC)/$*_debug.o -c $(SRC)/$*.C -DVERBOSE 
 
 clean:
 	$(RM) $(OBJECT_FILES) $(patsubst %.o,%_debug.o,$(OBJECT_FILES)) pollux_gateway pollux_calibrator pollux_gateway_verbose pollux-gateway_$(VER)-$(REV)_$(ARCH).ipk doc target
@@ -154,4 +162,6 @@ disable:
 	$(SYSD) stop pollux_gateway.service
 	$(SYSD) disable pollux_gateway.service
 	$(SYSD) --system daemon-reload
+
+
 
