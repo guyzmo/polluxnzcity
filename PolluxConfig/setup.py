@@ -47,6 +47,11 @@ setup(name='pollux',
       package_data={'': ['*.js', '*.css', '*.png', '*.tpl']},
       namespace_packages = ['pollux'],
       zip_safe=False,
+      data_files = [('conf/config.json','/etc/pollux/'),
+                    ('conf/sensors.json','/etc/pollux/'),
+                    ('conf/sensors_list.json','/etc/pollux/'),
+                    ('conf/pollux.sudoers','/etc/sudoers.d/'),
+                    ['conf/pollux_webserv.conf','/etc/defaults/']],
       install_requires=[
           # -*- Extra requirements: -*-
           'mako',
