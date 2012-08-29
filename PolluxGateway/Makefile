@@ -145,7 +145,7 @@ endif
 
 install-systemd: install
 	$(INSTALL) -d $(DEST_SYSTEMD)
-	$(INSTALL) pollux_gateway.service $(DEST_SYSTEMD)
+	$(INSTALL) conf/pollux_gateway.service $(DEST_SYSTEMD)
 
 uninstall:
 	$(RM) $(DEST_INSTALL)/pollux_gateway $(DESTDIR)/usr/lib/pollux/extensions/datastores/*.so
