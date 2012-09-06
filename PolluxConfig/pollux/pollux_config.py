@@ -511,21 +511,13 @@ def delete_module(config,sensors):
 @view('advanced')
 def upload_module(config,sensors):
     try:
-        if "name" in request.forms.keys() and "module" in request.files.keys():
-            name = request.forms.name
+        if "module" in request.files.keys():
             module = request.files.module
-
-            if name[0] in range(0,9):
-                raise Exception("Module name shall only begin with an alphabetic character.")
-            if reduce(lambda x, y: y.isalnum() and x, name, True):
-                raise Exception("Module name shall only contain alphanumerical character.")
-            if name in config.get_datastores().keys():
-                raise Exception("Module with this name already exists on the platform.")
 
             filename = module.filename
             code = module.file.read()
 
-            pymodule = imp.new_module(name)
+            pymodule = imp.new_module("plugin")
             exec(code,pymodule.__dict__)
 
             if not "DEFAULT_CONFIG" in pymodule.__dict__:
@@ -537,9 +529,9 @@ def upload_module(config,sensors):
             elif not "push_to_datastore" in pymodule.__dict__:
                 raise Exception("Missing push_to_datastore() function in "+filename)
             else:
-                with open(config.get_plugin_path()+name+".py","w") as fout:
+                with open(os.path.join(config.get_plugin_path(),filename),"w") as fout:
                     fout.write(code)
-                    config.get_datastores()[name] = pymodule.DEFAULT_CONFIG
+                    config.get_datastores()[pymodule.__dict__["NAME"]] = pymodule.DEFAULT_CONFIG
                     config.save()
         else:
             raise Exception("Form has not been correctly filled in. Try again !")
@@ -566,8 +558,8 @@ def view_logs(config,sensors):
                 gc.collect()
     else:
         try:
-            gw_out = subprocess.Popen(['/bin/systemctl','status','pollux_gateway.service'],stdout=subprocess.PIPE).communicate()[0]
-            cf_out = subprocess.Popen(['/bin/systemctl','status','lighttpd.service'],stdout=subprocess.PIPE).communicate()[0]
+            gw_out = subprocess.Popen(['/bin/systemctl','status','pollux_gateway.service', '-a'],stdout=subprocess.PIPE).communicate()[0]
+            cf_out = subprocess.Popen(['/bin/systemctl','status','lighttpd.service', '-a'],stdout=subprocess.PIPE).communicate()[0]
             str_out = """\
 <style>
     .ansi_terminal { background-color: #222; color: #cfc; }
@@ -646,6 +638,7 @@ fastcgi.server = (
                 (
                     "socket" => "/tmp/fastcgi.python.socket",
                     "bin-path" => "/usr/bin/python %(POLLUX_CONFIG_MODULE_FULLPATH)s -p /etc/pollux -l /usr/lib/pollux",
+                    "bin-environment" => ("PYTHONPATH" => "/usr/lib/python2.7/site-packages/pollux-0.2.0-py2.7.egg/")
                     "check-local" => "disable",
                     "max-procs" => 1,
                 )
