@@ -44,6 +44,20 @@ void sensor_calibrate() {
     offset = Wire.read(0x23);
 }
 
+float convert_resistor_to_temp(float resitor) {
+  float temp = 0.0;
+  float ref_temp[] = {-40 ,-30 ,-20 ,-10 ,0   ,10  ,20  ,30  ,40  ,50  ,60  ,70  ,80  ,90};
+  float ref_res[]  = {1584,1649,1715,1784,1854,1926,2000,2076,2153,2233,2314,2397,2482,2569};
+  short len = 14;
+  
+  for (short i;i<len;i++)
+    if(ref_res[i] >= resitor) {
+      float range = ref_res[i] - ref_res[i-1];
+      float delta = resitor - ref_res[i-1];
+      return ref_temp[i-1]+((delta/range)*10);
+    }
+}
+
 void sensor_meas() {
     Statistic stat;
     float     result;
@@ -62,6 +76,8 @@ void sensor_meas() {
 
     if(result < 0) result = 0;             // avoid eratic datas
     stat.clear();                          // clear statistics to avoid leack and data stacking
+
+    result = convert_resistor_to_temp(result);
 
     float_ptr = (uint8_t*)&result;
 
