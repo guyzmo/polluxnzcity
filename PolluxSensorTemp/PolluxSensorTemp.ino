@@ -35,15 +35,6 @@
 
 TinyWire Wire;
 
-prog_uint32_t offset=(float)-0.5;
-
-void sensor_calibrate() {
-    offset = Wire.read(0x20);
-    offset = Wire.read(0x21);
-    offset = Wire.read(0x22);
-    offset = Wire.read(0x23);
-}
-
 float convert_resistor_to_temp(float resitor) {
   float temp = 0.0;
   float ref_temp[] = {-40 ,-30 ,-20 ,-10 ,0   ,10  ,20  ,30  ,40  ,50  ,60  ,70  ,80  ,90};
@@ -80,11 +71,11 @@ void sensor_meas() {
     result = convert_resistor_to_temp(result);
 
     float_ptr = (uint8_t*)&result;
-
-    Wire.write(0x11,*(float_ptr));   // send 1st byte of float
-    Wire.write(0x12,*(float_ptr+1)); // send 2nd byte of float
-    Wire.write(0x13,*(float_ptr+2)); // send 3rd byte of float
-    Wire.write(0x14,*(float_ptr+3)); // send 4th byte of float
+    Wire.set_type(I2C_FLT);
+    Wire.write(*(float_ptr));   // send 1st byte of float
+    Wire.write(*(float_ptr+1)); // send 2nd byte of float
+    Wire.write(*(float_ptr+2)); // send 3rd byte of float
+    Wire.write(*(float_ptr+3)); // send 4th byte of float
 }
 
 void setup() {

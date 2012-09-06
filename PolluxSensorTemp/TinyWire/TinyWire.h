@@ -25,21 +25,44 @@
 extern "C" {
 #include "usiTwiSlave.h"
 }
-#define I2C_ADDR_SIZE 256
+#include "buffer.h"
 
-#include <avr/pgmspace.h>
+#define I2C_CMD_INIT 1
+#define I2C_CMD_MEAS 8
+
+#define I2C_LEN  2
+#define I2C_TYPE 4
+#define I2C_GET 16
+
+#define I2C_INT 1
+#define I2C_FLT 2
+#define I2C_DBL 4
+#define I2C_CHR 8
+#define I2C_STR 16
 
 class TinyWire {
+    static Buffer input_buffer;
+    static Buffer output_buffer;
+    static uint8_t last;
+
+    static uint8_t type;
+
+    static void (*_request_callback)(void);
 
     static void _on_receive_handler(uint8_t reg, uint8_t value);
     static uint8_t _on_request_handler(uint8_t reg);
 
     public:
         void begin(uint8_t i2c_slave_address);
+        void set_type(uint8_t t);
 
-        uint8_t read(uint8_t reg);
-        void write(uint8_t reg, uint8_t value);
+        int write(uint8_t data);
+        int write(char* str);
 
+        uint8_t available();
+        uint8_t read();
+
+        static void set_request_callback(void (*func)(void));
 };
 
 #endif // __TINYWIRE_H__
