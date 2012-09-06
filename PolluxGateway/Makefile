@@ -59,9 +59,6 @@ CCFLAGS += $(CFLAGS)
 LDFLAGS ?= ""
 LDDFLAGS = -lpthread -ldl -lpthread -lutil -lm -lpython2.7 -Xlinker -export-dynamic -ljson
 LDDFLAGS += $(LDFLAGS)
-$(warning "1" $(shell $(PYCFG) --ldflags))
-$(warning "2" $(patsubst -O2,,$(shell $(PYCFG) --ldflags)))
-$(warning "3" $(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --ldflags))))
 PY_LDDFLAGS=$(patsubst -I/%,-I$(BASEDIR)/%,$(patsubst -O2,,$(shell $(PYCFG) --ldflags)))
 PY_INCFLAGS=$(shell $(PYCFG) --includes)
 

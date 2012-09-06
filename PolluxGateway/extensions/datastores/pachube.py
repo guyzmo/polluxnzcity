@@ -1,4 +1,3 @@
-# 
 # Pollux'NZ City source code
 # 
 # (c) 2012 CKAB / hackable:Devices
@@ -17,58 +16,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import hashlib
-import urllib2 
 import json
+import urllib2
 
-NAME="citypulse"
-DESC="upload to citypulse datastore ; http://www.citypulse.org/"
-
+NAME="pachube"
+DESC="module that pushes data to cosm/pachube"
 DEFAULT_CONFIG = \
 {
     "activated": False, 
-    "api_key": "", 
-    "post_url": "http://www2.star-apic.com/citypulse/data/SetArduinoData",
-    "proxy": ""
+    "post_url": "http://api.pachube.com/v2/feeds/",
+    "feed_id" : "58338",
+    "api_key": "XXX"
 }
 
-def calculate_sha1(ostr, key):
-    return hashlib.sha1(ostr+key).hexdigest()
-
-def push_to_citypulse(content_string, url, proxy=None):
-    req = urllib2.Request(url,
-                          headers = {
-                              "Content-Type": "text/form-data; charset=utf-8",
-                              "Accept": "*/*",   
-                              "User-Agent": "polluxnzcity v0.1-beta", 
-                              },
-                          data = content_string)
-
+def push_to_pachube(url, key, content):
+    opener = urllib2.build_opener(urllib2.HTTPHandler)
+    request = urllib2.Request(url, data=content)
+    request.add_header('Content-Type', 'application/json')
+    request.add_header('X-PachubeApiKey', key)
+    request.get_method = lambda: 'PUT'
     try:
-        urllib2.urlopen(req,timeout=5)
-        return 1
-
+        opener.open(request, timeout=5)
     except urllib2.URLError,e:
-        print "[Error pushing data in citypulse.py: ", e.reason, "]",
+        print "[Error pushing data in pachube.py: ", e, "]",
         return -1
 
 def push_to_datastore(values_list, config):
-
-    for val in values_list:
-        val['v'] = float(val['v'])
-        if 'p' in val.keys():
-            val['p'] = float(val['p'])
-
-    values_str = json.dumps(values_list)
-
-    post_url = "%s?s=%s&h=%s" % (config["post_url"], 
-                                 config["api_key"],
-                                 calculate_sha1(values_str, config["api_key"]))
-
-    if "proxy" in config.keys() and not config["proxy"] == "":
-        return push_to_citypulse(values_str, post_url, config["proxy"])
-    else:
-        return push_to_citypulse(values_str, post_url)
+    data_str = dict(version="1.0.0",datastreams=[])
+    for v in values_list:
+        data_str["datastreams"].append(dict(id=v["k"], current_value=v["v"]))
+    return push_to_pachube(config["post_url"]+config["feed_id"], config["api_key"],json.dumps(data_str))
 
 def test():
     l = [{'p': '1',   'k': 'Internal temperature', 'u': 'degre celcius', 'v': '42'},

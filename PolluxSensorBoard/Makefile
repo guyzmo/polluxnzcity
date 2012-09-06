@@ -159,7 +159,7 @@ ifneq ($(findstring tiny,$(MODEL)),)
  ARDUINO_PROG_HEADER=WProgram.h
  SRC=$(ARDUINO_CORE)/pins_arduino.c
  ifeq ($(UPLOAD_RATE),)
-   UPLOAD_RATE=9600
+   UPLOAD_RATE=19200
  endif
 else
  AVRDUDE_PROGRAMMER = $(shell grep "^$(MODEL)\." $(ARDUINO_DIR)/hardware/arduino/boards.txt $(ATTINY_BOARDS) | grep upload.protocol | sed 's/.*=//')
