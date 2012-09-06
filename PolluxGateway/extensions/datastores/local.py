@@ -47,10 +47,13 @@ def push_to_datastore(values_list, config):
         sensors_data.close()
 
 def test():
-    c = DEFAULT_CONFIG[DEFAULT_CONFIG.keys()[0]]
-    l = [{'p': '0.1', 'k': 'temp', 'u': 'degre celcius', 'v': '42'},
-         {'p': '0.0001', 'k': 'dust', 'u': 'ppm', 'v': '0.001'}]
-    return push_to_datastore(l,c)
+    l = [{'p': '1',   'k': 'Internal temperature', 'u': 'degre celcius', 'v': '42'},
+         {'p': '0.1', 'k': 'Temperature',          'u': 'degre celcius', 'v': '41.8'},
+         {'p': '3',   'k': 'Noise_Level',          'u': 'dB',            'v': '65'},
+         {'p': '5',   'k': 'NO2',                  'u': 'ppm',           'v': '0.0'},
+         {'p': '5',   'k': 'CO',                   'u': 'ppm',           'v': '0.0'},
+         {'p': '4',   'k': 'Dust',                 'u': 'ug/m3',         'v': '36'}]
+    return push_to_datastore(l,DEFAULT_CONFIG)
 
 if __name__ == "__main__":
     import sys
