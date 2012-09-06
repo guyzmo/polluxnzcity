@@ -35,15 +35,23 @@
 
 TinyWire Wire;
 
-float convert_resistor_to_temp(float resitor) {
+float calculate_temperature(float rt) {
+    // http://math.stackexchange.com/questions/190893/quadratic-equation-to-calculate-a-temperature-from-resistance
+    const float a = 1/sqrt(4.94*.000001);
+    const float b = pow(3.84*0.001, 2) / (4 * 4.94 * 0.000001);
+    const float c = (3.84*0.001)/(2*sqrt(4.94*0.000001));
+    return a * (sqrt(rt / 1854. - 1 + b) - c);
+}
+
+float convert_resistor_to_temp(float resistor) {
   float ref_temp[] = {-40 ,-30 ,-20 ,-10 ,0   ,10  ,20  ,30  ,40  ,50  ,60  ,70  ,80  ,90};
   float ref_res[]  = {1584,1649,1715,1784,1854,1926,2000,2076,2153,2233,2314,2397,2482,2569};
   short len = 14;
   
   for (short i;i<len;i++)
-    if(ref_res[i] >= resitor) {
+    if(ref_res[i] >= resistor) {
       float range = ref_res[i] - ref_res[i-1];
-      float delta = resitor - ref_res[i-1];
+      float delta = resistor - ref_res[i-1];
       return ref_temp[i-1]+((delta/range)*10);
     }
 }
@@ -67,7 +75,8 @@ void sensor_meas() {
     if(result < 0) result = 0;             // avoid eratic datas
     stat.clear();                          // clear statistics to avoid leack and data stacking
 
-    result = convert_resistor_to_temp(result);
+    //result = convert_resistor_to_temp(result);
+    result = calculate_temperature(result);
 
     float_ptr = (uint8_t*)&result;
     Wire.set_type(I2C_FLT);
