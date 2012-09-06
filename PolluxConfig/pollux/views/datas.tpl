@@ -13,7 +13,7 @@ function change(el) {
 			legend: "always",
 			labelsDivStyles: {textAlign: "right"},
 			showRangeSelector: true,
-            visibility: [false, true, false, false, false]
+            visibility: [false, false, false, true]
 		});
 });
 </script>
@@ -21,10 +21,9 @@ function change(el) {
 <div id="graphdiv"  style="width:800px; height:320px;"></div>
 <br />
 <form class="form-inline">
-  <label for="0"> Noise       <input type="checkbox" id="0" onClick="change(this)"></label>
-  <label for="1"> Temperature <input type="checkbox" id="1" checked onClick="change(this)"></label> 
-  <label for="2"> Dust        <input type="checkbox" id="2" onClick="change(this)"></label>
-  <label for="3"> CO          <input type="checkbox" id="3" onClick="change(this)"></label>
-  <label for="4"> NO2         <input type="checkbox" id="4" onClick="change(this)"></label>   
+  <label for="0"> Noise                <input type="checkbox" id="0" onClick="change(this)"></label>
+  <label for="1"> Internal Temperature <input type="checkbox" id="1" checked onClick="change(this)"></label> 
+  <label for="2"> Dust                 <input type="checkbox" id="2" onClick="change(this)"></label>
+  <label for="3"> Temperature          <input type="checkbox" id="3" onClick="change(this)"></label> 
 </form>
 <br />

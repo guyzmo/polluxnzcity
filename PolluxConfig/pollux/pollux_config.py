@@ -12,7 +12,7 @@ import urllib2
 
 from argparse import ArgumentParser
 import subprocess
-import inspect
+#import inspect
 import json
 import sys
 import imp
@@ -86,10 +86,10 @@ class BottlePluginBase(object):
                         "conflicting settings (non-unique keyword: "+self.keyword+").")
 
     def apply(self, callback, context):
-        args = inspect.getargspec(context.callback)[0]
+        #args = inspect.getargspec(context.callback)[0]
         # check whether keyword is already in args
-        if self.keyword in args:
-            return callback
+        #if self.keyword in args:
+        #    return callback
         
         def wrapper(*args, **kwargs):
             kwargs[self.keyword] = self
@@ -355,6 +355,7 @@ def get_geoloc(query,config,sensors):
     return v
 
 @route('/data/csv')
+@view()
 def get_data(config,sensors):
     path = os.path.split(config.get_datastores()["local"]["path"])[0]
     filename = os.path.split(config.get_datastores()["local"]["path"])[-1]
