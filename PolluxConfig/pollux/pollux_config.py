@@ -355,7 +355,6 @@ def get_geoloc(query,config,sensors):
     return v
 
 @route('/data/csv')
-@view()
 def get_data(config,sensors):
     path = os.path.split(config.get_datastores()["local"]["path"])[0]
     filename = os.path.split(config.get_datastores()["local"]["path"])[-1]
