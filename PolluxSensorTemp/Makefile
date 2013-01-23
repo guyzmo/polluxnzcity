@@ -75,7 +75,7 @@ TARGET = $(shell basename $(PWD))
 ARDUINO_DIR = /Applications/Arduino.app/Contents/Resources/Java
 HOME_LIB = $(HOME)/Documents/Arduino/libraries
 # path to ATTiny files look at http://code.google.com/p/arduino-tiny/
-ATTINY_DIR=$(HOME)/Documents/Arduino/hardware/tiny
+ATTINY_DIR=$(ARDUINO_DIR)/hardware/tiny
 
 USERDEF=
 #'BUFFER_SIZE=64'
