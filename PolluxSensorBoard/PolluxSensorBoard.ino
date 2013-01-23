@@ -91,7 +91,7 @@ float get_temp(Statistic* stat) {
         delayMicroseconds(DELAY_ADC);      // wait 10 us to stabilise ADC
     }
 
-    result = ((stat->average()*0.0049)-0.5)*100 ; // convert the result into a humain readable output
+    result = ((stat->average()*0.0049)-0.5125)*100 ; // convert the result into a humain readable output
 
     if(result < 0) result = 0;             // avoid eratic datas
     stat->clear();                         // clear statistics to avoid leack and data stacking
