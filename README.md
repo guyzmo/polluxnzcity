@@ -165,11 +165,22 @@ Copyright
 
 (c)2011-2013 Lucas Fernandez and Bernard Pratz, CKAB, hackable:Devices
 
-Licensed under the GNU GPL version 3
+ * http://polluxnzcity.org/
+ * http://ckab.com/polluxnz-city/
+ * http://hackable-devices.org/projects/project/polluxnzcity/
 
-http://polluxnzcity.org/
-http://ckab.com/polluxnz-city/
-http://hackable-devices.org/projects/project/polluxnzcity/
+All our original work is licensed under the GNU GPL version 3
+and all our schematics are under the Creative Commons v3.0 Attribution Share-Alike.
+
+Here are the Libraries we use in our projects, and their respective copyrights notice
+
+Arduino libraries:
+ * Statistics by Rob Tillaart and Gil Ross, in the Public Domain 
+ * usiTwiSlave, by Donald R. Blake, Jochen Toppe and Ben Galvin under GPL v2
+ * Arduino, by the Arduino team, under the GPL v2
+
+All components symbols in the schematics are from Eagle's libraries, under Creative
+Commons v3.0 Share-Alike.
 
 License
 =======
@@ -186,7 +197,4 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-
 

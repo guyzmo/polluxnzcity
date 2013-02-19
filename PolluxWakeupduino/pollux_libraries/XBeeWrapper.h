@@ -4,8 +4,6 @@
  * Copyright (c) 2012 Bernard Pratz <guyzmo{at}hackable-devices{dot}org>
  * Copyright (c) 2012 Lucas Fernandez <kasey{at}hackable-devices{dot}org>
  * 
- * Copyright (c) 2009 Andrew Rapp. For the XBee example origins.
- *
  * Pollux'NZ City is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
