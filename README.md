@@ -177,7 +177,13 @@ Here are the Libraries we use in our projects, and their respective copyrights n
 Arduino libraries:
  * Statistics by Rob Tillaart and Gil Ross, in the Public Domain 
  * usiTwiSlave, by Donald R. Blake, Jochen Toppe and Ben Galvin under GPL v2
+ * circular buffer based on Akash Nath, in the Public Domain
  * Arduino, by the Arduino team, under the GPL v2
+
+For the python web interface:
+ * bottle.py under the MIT License
+ * bootstrap.js under the Apache License v2.0.
+ * deansi library by David Garcia Garzon, under the AGPLv3
 
 All components symbols in the schematics are from Eagle's libraries, under Creative
 Commons v3.0 Share-Alike.
